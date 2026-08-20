@@ -1,12 +1,12 @@
 # Product Requirements Document (PRD)
 
-## MileLog Mini - Android Application
+## MileLog Lite - Android Application
 
 
 ## 1. Project Overview
 
 ### 1.1 Purpose
-MileLog Mini is a native Android application that helps a car owner log fuel fill-ups, automatically calculate mileage and cost efficiency, and view that data as simple visual charts. It replaces a manual notebook or spreadsheet with a small, focused, offline app.
+MileLog Lite is a native Android application that helps a car owner log fuel fill-ups, automatically calculate mileage and cost efficiency, and view that data as simple visual charts. It replaces a manual notebook or spreadsheet with a small, focused, offline app.
 
 ### 1.2 Problem Statement
 Most vehicle owners don't track fuel consumption consistently. Without a running log, it's hard to know actual mileage, cost per kilometer, or whether spending is trending up.

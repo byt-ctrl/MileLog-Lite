@@ -1,4 +1,4 @@
-# MileLog Mini - Sprint Execution Plan & Checklist
+# MileLog Lite - Sprint Execution Plan & Checklist
 
 This document provides an interactive execution checklist for the mini-scope MileLog Android application. It mirrors the structure of the full MileLog sprint plan but is reduced to a **single-vehicle fuel logger with calculations and charts**, sized for a 3–4 week build.
 
@@ -20,7 +20,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 ### 1.1 Key Deliverables
 - [x] Initialize Android project with Kotlin and Jetpack Compose.
-- [x] Add dependencies: Room, Compose Navigation, Lifecycle ViewModel, JUnit.
+- [ ] Add dependencies: Room, Compose Navigation, Lifecycle ViewModel, JUnit.
 - [ ] Set up MVVM package structure (`data`, `domain`, `ui`).
 - [x] Define base Material Design 3 theme (colors, typography).
 - [ ] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
@@ -120,7 +120,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] **Only if the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete.
 
 ### 4.2 Sprint 4 Milestone
-- [ ] MileLog Mini is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).
+- [ ] MileLog Lite is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).
 
 ### 4.3 Sprint 4 Testing
 - [ ] Full regression pass: add entry → edit entry → delete entry → dashboard reflects change → charts reflect change.

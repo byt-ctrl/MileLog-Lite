@@ -1,4 +1,4 @@
-# MileLog Mini
+# MileLog Lite
 
 A lightweight, offline-first Android fuel logger built with Kotlin and Jetpack Compose. Track fill-ups, mileage, and fuel costs at a glance.
 
@@ -45,8 +45,8 @@ app/src/main/java/
 
 ## Documentation
 
-- [Product Requirements Document](docs/PRD_MileLog_Mini.md)
-- [Sprint Execution Plan](docs/Sprint_Plan_MileLog_Mini.md)
+- [Product Requirements Document](docs/PRD_MileLog_Lite.md)
+- [Sprint Execution Plan](docs/Sprint_Plan_MileLog_Lite.md)
 
 ## License
 
