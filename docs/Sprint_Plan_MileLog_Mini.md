@@ -19,10 +19,10 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Primary Goal:** Set up the project skeleton and get fuel entries persisting locally with full CRUD.
 
 ### 1.1 Key Deliverables
-- [ ] Initialize Android project with Kotlin and Jetpack Compose.
+- [x] Initialize Android project with Kotlin and Jetpack Compose.
 - [ ] Add dependencies: Room, Compose Navigation, Lifecycle ViewModel, JUnit.
 - [ ] Set up MVVM package structure (`data`, `domain`, `ui`).
-- [ ] Define base Material Design 3 theme (colors, typography).
+- [x] Define base Material Design 3 theme (colors, typography).
 - [ ] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
 - [ ] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
 - [ ] Create Room `Database` class and repository layer (`FuelEntryRepository`).
