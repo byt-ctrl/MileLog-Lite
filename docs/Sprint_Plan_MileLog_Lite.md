@@ -21,7 +21,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 ### 1.1 Key Deliverables
 - [x] Initialize Android project with Kotlin and Jetpack Compose.
 - [x] Add dependencies: Room, Compose Navigation, Lifecycle ViewModel, JUnit.
-- [ ] Set up MVVM package structure (`data`, `domain`, `ui`).
+- [x] Set up MVVM package structure (`data`, `domain`, `ui`).
 - [x] Define base Material Design 3 theme (colors, typography).
 - [ ] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
 - [ ] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
