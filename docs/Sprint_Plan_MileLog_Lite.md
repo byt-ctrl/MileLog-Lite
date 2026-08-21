@@ -23,7 +23,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Add dependencies: Room, Compose Navigation, Lifecycle ViewModel, JUnit.
 - [x] Set up MVVM package structure (`data`, `domain`, `ui`).
 - [x] Define base Material Design 3 theme (colors, typography).
-- [ ] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
+- [x] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
 - [ ] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
 - [ ] Create Room `Database` class and repository layer (`FuelEntryRepository`).
 - [ ] Build Add Fuel Entry screen (form UI).
