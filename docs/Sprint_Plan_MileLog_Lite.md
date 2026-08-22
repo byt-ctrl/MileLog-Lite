@@ -25,7 +25,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Define base Material Design 3 theme (colors, typography).
 - [x] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
 - [x] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
-- [ ] Create Room `Database` class and repository layer (`FuelEntryRepository`).
+- [x] Create Room `Database` class and repository layer (`FuelEntryRepository`).
 - [ ] Build Add Fuel Entry screen (form UI).
 - [ ] Build Edit Fuel Entry flow (reuse Add screen or dedicated screen).
 - [ ] Build Delete Fuel Entry (with confirmation dialog).
