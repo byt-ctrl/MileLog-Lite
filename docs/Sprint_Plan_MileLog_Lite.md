@@ -27,9 +27,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
 - [x] Create Room `Database` class and repository layer (`FuelEntryRepository`).
 - [x] Build Add Fuel Entry screen (form UI).
-- [ ] Build Edit Fuel Entry flow (reuse Add screen or dedicated screen).
+- [x] Build Edit Fuel Entry flow (reuse Add screen or dedicated screen).
 - [ ] Build Delete Fuel Entry (with confirmation dialog).
-- [ ] Build Fuel History screen listing all entries, most recent first.
+- [x] Build Fuel History screen listing all entries, most recent first.
 
 ### 1.2 Sprint 1 Milestone
 - [ ] User can add, edit, delete, and view a list of fuel entries. Data persists after app restart, fully offline.

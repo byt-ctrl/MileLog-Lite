@@ -1,0 +1,153 @@
+package com.example.myapplication.ui.history
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.data.local.FuelEntry
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * History screen listing all fuel entries, most recent first.
+ *
+ * Tapping an entry opens it in edit mode; the FAB opens a new entry form.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistoryScreen(
+    onEditEntry: (Long) -> Unit,
+    onAddEntry: () -> Unit,
+    onNavigateUp: () -> Unit,
+    viewModel: HistoryViewModel = viewModel(factory = HistoryViewModel.Factory)
+) {
+    val entries by viewModel.entries.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Fuel History") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Navigate back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddEntry) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add fuel entry"
+                )
+            }
+        }
+    ) { innerPadding ->
+        if (entries.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No fill-ups yet. Tap + to add your first entry.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(entries, key = { it.id }) { entry ->
+                    FuelEntryCard(
+                        entry = entry,
+                        onClick = { onEditEntry(entry.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Card rendering a single fuel entry with its details.
+ */
+@Composable
+private fun FuelEntryCard(
+    entry: FuelEntry,
+    onClick: () -> Unit
+) {
+    val dateFormatter = remember(entry.date) {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = dateFormatter.format(Date(entry.date)),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "Odometer: ${entry.odometer} km",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Fuel: %.2f L  •  Cost: ₹ %.2f".format(entry.liters, entry.cost),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
