@@ -32,10 +32,10 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Build Fuel History screen listing all entries, most recent first.
 
 ### 1.2 Sprint 1 Milestone
-- [ ] User can add, edit, delete, and view a list of fuel entries. Data persists after app restart, fully offline.
+- [x] User can add, edit, delete, and view a list of fuel entries. Data persists after app restart, fully offline.
 
 ### 1.3 Sprint 1 Testing
-- [ ] DAO tests for insert, update, delete, and fetch-all operations.
+- [x] DAO tests for insert, update, delete, and fetch-all operations.
 - [ ] Manual test: add several entries, force-close app, reopen, confirm data persists.
 
 ---
