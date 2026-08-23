@@ -11,11 +11,12 @@ import com.example.myapplication.data.repository.FuelEntryRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel exposing the list of fuel entries for the History screen.
  */
-class HistoryViewModel(repository: FuelEntryRepository) : ViewModel() {
+class HistoryViewModel(private val repository: FuelEntryRepository) : ViewModel() {
 
     /**
      * Live list of all fuel entries, most recent first. Auto-updates on any insert/update/delete.
@@ -26,6 +27,15 @@ class HistoryViewModel(repository: FuelEntryRepository) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    /**
+     * Deletes the entry with the given id from the database.
+     */
+    fun deleteEntry(entry: FuelEntry) {
+        viewModelScope.launch {
+            repository.deleteEntry(entry)
+        }
+    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

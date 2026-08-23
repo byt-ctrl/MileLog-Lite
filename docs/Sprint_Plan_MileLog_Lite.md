@@ -28,7 +28,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Create Room `Database` class and repository layer (`FuelEntryRepository`).
 - [x] Build Add Fuel Entry screen (form UI).
 - [x] Build Edit Fuel Entry flow (reuse Add screen or dedicated screen).
-- [ ] Build Delete Fuel Entry (with confirmation dialog).
+- [x] Build Delete Fuel Entry (with confirmation dialog).
 - [x] Build Fuel History screen listing all entries, most recent first.
 
 ### 1.2 Sprint 1 Milestone
