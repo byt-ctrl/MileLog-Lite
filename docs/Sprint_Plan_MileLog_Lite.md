@@ -26,7 +26,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Create `FuelEntry` Room entity (date, odometer, liters, cost, id).
 - [x] Create `FuelEntryDao` with insert, update, delete, and get-all queries.
 - [x] Create Room `Database` class and repository layer (`FuelEntryRepository`).
-- [ ] Build Add Fuel Entry screen (form UI).
+- [x] Build Add Fuel Entry screen (form UI).
 - [ ] Build Edit Fuel Entry flow (reuse Add screen or dedicated screen).
 - [ ] Build Delete Fuel Entry (with confirmation dialog).
 - [ ] Build Fuel History screen listing all entries, most recent first.

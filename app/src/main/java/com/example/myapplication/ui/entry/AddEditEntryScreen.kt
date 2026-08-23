@@ -1,0 +1,219 @@
+package com.example.myapplication.ui.entry
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * Add / Edit Fuel Entry Screen.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditEntryScreen(
+    entryId: Long = 0L,
+    onNavigateUp: () -> Unit,
+    viewModel: AddEditViewModel = viewModel(factory = AddEditViewModel.Factory)
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(entryId) {
+        if (entryId > 0L) {
+            viewModel.loadEntry(entryId)
+        }
+    }
+
+    LaunchedEffect(uiState.isEntrySaved) {
+        if (uiState.isEntrySaved) {
+            viewModel.resetSavedState()
+            onNavigateUp()
+        }
+    }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = remember {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (uiState.isEditMode) "Edit Fuel Entry" else "Add Fuel Entry"
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Navigate back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Date Picker Field
+            OutlinedTextField(
+                value = dateFormatter.format(Date(uiState.dateMillis)),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Date of Fill-up") },
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Select date"
+                        )
+                    }
+                },
+                isError = uiState.dateError != null,
+                supportingText = uiState.dateError?.let { { Text(it) } },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true }
+            )
+
+            // Odometer Field
+            OutlinedTextField(
+                value = uiState.odometer,
+                onValueChange = { viewModel.onOdometerChanged(it) },
+                label = { Text("Odometer Reading") },
+                suffix = { Text("km") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                isError = uiState.odometerError != null,
+                supportingText = {
+                    if (uiState.odometerError != null) {
+                        Text(uiState.odometerError!!)
+                    } else if (uiState.previousOdometer != null && !uiState.isEditMode) {
+                        Text("Previous reading: ${uiState.previousOdometer} km")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Fuel Quantity Field
+            OutlinedTextField(
+                value = uiState.liters,
+                onValueChange = { viewModel.onLitersChanged(it) },
+                label = { Text("Fuel Quantity") },
+                suffix = { Text("L") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+                isError = uiState.litersError != null,
+                supportingText = uiState.litersError?.let { { Text(it) } },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Total Cost Field
+            OutlinedTextField(
+                value = uiState.cost,
+                onValueChange = { viewModel.onCostChanged(it) },
+                label = { Text("Total Cost") },
+                prefix = { Text("₹ ") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+                isError = uiState.costError != null,
+                supportingText = uiState.costError?.let { { Text(it) } },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Save Button
+            Button(
+                onClick = { viewModel.saveEntry() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(
+                    text = if (uiState.isEditMode) "Update Entry" else "Save Entry",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = uiState.dateMillis
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            viewModel.onDateChanged(it)
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
