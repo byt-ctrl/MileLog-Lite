@@ -35,23 +35,23 @@ object MileageCalculator {
         val firstOdometer = sortedEntries.first().odometer
         val totalDistance = if (sortedEntries.size >= 2) latestOdometer - firstOdometer else 0
         
-        val totalFuel = sortedEntries.sumOf { it.liters }
-        val totalCost = sortedEntries.sumOf { it.cost }
+        val totalFuel = sortedEntries.map { it.liters }.sum()
+        val totalCost = sortedEntries.map { it.cost }.sum()
         
-        val totalFuelForMileage = if (sortedEntries.size >= 2) {
-            sortedEntries.drop(1).sumOf { it.liters }
+        val totalFuelForMileage: Double = if (sortedEntries.size >= 2) {
+            sortedEntries.drop(1).map { it.liters }.sum()
         } else {
             0.0
         }
         
-        val averageMileage = if (totalDistance > 0 && totalFuelForMileage > 0) {
-            totalDistance / totalFuelForMileage
+        val averageMileage: Double? = if (totalDistance > 0 && totalFuelForMileage > 0.0) {
+            totalDistance.toDouble() / totalFuelForMileage
         } else {
             null
         }
         
         val costPerKm = if (totalDistance > 0) {
-            totalCost / totalDistance
+            totalCost / totalDistance.toDouble()
         } else {
             null
         }
