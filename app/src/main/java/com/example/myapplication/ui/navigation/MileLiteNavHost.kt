@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.ui.dashboard.DashboardScreen
 import com.example.myapplication.ui.entry.AddEditEntryScreen
 import com.example.myapplication.ui.history.HistoryScreen
 
@@ -33,11 +34,10 @@ fun MileLiteNavHost(
         startDestination = MileLogRoutes.DASHBOARD
     ) {
         composable(MileLogRoutes.DASHBOARD) {
-            // Dashboard lands here in a later sprint; for now redirect to History as the
-            // entry point so the edit flow is reachable end-to-end.
-            navController.navigate(MileLogRoutes.HISTORY) {
-                popUpTo(MileLogRoutes.DASHBOARD) { inclusive = true }
-            }
+            DashboardScreen(
+                onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) },
+                onViewHistory = { navController.navigate(MileLogRoutes.HISTORY) }
+            )
         }
         composable(MileLogRoutes.HISTORY) {
             HistoryScreen(

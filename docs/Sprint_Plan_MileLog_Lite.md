@@ -47,29 +47,29 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Primary Goal:** Add the calculation engine, input validation, and the dashboard summary screen.
 
 ### 2.1 Key Deliverables
-- [ ] Implement mileage calculation: `(current_odometer - previous_odometer) / fuel_quantity`.
-- [ ] Implement cost-per-km calculation: `total_cost / total_distance`.
-- [ ] Implement running average mileage across all entries.
-- [ ] Implement running totals: total distance, total fuel, total cost.
-- [ ] Add validation: required fields, positive fuel quantity, positive cost.
-- [ ] Add validation: new odometer reading must be greater than the previous one.
-- [ ] Show inline error messages on the Add/Edit form for invalid input.
-- [ ] Build Dashboard screen UI:
-    - [ ] Latest odometer reading
-    - [ ] Total fuel spend
-    - [ ] Average mileage (km/l)
-    - [ ] Cost per km
-- [ ] Add a quick-add fuel entry button on the dashboard (reachable within 2 taps).
-- [ ] Wire dashboard values to live data (auto-update when entries change).
+- [x] Implement mileage calculation: `(current_odometer - previous_odometer) / fuel_quantity`.
+- [x] Implement cost-per-km calculation: `total_cost / total_distance`.
+- [x] Implement running average mileage across all entries.
+- [x] Implement running totals: total distance, total fuel, total cost.
+- [x] Add validation: required fields, positive fuel quantity, positive cost.
+- [x] Add validation: new odometer reading must be greater than the previous one.
+- [x] Show inline error messages on the Add/Edit form for invalid input.
+- [x] Build Dashboard screen UI:
+    - [x] Latest odometer reading
+    - [x] Total fuel spend
+    - [x] Average mileage (km/l)
+    - [x] Cost per km
+- [x] Add a quick-add fuel entry button on the dashboard (reachable within 2 taps).
+- [x] Wire dashboard values to live data (auto-update when entries change).
 
 ### 2.2 Sprint 2 Milestone
-- [ ] Dashboard shows accurate, auto-updating totals and averages. Invalid entries (bad odometer, negative values, missing fields) are blocked with clear error messages.
+- [x] Dashboard shows accurate, auto-updating totals and averages. Invalid entries (bad odometer, negative values, missing fields) are blocked with clear error messages.
 
 ### 2.3 Sprint 2 Testing
-- [ ] Unit tests for mileage calculation.
-- [ ] Unit tests for cost-per-km calculation.
-- [ ] Unit tests for running average mileage and running totals.
-- [ ] Unit tests for odometer validation (rejects non-increasing values).
+- [x] Unit tests for mileage calculation.
+- [x] Unit tests for cost-per-km calculation.
+- [x] Unit tests for running average mileage and running totals.
+- [x] Unit tests for odometer validation (rejects non-increasing values).
 - [ ] Manual test: add/edit/delete entries and confirm dashboard updates correctly each time.
 
 ---
