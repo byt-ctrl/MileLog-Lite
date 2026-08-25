@@ -81,7 +81,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Primary Goal:** Add the visual analytics layer - the one standout feature beyond basic CRUD.
 
 ### 3.1 Key Deliverables
-- [ ] Add MPAndroidChart dependency.
+- [x] Add MPAndroidChart dependency.
 - [ ] Build mileage trend line chart (km/l per fill-up, chronological).
 - [ ] Build monthly fuel spend bar chart (grouped by calendar month).
 - [ ] Add a Charts/Insights screen (or section on the dashboard) hosting both charts.
