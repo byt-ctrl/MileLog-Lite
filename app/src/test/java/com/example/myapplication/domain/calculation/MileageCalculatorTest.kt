@@ -104,4 +104,61 @@ class MileageCalculatorTest {
         assertNull(fillups[0].mileageKmPerL)
         assertEquals(0.0, fillups[1].mileageKmPerL!!, 0.001)
     }
+
+    @Test
+    fun testMonthlySpendEmpty() {
+        val monthlySpends = MileageCalculator.calculateMonthlySpend(emptyList())
+        assertEquals(0, monthlySpends.size)
+    }
+
+    @Test
+    fun testMonthlySpendGrouping() {
+        val cal = java.util.Calendar.getInstance()
+
+        // Entry 1 in Jan 2026
+        cal.set(2026, java.util.Calendar.JANUARY, 10)
+        val dateJan1 = cal.timeInMillis
+        val entry1 = FuelEntry(id = 1, date = dateJan1, odometer = 1000, liters = 30.0, cost = 3000.0)
+
+        // Entry 2 in Jan 2026
+        cal.set(2026, java.util.Calendar.JANUARY, 25)
+        val dateJan2 = cal.timeInMillis
+        val entry2 = FuelEntry(id = 2, date = dateJan2, odometer = 1400, liters = 25.0, cost = 2500.0)
+
+        // Entry 3 in Feb 2026
+        cal.set(2026, java.util.Calendar.FEBRUARY, 15)
+        val dateFeb = cal.timeInMillis
+        val entry3 = FuelEntry(id = 3, date = dateFeb, odometer = 1800, liters = 35.0, cost = 3500.0)
+
+        // Entry 4 in Apr 2026 (March skipped)
+        cal.set(2026, java.util.Calendar.APRIL, 5)
+        val dateApr = cal.timeInMillis
+        val entry4 = FuelEntry(id = 4, date = dateApr, odometer = 2200, liters = 40.0, cost = 4000.0)
+
+        // Pass entries in shuffled order
+        val monthlySpends = MileageCalculator.calculateMonthlySpend(listOf(entry4, entry1, entry3, entry2))
+
+        assertEquals(3, monthlySpends.size)
+
+        // Jan 2026
+        assertEquals(2026, monthlySpends[0].year)
+        assertEquals(java.util.Calendar.JANUARY, monthlySpends[0].month)
+        assertEquals(5500.0, monthlySpends[0].totalCost, 0.001)
+        assertEquals(55.0, monthlySpends[0].totalLiters, 0.001)
+        assertEquals(2, monthlySpends[0].entryCount)
+
+        // Feb 2026
+        assertEquals(2026, monthlySpends[1].year)
+        assertEquals(java.util.Calendar.FEBRUARY, monthlySpends[1].month)
+        assertEquals(3500.0, monthlySpends[1].totalCost, 0.001)
+        assertEquals(35.0, monthlySpends[1].totalLiters, 0.001)
+        assertEquals(1, monthlySpends[1].entryCount)
+
+        // Apr 2026
+        assertEquals(2026, monthlySpends[2].year)
+        assertEquals(java.util.Calendar.APRIL, monthlySpends[2].month)
+        assertEquals(4000.0, monthlySpends[2].totalCost, 0.001)
+        assertEquals(40.0, monthlySpends[2].totalLiters, 0.001)
+        assertEquals(1, monthlySpends[2].entryCount)
+    }
 }

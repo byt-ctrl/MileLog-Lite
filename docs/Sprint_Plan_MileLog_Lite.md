@@ -83,7 +83,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 ### 3.1 Key Deliverables
 - [x] Add MPAndroidChart dependency.
 - [x] Build mileage trend line chart (km/l per fill-up, chronological).
-- [ ] Build monthly fuel spend bar chart (grouped by calendar month).
+- [x] Build monthly fuel spend bar chart (grouped by calendar month).
 - [ ] Add a Charts/Insights screen (or section on the dashboard) hosting both charts.
 - [ ] Handle empty state (no chart shown / friendly message when there are fewer than 2 entries).
 - [ ] Ensure charts refresh automatically when entries are added, edited, or deleted.
@@ -92,7 +92,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] Charts screen accurately reflects logged data and updates live as entries change. Empty and single-entry states are handled gracefully (no crashes).
 
 ### 3.3 Sprint 3 Testing
-- [ ] Unit tests for the data-grouping logic that feeds the monthly spend chart (grouping by month, summing cost).
+- [x] Unit tests for the data-grouping logic that feeds the monthly spend chart (grouping by month, summing cost).
 - [ ] Manual visual check: add entries across 3+ months and confirm chart bars/line points match expected values.
 - [ ] Manual test: fresh install (zero entries) does not crash the Charts screen.
 

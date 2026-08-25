@@ -1,6 +1,10 @@
 package com.example.myapplication.domain.calculation
 
 import com.example.myapplication.data.local.FuelEntry
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 data class DashboardStats(
     val latestOdometer: Int?,
@@ -14,6 +18,15 @@ data class DashboardStats(
 data class FillupMileage(
     val entry: FuelEntry,
     val mileageKmPerL: Double?  // null for the first entry
+)
+
+data class MonthlyFuelSpend(
+    val year: Int,
+    val month: Int,        // 0-11 as per Calendar.MONTH
+    val label: String,     // e.g. "Aug 26"
+    val totalCost: Double,
+    val totalLiters: Double,
+    val entryCount: Int
 )
 
 object MileageCalculator {
@@ -89,5 +102,46 @@ object MileageCalculator {
         }
         
         return result
+    }
+
+    /**
+     * Groups entries by calendar month (chronologically ascending) and calculates
+     * total fuel spend and liters filled for each month.
+     */
+    fun calculateMonthlySpend(entries: List<FuelEntry>): List<MonthlyFuelSpend> {
+        if (entries.isEmpty()) return emptyList()
+
+        val calendar = Calendar.getInstance()
+        val labelFormat = SimpleDateFormat("MMM yy", Locale.getDefault())
+
+        // Group by Pair(year, month)
+        val grouped = entries.groupBy { entry ->
+            calendar.timeInMillis = entry.date
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            Pair(year, month)
+        }
+
+        return grouped.entries
+            .sortedWith(compareBy({ it.key.first }, { it.key.second }))
+            .map { (yearMonth, monthEntries) ->
+                val (year, month) = yearMonth
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
+
+                val label = labelFormat.format(calendar.time)
+                val totalCost = monthEntries.map { it.cost }.sum()
+                val totalLiters = monthEntries.map { it.liters }.sum()
+
+                MonthlyFuelSpend(
+                    year = year,
+                    month = month,
+                    label = label,
+                    totalCost = totalCost,
+                    totalLiters = totalLiters,
+                    entryCount = monthEntries.size
+                )
+            }
     }
 }
