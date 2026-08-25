@@ -70,7 +70,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Unit tests for cost-per-km calculation.
 - [x] Unit tests for running average mileage and running totals.
 - [x] Unit tests for odometer validation (rejects non-increasing values).
-- [ ] Manual test: add/edit/delete entries and confirm dashboard updates correctly each time.
+- [x] Manual test: add/edit/delete entries and confirm dashboard updates correctly each time.
 
 ---
 
