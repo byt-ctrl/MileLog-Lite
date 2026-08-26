@@ -71,7 +71,7 @@ fun ChartsScreen(
                 }
             }
 
-            uiState.entryCount == 0 -> {
+            uiState.entryCount < 2 -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -80,7 +80,7 @@ fun ChartsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No data yet. Add at least 2 fuel entries to see charts.",
+                        text = "Add at least 2 fuel entries to see charts and insights.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center

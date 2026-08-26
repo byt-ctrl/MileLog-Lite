@@ -85,7 +85,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Build mileage trend line chart (km/l per fill-up, chronological).
 - [x] Build monthly fuel spend bar chart (grouped by calendar month).
 - [x] Add a Charts/Insights screen (or section on the dashboard) hosting both charts.
-- [ ] Handle empty state (no chart shown / friendly message when there are fewer than 2 entries).
+- [x] Handle empty state (no chart shown / friendly message when there are fewer than 2 entries).
 - [ ] Ensure charts refresh automatically when entries are added, edited, or deleted.
 
 ### 3.2 Sprint 3 Milestone
