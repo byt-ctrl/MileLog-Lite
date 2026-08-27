@@ -105,7 +105,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Primary Goal:** Stabilize, polish, and prepare the app for submission/demo.
 
 ### 4.1 Key Deliverables
-- [ ] Add empty states (no entries yet) to History and Dashboard screens.
+- [x] Add empty states (no entries yet) to History and Dashboard screens.
 - [ ] Add loading/error states where relevant.
 - [ ] Review spacing, typography, and Material 3 consistency across all screens.
 - [ ] Add content descriptions to key interactive elements (buttons, icons).
