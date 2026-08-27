@@ -69,6 +69,8 @@ cd MileLog-Lite/MileLog-Lite
   - Displays inline contextual error notices below each form field.
 - **Offline Persistence:**
   - Backed by Room SQLite with database indices on `date`, `odometer`, and composite `(date, odometer)` for sub-millisecond query performance.
+- **CSV Export:**
+  - One-tap export of the full fuel history to a CSV file (`id,date,odometer,liters,cost`) via the system document picker (SAF). Export-only — no import or backup/restore.
 - **Accessibility & Font Scaling:**
   - Fully dynamic layout capable of scaling up to 200% system font size without truncation, overlap, or scroll clipping.
 
@@ -144,7 +146,7 @@ cd MileLog-Lite/MileLog-Lite
 
 1. **Single-Vehicle Support:** The app tracks one vehicle profile per installation. Multi-vehicle management is omitted from the lite scope.
 2. **Local-Only Storage:** All data is stored locally in SQLite. Cloud synchronization and multi-device account logins are not included.
-3. **No File Export / Import:** CSV or PDF report export features are not implemented in the current version.
+3. **Export Only, No Import:** Fuel history can be exported to CSV via the system document picker (SAF), but CSV import/restore is not implemented.
 4. **Full-Tank Assumption:** Calculations assume each recorded fill-up fills the tank completely. Partial fill-up tracking is deferred to future releases.
 5. **Fixed Currency Formatting:** Currency amounts are formatted in Indian Rupees (INR) by default without multi-currency switching options.
 

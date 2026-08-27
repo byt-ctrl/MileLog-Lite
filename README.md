@@ -71,6 +71,7 @@ $env:PATH += ";$env:ANDROID_HOME\platform-tools"
 - **Smart Form Validation:** Real-time feedback preventing non-increasing odometer entries, negative fuel quantities, or missing cost values.
 - **History Management:** Reverse-chronological log of all entries with one-tap editing and guarded deletion confirmation dialogs.
 - **Offline-First Storage:** Local Room SQLite database with multi-column indices for fast query performance.
+- **CSV Export:** One-tap export of the full fuel history to a CSV file via the system document picker (no import/backup).
 - **Dynamic Accessibility:** Fully responsive layout tested up to 200% system font scaling without text clipping or overlapping.
 
 ---
@@ -125,7 +126,7 @@ $env:PATH += ";$env:ANDROID_HOME\platform-tools"
 
 1. **Single Vehicle Tracking:** Designed for single-vehicle tracking per installation (multi-vehicle profiles are not included in the lite scope).
 2. **Local Storage Only:** Data is stored strictly on the local device; cloud backup and multi-device synchronization are not included.
-3. **No File Export:** Exporting data to CSV, Excel, or JSON formats is not currently supported.
+3. **Export Only, No Import:** Fuel history can be exported to CSV via the system document picker, but CSV import/restore is not supported.
 4. **Full-Tank Assumption:** Mileage calculations assume complete fill-ups between consecutive logs.
 5. **Single Currency:** Currency values are formatted in Indian Rupees (INR); dynamic multi-currency switching is not configured.
 

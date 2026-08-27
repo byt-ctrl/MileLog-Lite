@@ -135,7 +135,7 @@ Because this is a small project, there is one build phase rather than a multi-ph
 
 **Optional, only if time remains after the above is complete and tested:**
 - [ ] Dark mode / theming
-- [ ] Simple CSV export (no import, no backup)
+- [x] Simple CSV export (no import, no backup)
 - [ ] Basic maintenance reminder (single odometer-based reminder, no full reminder system)
 
 ---

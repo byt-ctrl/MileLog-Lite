@@ -117,7 +117,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
     - [x] Architecture overview (MVVM diagram or description)
     - [x] Screenshots of core screens
     - [x] Known limitations (e.g., single vehicle only, no export)
-- [ ] **Only if the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete.
+- [x] **If the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete. **Implemented: simple CSV export** (History screen top-bar action → system document picker → `milelog_fuel_entries.csv`; export-only, no import).
 
 ### 4.2 Sprint 4 Milestone
 - [ ] MileLog Lite is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).

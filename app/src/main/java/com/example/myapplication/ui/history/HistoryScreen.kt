@@ -1,5 +1,7 @@
 package com.example.myapplication.ui.history
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,11 +30,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +58,8 @@ import java.util.Locale
  * History screen listing all fuel entries, most recent first.
  *
  * Tapping an entry opens it in edit mode; the FAB opens a new entry form.
+ * The top-bar download icon exports all entries to a CSV file via the
+ * system document-creation picker.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +72,32 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val entries = uiState.entries
     var entryPendingDelete by remember { mutableStateOf<FuelEntry?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.writeExportedCsv(uri)
+        } else {
+            viewModel.clearExportReady()
+        }
+    }
+
+    // When the ViewModel has prepared the CSV, launch the picker so the user
+    // chooses where to save it.
+    LaunchedEffect(uiState.exportReady) {
+        val csv = uiState.exportReady ?: return@LaunchedEffect
+        exportLauncher.launch("milelog_fuel_entries.csv")
+        viewModel.clearExportReady()
+    }
+
+    // Surface export outcomes (success/failure) via a snackbar.
+    LaunchedEffect(uiState.exportMessage) {
+        val message = uiState.exportMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeExportMessage()
+    }
 
     Scaffold(
         topBar = {
@@ -77,11 +111,22 @@ fun HistoryScreen(
                         )
                     }
                 },
+                actions = {
+                    if (!uiState.isLoading && uiState.errorMessage == null) {
+                        IconButton(onClick = viewModel::exportEntries) {
+                            Icon(
+                                imageVector = Icons.Filled.Download,
+                                contentDescription = "Export entries to CSV"
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddEntry) {
                 Icon(
