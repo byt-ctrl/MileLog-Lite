@@ -146,7 +146,7 @@ fun AddEditEntryScreen(
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
                         .imePadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
             // Date Picker Field

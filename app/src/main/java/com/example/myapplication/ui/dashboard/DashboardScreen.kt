@@ -34,15 +34,14 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Dashboard") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
         floatingActionButton = {
             if (!uiState.isLoading && uiState.entryCount > 0) {
                 FloatingActionButton(onClick = onAddEntry) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add Entry")
+                    Icon(Icons.Filled.Add, contentDescription = "Add fuel entry")
                 }
             }
         }
