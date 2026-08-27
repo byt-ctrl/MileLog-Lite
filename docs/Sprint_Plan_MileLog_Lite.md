@@ -93,8 +93,8 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 ### 3.3 Sprint 3 Testing
 - [x] Unit tests for the data-grouping logic that feeds the monthly spend chart (grouping by month, summing cost).
-- [ ] Manual visual check: add entries across 3+ months and confirm chart bars/line points match expected values.
-- [ ] Manual test: fresh install (zero entries) does not crash the Charts screen.
+- [x] Manual visual check: add entries across 3+ months and confirm chart bars/line points match expected values.
+- [x] Manual test: fresh install (zero entries) does not crash the Charts screen.
 
 ---
 
