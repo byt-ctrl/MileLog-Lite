@@ -111,12 +111,12 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Add content descriptions to key interactive elements (buttons, icons).
 - [x] Confirm font scaling doesn't break layouts on any screen.
 - [x] Add a database index on the date/odometer field if entry counts are large in testing.
-- [ ] Write short project documentation:
-    - [ ] Setup instructions
-    - [ ] Feature list
-    - [ ] Architecture overview (MVVM diagram or description)
-    - [ ] Screenshots of core screens
-    - [ ] Known limitations (e.g., single vehicle only, no export)
+- [x] Write short project documentation:
+    - [x] Setup instructions
+    - [x] Feature list
+    - [x] Architecture overview (MVVM diagram or description)
+    - [x] Screenshots of core screens
+    - [x] Known limitations (e.g., single vehicle only, no export)
 - [ ] **Only if the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete.
 
 ### 4.2 Sprint 4 Milestone
