@@ -45,6 +45,12 @@ interface FuelEntryDao {
     suspend fun insert(entry: FuelEntry): Long
 
     /**
+     * Inserts multiple fuel entries in a single transaction, returning their auto-generated IDs.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entries: List<FuelEntry>): List<Long>
+
+    /**
      * Updates an existing fuel entry.
      */
     @Update

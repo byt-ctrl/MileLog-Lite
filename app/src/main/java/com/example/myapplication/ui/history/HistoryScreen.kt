@@ -243,7 +243,8 @@ private fun FuelEntryCard(
             ) {
                 Text(
                     text = dateFormatter.format(Date(entry.date)),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 IconButton(onClick = onDeleteClick) {
                     Icon(

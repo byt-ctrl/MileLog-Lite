@@ -17,7 +17,8 @@ import androidx.room.PrimaryKey
     tableName = "fuel_entries",
     indices = [
         Index(value = ["date"]),
-        Index(value = ["odometer"])
+        Index(value = ["odometer"]),
+        Index(value = ["date", "odometer"])
     ]
 )
 data class FuelEntry(

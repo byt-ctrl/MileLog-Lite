@@ -35,6 +35,11 @@ interface FuelEntryRepository {
     suspend fun insertEntry(entry: FuelEntry): Long
 
     /**
+     * Inserts multiple fuel entries in bulk.
+     */
+    suspend fun insertEntries(entries: List<FuelEntry>): List<Long>
+
+    /**
      * Updates an existing fuel entry in the database.
      */
     suspend fun updateEntry(entry: FuelEntry)
@@ -61,6 +66,8 @@ class OfflineFuelEntryRepository(
     override suspend fun getLatestEntry(): FuelEntry? = fuelEntryDao.getLatest()
 
     override suspend fun insertEntry(entry: FuelEntry): Long = fuelEntryDao.insert(entry)
+
+    override suspend fun insertEntries(entries: List<FuelEntry>): List<Long> = fuelEntryDao.insertAll(entries)
 
     override suspend fun updateEntry(entry: FuelEntry) = fuelEntryDao.update(entry)
 

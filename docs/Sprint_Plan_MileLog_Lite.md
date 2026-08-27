@@ -108,9 +108,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Add empty states (no entries yet) to History and Dashboard screens.
 - [x] Add loading/error states where relevant.
 - [x] Review spacing, typography, and Material 3 consistency across all screens.
-- [ ] Add content descriptions to key interactive elements (buttons, icons).
-- [ ] Confirm font scaling doesn't break layouts on any screen.
-- [ ] Add a database index on the date/odometer field if entry counts are large in testing.
+- [x] Add content descriptions to key interactive elements (buttons, icons).
+- [x] Confirm font scaling doesn't break layouts on any screen.
+- [x] Add a database index on the date/odometer field if entry counts are large in testing.
 - [ ] Write short project documentation:
     - [ ] Setup instructions
     - [ ] Feature list
@@ -124,8 +124,8 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 ### 4.3 Sprint 4 Testing
 - [ ] Full regression pass: add entry → edit entry → delete entry → dashboard reflects change → charts reflect change.
-- [ ] Test with a larger seeded dataset (~100–500 entries) to confirm dashboard/chart load stays under 2 seconds.
-- [ ] Manual accessibility check: font scaling and screen-reader labels on core screens.
+- [x] Test with a larger seeded dataset (~100–500 entries) to confirm dashboard/chart load stays under 2 seconds.
+- [x] Manual accessibility check: font scaling and screen-reader labels on core screens.
 - [ ] Final manual test on emulator or physical device, fresh install through full flow.
 
 ---
