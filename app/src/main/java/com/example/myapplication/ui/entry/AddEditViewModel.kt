@@ -30,6 +30,7 @@ data class AddEditUiState(
     val costError: String? = null,
     val previousOdometer: Int? = null,
     val isLoading: Boolean = false,
+    val loadError: String? = null,
     val isEntrySaved: Boolean = false
 ) {
     val isEditMode: Boolean get() = entryId > 0L
@@ -49,33 +50,59 @@ class AddEditViewModel(
         loadLatestOdometer()
     }
 
+    private var pendingLoadId: Long = 0L
+
     private fun loadLatestOdometer() {
         viewModelScope.launch {
-            val latest = repository.getLatestEntry()
-            _uiState.update { it.copy(previousOdometer = latest?.odometer) }
+            runCatching { repository.getLatestEntry() }
+                .onSuccess { latest ->
+                    _uiState.update { it.copy(previousOdometer = latest?.odometer) }
+                }
         }
     }
 
     fun loadEntry(id: Long) {
         if (id <= 0L) return
+        pendingLoadId = id
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val entry = repository.getEntryById(id)
-            if (entry != null) {
-                _uiState.update {
-                    it.copy(
-                        entryId = entry.id,
-                        dateMillis = entry.date,
-                        odometer = entry.odometer.toString(),
-                        liters = entry.liters.toString(),
-                        cost = entry.cost.toString(),
-                        isLoading = false
-                    )
+            _uiState.update { it.copy(isLoading = true, loadError = null) }
+            val result = runCatching { repository.getEntryById(id) }
+            if (pendingLoadId != id) return@launch
+            result
+                .onSuccess { entry ->
+                    if (entry != null) {
+                        _uiState.update {
+                            it.copy(
+                                entryId = entry.id,
+                                dateMillis = entry.date,
+                                odometer = entry.odometer.toString(),
+                                liters = entry.liters.toString(),
+                                cost = entry.cost.toString(),
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadError = "This entry no longer exists. It may have been deleted."
+                            )
+                        }
+                    }
                 }
-            } else {
-                _uiState.update { it.copy(isLoading = false) }
-            }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            loadError = "Couldn't load this entry. Please try again."
+                        )
+                    }
+                }
         }
+    }
+
+    fun retryLoad() {
+        loadEntry(pendingLoadId)
     }
 
     fun onDateChanged(millis: Long) {

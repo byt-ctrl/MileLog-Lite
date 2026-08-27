@@ -56,6 +56,30 @@ fun DashboardScreen(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (uiState.errorMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage!!,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = viewModel::retry) {
+                        Text("Retry")
+                    }
+                }
+            }
         } else if (uiState.entryCount == 0) {
             Box(
                 modifier = Modifier

@@ -8,10 +8,15 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 
 data class DashboardUiState(
     val latestOdometer: Int? = null,
@@ -21,14 +26,19 @@ data class DashboardUiState(
     val averageMileage: Double? = null,
     val costPerKm: Double? = null,
     val entryCount: Int = 0,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val errorMessage: String? = null
 )
 
 class DashboardViewModel(
     private val repository: FuelEntryRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<DashboardUiState> = repository.getAllEntriesFlow()
+    private val _retryTrigger = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<DashboardUiState> = _retryTrigger
+        .flatMapLatest { repository.getAllEntriesFlow() }
         .map { entries ->
             val stats = MileageCalculator.calculateDashboardStats(entries)
             DashboardUiState(
@@ -42,11 +52,23 @@ class DashboardViewModel(
                 isLoading = false
             )
         }
+        .catch { e ->
+            emit(
+                DashboardUiState(
+                    isLoading = false,
+                    errorMessage = "Couldn't load dashboard data. Please try again."
+                )
+            )
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = DashboardUiState(isLoading = true)
         )
+
+    fun retry() {
+        _retryTrigger.update { it + 1 }
+    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
