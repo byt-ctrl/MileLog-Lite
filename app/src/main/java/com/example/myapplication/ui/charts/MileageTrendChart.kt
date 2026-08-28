@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.myapplication.domain.calculation.FillupMileage
@@ -45,7 +47,11 @@ fun MileageTrendChart(
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
 
-    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Mileage trend chart showing fuel efficiency in kilometers per liter over time" }
+    ) {
         Text(
             text = "Mileage Trend",
             style = MaterialTheme.typography.titleMedium,

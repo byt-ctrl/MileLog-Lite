@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.myapplication.domain.calculation.MonthlyFuelSpend
@@ -38,7 +40,11 @@ fun MonthlySpendChart(
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
 
-    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Monthly fuel spend chart showing total cost in rupees by calendar month" }
+    ) {
         Text(
             text = "Monthly Fuel Spend",
             style = MaterialTheme.typography.titleMedium,

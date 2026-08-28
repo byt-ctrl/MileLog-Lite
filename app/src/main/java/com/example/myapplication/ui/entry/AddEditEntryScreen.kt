@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.entry
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -166,9 +165,7 @@ fun AddEditEntryScreen(
                 },
                 isError = uiState.dateError != null,
                 supportingText = uiState.dateError?.let { { Text(it) } },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showDatePicker = true }
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Odometer Field
@@ -251,7 +248,7 @@ fun AddEditEntryScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK")
+                    Text("Select date")
                 }
             },
             dismissButton = {
