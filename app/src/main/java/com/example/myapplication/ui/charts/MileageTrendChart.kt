@@ -91,12 +91,12 @@ fun MileageTrendChart(
                         xAxis.setDrawGridLines(false)
                         xAxis.granularity = 1f
                         xAxis.textColor = textColor
-                        xAxis.textSize = 10f
+                        xAxis.textSize = 12f
 
                         // Left Y axis (km/L)
                         axisLeft.textColor = textColor
                         axisLeft.gridColor = gridColor
-                        axisLeft.textSize = 10f
+                        axisLeft.textSize = 12f
                         axisLeft.setDrawAxisLine(false)
 
                         // Disable right Y axis
@@ -130,7 +130,7 @@ fun MileageTrendChart(
                         setDrawCircleHole(true)
                         circleHoleRadius = 2f
                         setDrawValues(true)
-                        valueTextSize = 9f
+                        valueTextSize = 11f
                         valueTextColor = textColor
                         valueFormatter = object : ValueFormatter() {
                             override fun getFormattedValue(value: Float): String {

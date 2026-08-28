@@ -86,12 +86,12 @@ fun MonthlySpendChart(
                         xAxis.setDrawGridLines(false)
                         xAxis.granularity = 1f
                         xAxis.textColor = textColor
-                        xAxis.textSize = 10f
+                        xAxis.textSize = 12f
 
                         // Left Y axis (cost in ₹)
                         axisLeft.textColor = textColor
                         axisLeft.gridColor = gridColor
-                        axisLeft.textSize = 10f
+                        axisLeft.textSize = 12f
                         axisLeft.setDrawAxisLine(false)
                         axisLeft.axisMinimum = 0f
                         axisLeft.valueFormatter = object : ValueFormatter() {
@@ -123,7 +123,7 @@ fun MonthlySpendChart(
                     val dataSet = BarDataSet(entries, "Monthly Spend").apply {
                         color = barColor
                         setDrawValues(true)
-                        valueTextSize = 9f
+                        valueTextSize = 11f
                         valueTextColor = textColor
                         valueFormatter = object : ValueFormatter() {
                             override fun getFormattedValue(value: Float): String {
