@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MileLog Lite - Full Emulator Regression Report</title>
+<style>
+:root{--pass:#2e7d32;--pass-bg:#e8f5e9;--fail:#c62828;--info:#1565c0;--border:#e0e0e0;--bg:#fafafa;--card:#fff;--text:#212121;--muted:#757575;--amber:#e8a838;--teal:#1B4D4A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.hdr{background:linear-gradient(135deg,#1B4D4A,#2d7a75);color:#fff;padding:32px 40px}
+.hdr h1{font-size:28px;font-weight:700}.hdr .sub{opacity:.85;font-size:14px}
+.hdr .meta{margin-top:16px;display:flex;gap:28px;font-size:13px;opacity:.8;flex-wrap:wrap}
+.ctn{max-width:1200px;margin:0 auto;padding:24px}
+.sg{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.sc{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);text-align:center}
+.sc .n{font-size:32px;font-weight:800;line-height:1.2}.sc .l{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px}
+.sc.g .n{color:var(--pass)}.sc.r .n{color:var(--fail)}.sc.b .n{color:var(--info)}.sc.a .n{color:var(--amber);font-size:26px}
+.vd{background:var(--pass-bg);border:2px solid var(--pass);border-radius:12px;padding:20px 28px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+.vd .ic{font-size:36px}.vd .tx h2{color:var(--pass);font-size:20px}.vd .tx p{color:var(--muted);font-size:14px}
+.sec{background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
+.sh{padding:16px 24px;font-weight:600;font-size:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sh .bg{background:var(--pass-bg);color:var(--pass);font-size:12px;padding:2px 10px;border-radius:20px;font-weight:700}
+.sb{padding:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{background:#f5f5f5;padding:10px 16px;text-align:left;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--border)}
+tbody td{padding:12px 16px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafafa}
+.st{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.st.p{color:var(--pass)}.st.r{color:var(--fail)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st.p .dot{background:var(--pass)}.st.r .dot{background:var(--fail)}
+.tc{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.steps{padding:0}
+.step{padding:20px 24px;border-bottom:1px solid #f0f0f0;display:grid;grid-template-columns:60px 1fr 340px;gap:20px;align-items:start}
+.step:last-child{border-bottom:none}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0}
+.step-body h3{font-size:15px;margin-bottom:4px}
+.step-body p{font-size:13px;color:var(--muted)}
+.step-body .assert{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.step-body .assert span{background:#f5f5f5;padding:3px 10px;border-radius:6px;font-size:12px;font-family:monospace}
+.step-body .assert span.ok{background:var(--pass-bg);color:var(--pass)}
+.step-img{border-radius:8px;border:1px solid var(--border);width:100%;max-width:320px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+.kpi{background:#f8f9fa;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #eee}
+.kpi .kl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}.kpi .kv{font-size:16px;font-weight:700;margin-top:2px}
+.fd{padding:16px 24px;border-bottom:1px solid #f0f0f0}.fd:last-child{border-bottom:none}
+.fd .sv{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.fd .sv.f{color:var(--pass)}.fd .sv.i{color:var(--info)}.fd h4{font-size:14px;margin-bottom:4px}.fd p{font-size:13px;color:var(--muted)}
+.ft{text-align:center;padding:24px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:24px}
+code{background:#f5f5f5;padding:1px 6px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+<h1>MileLog Lite - Full Emulator Regression Report</h1>
+<div class="sub">Add - Edit - Delete - Dashboard Reflects - Charts Reflect - Every tap verified on real emulator</div>
+<div class="meta">
+<span>Aug 28, 2026</span>
+<span>Pixel_7 (AVD) - Android 17</span>
+<span>AGP 9.2.1, Kotlin 2.2.10, Room 2.8.4</span>
+<span>com.example.myapplication (debug)</span>
+<span>19 screenshots captured</span>
+</div>
+</div>
+
+<div class="ctn">
+
+<div class="vd">
+<div class="ic" style="color:var(--pass);font-weight:700">PASS</div>
+<div class="tx">
+<h2>FULL CRUD CYCLE PASSED - 14 STEPS, 0 FAILURES</h2>
+<p>Every action on the emulator verified: dashboard KPIs update live, charts redraw, history reflects changes, delete confirmation works, empty states render correctly.</p>
+</div>
+</div>
+
+<div class="sg">
+<div class="sc b"><div class="n">14</div><div class="l">Emulator Steps</div></div>
+<div class="sc g"><div class="n">19</div><div class="l">Screenshots</div></div>
+<div class="sc g"><div class="n">29</div><div class="l">Automated Tests</div></div>
+<div class="sc a"><div class="n">~45</div><div class="l">UI Assertions</div></div>
+<div class="sc g"><div class="n">0</div><div class="l">Failures</div></div>
+</div>
+
+<!-- PHASE 1: EMPTY STATE -->
+<div class="sec">
+<div class="sh">Phase 1 - Empty State (Fresh Launch)</div>
+<div class="steps">
+<div class="step">
+<div class="step-num">0</div>
+<div class="step-body">
+<h3>App launched with cleared data</h3>
+<p>Fresh install, no entries. Dashboard shows empty state with CTA.</p>
+<div class="assert">
+<span class="ok">"No entries yet"</span>
+<span class="ok">"Add your first entry"</span>
+<span class="ok">No KPI cards</span>
+<span class="ok">No FAB</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/01_empty_dashboard.png" alt="Empty dashboard">
+</div>
+</div>
+</div>
+
+<!-- PHASE 2: ADD 3 ENTRIES -->
+<div class="sec">
+<div class="sh">Phase 2 - Add Entry Flow (3 Entries)</div>
+<div class="steps">
+
+<div class="step">
+<div class="step-num">1</div>
+<div class="step-body">
+<h3>Tap "Add your first entry"</h3>
+<p>Navigates to AddEntryScreen. Form shows today's date, empty odometer/liters/cost fields.</p>
+<div class="assert">
+<span class="ok">Form opens</span>
+<span class="ok">Date pre-filled</span>
+<span class="ok">"Save Entry" button</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/02_add_entry_form.png" alt="Add entry form">
+</div>
+
+<div class="step">
+<div class="step-num">2</div>
+<div class="step-body">
+<h3>Fill Entry 1: Odo 10000, 30L, 3000</h3>
+<p>Type values into each field. Form validation passes, Save button enabled.</p>
+<div class="assert">
+<span class="ok">Odometer: 10000</span>
+<span class="ok">Liters: 30</span>
+<span class="ok">Cost: 3000</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/03_form_filled_entry1.png" alt="Form filled entry 1">
+</div>
+
+<div class="step">
+<div class="step-num">3</div>
+<div class="step-body">
+<h3>Dashboard after Entry 1</h3>
+<p>Save returns to Dashboard. Single entry: odometer + totals shown, avg/costPerKm null (need 2+).</p>
+<div class="kpi-strip">
+<div class="kpi"><div class="kl">Odometer</div><div class="kv">10,000 km</div></div>
+<div class="kpi"><div class="kl">Total Spend</div><div class="kv">3,000</div></div>
+<div class="kpi"><div class="kl">Avg Mileage</div><div class="kv">-</div></div>
+<div class="kpi"><div class="kl">Cost/km</div><div class="kv">-</div></div>
+</div>
+<div class="assert">
+<span class="ok">1 entries total</span>
+<span class="ok">FAB visible</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/04_dashboard_after_entry1.png" alt="Dashboard after entry 1">
+</div>
+
+<div class="step">
+<div class="step-num">4</div>
+<div class="step-body">
+<h3>Dashboard after Entry 2 (Odo 10500, 25L, 2500)</h3>
+<p>Second entry: mileage and costPerKm now computed. All 4 KPI cards populated.</p>
+<div class="kpi-strip">
+<div class="kpi"><div class="kl">Odometer</div><div class="kv">10,500 km</div></div>
+<div class="kpi"><div class="kl">Total Spend</div><div class="kv">5,500</div></div>
+<div class="kpi"><div class="kl">Avg Mileage</div><div class="kv">20.0 km/L</div></div>
+<div class="kpi"><div class="kl">Cost/km</div><div class="kv">11.00</div></div>
+</div>
+<div class="assert">
+<span class="ok">2 entries total</span>
+<span class="ok">mileage = 500/25 = 20.0</span>
+<span class="ok">cost/km = 5500/500 = 11.00</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/05_dashboard_after_entry2.png" alt="Dashboard after entry 2">
+</div>
+
+<div class="step">
+<div class="step-num">5</div>
+<div class="step-body">
+<h3>Dashboard after Entry 3 (Odo 11000, 28L, 2800)</h3>
+<p>Third entry: recalculate with all 3 entries. 1000km total distance, 83L fuel.</p>
+<div class="kpi-strip">
+<div class="kpi"><div class="kl">Odometer</div><div class="kv">11,000 km</div></div>
+<div class="kpi"><div class="kl">Total Spend</div><div class="kv">8,300</div></div>
+<div class="kpi"><div class="kl">Avg Mileage</div><div class="kv">18.9 km/L</div></div>
+<div class="kpi"><div class="kl">Cost/km</div><div class="kv">8.30</div></div>
+</div>
+<div class="assert">
+<span class="ok">3 entries total</span>
+<span class="ok">mileage = 1000/53 = 18.9</span>
+<span class="ok">cost/km = 8300/1000 = 8.30</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/06_dashboard_after_entry3.png" alt="Dashboard after entry 3">
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 3: CHARTS + HISTORY -->
+<div class="sec">
+<div class="sh">Phase 3 - Charts and History Verification</div>
+<div class="steps">
+
+<div class="step">
+<div class="step-num">6</div>
+<div class="step-body">
+<h3>Charts with 3 entries</h3>
+<p>Mileage Trend line chart + Monthly Fuel Spend bar chart both render. Trend shows 2 data points (entries 2 and 3). Monthly bars for Aug 2026.</p>
+<div class="assert">
+<span class="ok">"Mileage Trend"</span>
+<span class="ok">"Monthly Fuel Spend"</span>
+<span class="ok">Line chart rendered</span>
+<span class="ok">Bar chart rendered</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/07_charts_with_3_entries.png" alt="Charts with 3 entries">
+</div>
+
+<div class="step">
+<div class="step-num">7</div>
+<div class="step-body">
+<h3>History - 3 entries, most recent first</h3>
+<p>LazyColumn shows all 3 entries sorted by odometer descending. Each card shows date, odometer, liters, cost. Delete icon on each.</p>
+<div class="assert">
+<span class="ok">11000 km (top)</span>
+<span class="ok">10500 km (mid)</span>
+<span class="ok">10000 km (bottom)</span>
+<span class="ok">Delete icons visible</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/08_history_3_entries.png" alt="History 3 entries">
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 4: EDIT -->
+<div class="sec">
+<div class="sh">Phase 4 - Edit Entry</div>
+<div class="steps">
+
+<div class="step">
+<div class="step-num">8</div>
+<div class="step-body">
+<h3>Edit form - pre-filled with Entry 1 data</h3>
+<p>Tap entry card, navigates to AddEditEntryScreen in edit mode. All fields pre-populated. Button says "Update Entry".</p>
+<div class="assert">
+<span class="ok">"Edit Fuel Entry" title</span>
+<span class="ok">Odometer: 11000</span>
+<span class="ok">Liters: 28.0</span>
+<span class="ok">Cost: 2800.0</span>
+<span class="ok">"Update Entry" button</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/09_edit_entry_form.png" alt="Edit form">
+</div>
+
+<div class="step">
+<div class="step-num">9</div>
+<div class="step-body">
+<h3>Change odometer: 11000 to 11200</h3>
+<p>Clear odometer field, type new value. Other fields unchanged.</p>
+<div class="assert">
+<span class="ok">Odometer: 11200</span>
+<span class="ok">Liters: 28.0 (unchanged)</span>
+<span class="ok">Cost: 2800.0 (unchanged)</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/10b_edit_odometer_corrected.png" alt="Odometer changed">
+</div>
+
+<div class="step">
+<div class="step-num">10</div>
+<div class="step-body">
+<h3>History after edit - 11200 km confirmed</h3>
+<p>Update saved, returns to History. First entry now shows 11200 km.</p>
+<div class="assert">
+<span class="ok">"Odometer: 11200 km"</span>
+<span class="ok">Other entries unchanged</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/11_history_after_edit.png" alt="History after edit">
+</div>
+
+<div class="step">
+<div class="step-num">11</div>
+<div class="step-body">
+<h3>Dashboard recalculated after edit</h3>
+<p>Dashboard auto-updates: odometer 11,200, new mileage = 1200/53 = 22.6 km/L, cost/km = 8300/1200 = 6.92.</p>
+<div class="kpi-strip">
+<div class="kpi"><div class="kl">Odometer</div><div class="kv">11,200 km</div></div>
+<div class="kpi"><div class="kl">Total Spend</div><div class="kv">8,300</div></div>
+<div class="kpi"><div class="kl">Avg Mileage</div><div class="kv">22.6 km/L</div></div>
+<div class="kpi"><div class="kl">Cost/km</div><div class="kv">6.92</div></div>
+</div>
+<div class="assert">
+<span class="ok">All 4 KPIs recalculated</span>
+<span class="ok">3 entries total</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/12_dashboard_after_edit.png" alt="Dashboard after edit">
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 5: DELETE -->
+<div class="sec">
+<div class="sh">Phase 5 - Delete Entry</div>
+<div class="steps">
+
+<div class="step">
+<div class="step-num">12</div>
+<div class="step-body">
+<h3>Delete confirmation dialog</h3>
+<p>Tap delete icon, AlertDialog with "Delete entry?" + date. Cancel and Delete buttons.</p>
+<div class="assert">
+<span class="ok">"Delete entry?"</span>
+<span class="ok">"This action cannot be undone"</span>
+<span class="ok">Cancel / Delete buttons</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/13_delete_confirm_dialog.png" alt="Delete confirmation">
+</div>
+
+<div class="step">
+<div class="step-num">13</div>
+<div class="step-body">
+<h3>History after delete - 10500 km removed</h3>
+<p>Confirmed delete, entry removed from database, Flow emits updated list, History recomposes with 2 entries.</p>
+<div class="assert">
+<span class="ok">11200 km (kept)</span>
+<span class="ok">10000 km (kept)</span>
+<span class="ok">10500 km gone</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/14_history_after_delete.png" alt="History after delete">
+</div>
+
+<div class="step">
+<div class="step-num">14</div>
+<div class="step-body">
+<h3>Dashboard after delete - recalc with 2 entries</h3>
+<p>Deleted entry removed from calculations. 1200km distance, 58L fuel, 42.9 km/L, 4.83/km.</p>
+<div class="kpi-strip">
+<div class="kpi"><div class="kl">Odometer</div><div class="kv">11,200 km</div></div>
+<div class="kpi"><div class="kl">Total Spend</div><div class="kv">5,800</div></div>
+<div class="kpi"><div class="kl">Avg Mileage</div><div class="kv">42.9 km/L</div></div>
+<div class="kpi"><div class="kl">Cost/km</div><div class="kv">4.83</div></div>
+</div>
+<div class="assert">
+<span class="ok">All KPIs recalculated</span>
+<span class="ok">2 entries total</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/15_dashboard_after_delete.png" alt="Dashboard after delete">
+</div>
+
+<div class="step">
+<div class="step-num">-</div>
+<div class="step-body">
+<h3>Charts after delete - trend reverts</h3>
+<p>Only 2 entries left, Mileage Trend shows "Need 3 entries" message. Monthly bar chart still shows data.</p>
+<div class="assert">
+<span class="ok">"Add at least 3 entries to see trend"</span>
+<span class="ok">Monthly bars still render</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/16_charts_after_delete.png" alt="Charts after delete">
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 6: FULL CLEAR + EMPTY STATE -->
+<div class="sec">
+<div class="sh">Phase 6 - Full Clear and Empty State Return</div>
+<div class="steps">
+
+<div class="step">
+<div class="step-num">15</div>
+<div class="step-body">
+<h3>History - "No entries yet"</h3>
+<p>After deleting all entries, History shows empty state with CTA button.</p>
+<div class="assert">
+<span class="ok">"No entries yet"</span>
+<span class="ok">"Add your first entry" button</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/17_history_empty.png" alt="Empty history">
+</div>
+
+<div class="step">
+<div class="step-num">16</div>
+<div class="step-body">
+<h3>Dashboard - back to empty state</h3>
+<p>Full round-trip complete. Dashboard returns to initial empty state, no stale data, no crashes.</p>
+<div class="assert">
+<span class="ok">"No entries yet"</span>
+<span class="ok">"Add your first fuel entry..."</span>
+<span class="ok">No KPI cards</span>
+<span class="ok">No FAB</span>
+</div>
+</div>
+<img class="step-img" src="screenshots/18_dashboard_empty_final.png" alt="Empty dashboard final">
+</div>
+
+</div>
+</div>
+
+<!-- AUTOMATED TEST RESULTS -->
+<div class="sec">
+<div class="sh">Automated Test Results (Run on Same Emulator)</div>
+<div class="sb">
+<table>
+<thead><tr><th>Suite</th><th>Tests</th><th>Status</th><th>Coverage</th></tr></thead>
+<tbody>
+<tr><td><strong>FullRegressionTest</strong></td><td>3</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>CRUD - Dashboard - Charts pipeline</td></tr>
+<tr><td><strong>FuelEntryDaoTest</strong></td><td>8</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>Room CRUD + Flow + persistence</td></tr>
+<tr><td><strong>FuelEntryBenchmarkTest</strong></td><td>1</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>5000 entries perf</td></tr>
+<tr><td><strong>MileageCalculatorTest</strong></td><td>7</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>All calculation edge cases</td></tr>
+<tr><td><strong>FuelEntryValidatorTest</strong></td><td>4</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>All validation rules</td></tr>
+<tr><td><strong>FuelEntryCsvExporterTest</strong></td><td>4</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>CSV export correctness</td></tr>
+<tr><td><strong>ExampleInstrumentedTest</strong></td><td>1</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>App context</td></tr>
+<tr><td><strong>ExampleUnitTest</strong></td><td>1</td><td><span class="st p"><span class="dot"></span>PASS</span></td><td>Sanity</td></tr>
+<tr style="background:#f8f9fa;font-weight:700"><td>TOTAL</td><td>29</td><td><span class="st p"><span class="dot"></span>ALL PASS</span></td><td></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- FINDINGS -->
+<div class="sec">
+<div class="sh">Findings</div>
+<div class="fd">
+<div class="sv f">FIX APPLIED</div>
+<h4>FuelEntryDaoTest: entriesPersistAcrossDatabaseReopen() - JUnit4 return type</h4>
+<p>Pre-existing: <code>runBlocking {}</code> returns a value but JUnit4 requires <code>void</code>. Added explicit <code>: Unit</code> return type. Fixed during this regression pass.</p>
+</div>
+<div class="fd">
+<div class="sv i">PRE-EXISTING - NOT BLOCKING</div>
+<h4>gradle.properties: Windows path escape lint warning</h4>
+<p><code>org.gradle.java.home</code> contains unescaped backslashes. Cosmetic, does not affect builds or tests.</p>
+</div>
+<div class="fd">
+<div class="sv f">VERIFIED</div>
+<h4>Full CRUD pipeline - zero regressions</h4>
+<p>Add, edit, delete all propagate correctly through Repository, MileageCalculator, Dashboard/Charts ViewModels. Room Flow auto-emits on every change. No manual refresh needed.</p>
+</div>
+</div>
+
+<div class="ft">
+MileLog Lite - Full Emulator Regression Report - Aug 28, 2026 - 14 steps - 19 screenshots - 29 automated tests - 0 failures
+</div>
+
+</div>
+</body>
+</html>

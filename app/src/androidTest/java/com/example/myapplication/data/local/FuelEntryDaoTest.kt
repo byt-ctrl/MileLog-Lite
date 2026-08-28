@@ -123,7 +123,7 @@ class FuelEntryDaoTest {
     }
 
     @Test
-    fun entriesPersistAcrossDatabaseReopen() = runBlocking {
+    fun entriesPersistAcrossDatabaseReopen(): Unit = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val dbName = "persistence-test.db"
         context.deleteDatabase(dbName)
