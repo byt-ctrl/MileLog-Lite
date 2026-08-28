@@ -126,7 +126,7 @@ fun MileageTrendChart(
                             } else ""
                         }
                     }
-                    chart.xAxis.labelCount = minOf(chartPoints.size, 5)
+                    chart.xAxis.labelCount = minOf(chartPoints.size, 4)
 
                     val dataSet = LineDataSet(entries, "Mileage").apply {
                         color = lineColor

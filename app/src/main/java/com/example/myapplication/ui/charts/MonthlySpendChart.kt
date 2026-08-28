@@ -124,7 +124,7 @@ fun MonthlySpendChart(
                             } else ""
                         }
                     }
-                    chart.xAxis.labelCount = minOf(spends.size, 6)
+                    chart.xAxis.labelCount = minOf(spends.size, 4)
 
                     val dataSet = BarDataSet(entries, "Monthly Spend").apply {
                         color = barColor
