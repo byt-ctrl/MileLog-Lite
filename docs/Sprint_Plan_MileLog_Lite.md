@@ -138,7 +138,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Primary Goal:** Allow users to categorize fuel entries by fuel type (Petrol, Diesel, CNG) for better tracking and filtering.
 
 ### 5.1 Key Deliverables
-- [ ] Create `FuelCategory` enum with predefined values (Petrol, Diesel, CNG).
+- [x] Create `FuelCategory` enum with predefined values (Petrol, Diesel, CNG).
 - [ ] Add `fuelCategory` field to `FuelEntry` Room entity (default: Petrol).
 - [ ] Update `FuelEntryDao` queries to support filtering by fuel category.
 - [ ] Build fuel category dropdown selector in Add/Edit Entry form (Material3 `ExposedDropdownMenuBox`).
