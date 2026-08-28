@@ -12,13 +12,15 @@ import androidx.room.PrimaryKey
  * @property odometer Vehicle odometer reading in kilometers at fill-up.
  * @property liters Volume of fuel filled in liters.
  * @property cost Total cost of the fuel fill-up.
+ * @property fuelCategory Fuel type category display name (e.g. "Petrol", "Diesel", "CNG").
  */
 @Entity(
     tableName = "fuel_entries",
     indices = [
         Index(value = ["date"]),
         Index(value = ["odometer"]),
-        Index(value = ["date", "odometer"])
+        Index(value = ["date", "odometer"]),
+        Index(value = ["fuelCategory"])
     ]
 )
 data class FuelEntry(
@@ -27,5 +29,6 @@ data class FuelEntry(
     val date: Long,
     val odometer: Int,
     val liters: Double,
-    val cost: Double
+    val cost: Double,
+    val fuelCategory: String = "Petrol"
 )
