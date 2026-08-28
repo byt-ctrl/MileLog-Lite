@@ -9,6 +9,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 > - [Sprint 2: Calculations, Dashboard & Validation](#sprint-2-calculations-dashboard--validation)
 > - [Sprint 3: Charts & Visualization](#sprint-3-charts--visualization)
 > - [Sprint 4: Polish, Testing & Release Readiness](#sprint-4-polish-testing--release-readiness)
+> - [Sprint 5: Fuel Category Selection](#sprint-5-fuel-category-selection)
 
 ---
 
@@ -120,13 +121,41 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] **If the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete. **Implemented: simple CSV export** (History screen top-bar action → system document picker → `milelog_fuel_entries.csv`; export-only, no import).
 
 ### 4.2 Sprint 4 Milestone
-- [ ] MileLog Lite is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).
+- [x] MileLog Lite is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).
 
 ### 4.3 Sprint 4 Testing
-- [ ] Full regression pass: add entry → edit entry → delete entry → dashboard reflects change → charts reflect change.
+- [x] Full regression pass: add entry → edit entry → delete entry → dashboard reflects change → charts reflect change.
 - [x] Test with a larger seeded dataset (~100–500 entries) to confirm dashboard/chart load stays under 2 seconds.
 - [x] Manual accessibility check: font scaling and screen-reader labels on core screens.
-- [ ] Final manual test on emulator or physical device, fresh install through full flow.
+- [x] Final manual test on emulator or physical device, fresh install through full flow.
+
+---
+
+## Sprint 5: Fuel Category Selection
+
+**Timeline:** Week 5
+
+**Primary Goal:** Allow users to categorize fuel entries by fuel type (Petrol, Diesel, CNG) for better tracking and filtering.
+
+### 5.1 Key Deliverables
+- [ ] Create `FuelCategory` enum with predefined values (Petrol, Diesel, CNG).
+- [ ] Add `fuelCategory` field to `FuelEntry` Room entity (default: Petrol).
+- [ ] Update `FuelEntryDao` queries to support filtering by fuel category.
+- [ ] Build fuel category dropdown selector in Add/Edit Entry form (Material3 `ExposedDropdownMenuBox`).
+- [ ] Update Dashboard to show latest entry's fuel category in KPI card.
+- [ ] Update Charts to group/split by fuel category (optional: per-category trend line).
+- [ ] Add category filter chips on History screen to filter entries by fuel type.
+- [ ] Update CSV export to include fuel category column.
+- [ ] Unit tests for fuel category enum and filtering logic.
+- [ ] Instrumented tests for DAO queries with category filters.
+
+### 5.2 Sprint 5 Milestone
+- [ ] User can select a fuel type (Petrol, Diesel, CNG) when adding/editing entries, and filter history/charts by fuel category.
+
+### 5.3 Sprint 5 Testing
+- [ ] Unit tests: fuel category enum values, filtering by category.
+- [ ] Instrumented tests: DAO insert/query with category field, filter queries.
+- [ ] Manual test: add entries with Petrol, Diesel, CNG types, verify charts show category-specific data.
 
 ---
 
