@@ -146,7 +146,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Update Charts to group/split by fuel category (optional: per-category trend line).
 - [x] Add category filter chips on History screen to filter entries by fuel type.
 - [x] Update CSV export to include fuel category column.
-- [ ] Unit tests for fuel category enum and filtering logic.
+- [x] Unit tests for fuel category enum and filtering logic.
 - [ ] Instrumented tests for DAO queries with category filters.
 
 ### 5.2 Sprint 5 Milestone
