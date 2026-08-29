@@ -140,7 +140,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 ### 5.1 Key Deliverables
 - [x] Create `FuelCategory` enum with predefined values (Petrol, Diesel, CNG).
 - [x] Add `fuelCategory` field to `FuelEntry` Room entity (default: Petrol).
-- [ ] Update `FuelEntryDao` queries to support filtering by fuel category.
+- [x] Update `FuelEntryDao` queries to support filtering by fuel category.
 - [ ] Build fuel category dropdown selector in Add/Edit Entry form (Material3 `ExposedDropdownMenuBox`).
 - [ ] Update Dashboard to show latest entry's fuel category in KPI card.
 - [ ] Update Charts to group/split by fuel category (optional: per-category trend line).
