@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.validation.FuelEntryValidator
@@ -24,6 +25,7 @@ data class AddEditUiState(
     val odometer: String = "",
     val liters: String = "",
     val cost: String = "",
+    val fuelCategory: FuelCategory = FuelCategory.DEFAULT,
     val dateError: String? = null,
     val odometerError: String? = null,
     val litersError: String? = null,
@@ -78,6 +80,7 @@ class AddEditViewModel(
                                 odometer = entry.odometer.toString(),
                                 liters = entry.liters.toString(),
                                 cost = entry.cost.toString(),
+                                fuelCategory = FuelCategory.fromDisplayName(entry.fuelCategory),
                                 isLoading = false
                             )
                         }
@@ -141,6 +144,10 @@ class AddEditViewModel(
         }
     }
 
+    fun onFuelCategoryChanged(category: FuelCategory) {
+        _uiState.update { it.copy(fuelCategory = category) }
+    }
+
     fun saveEntry(): Boolean {
         val currentState = _uiState.value
         val validationResult = FuelEntryValidator.validate(
@@ -169,7 +176,8 @@ class AddEditViewModel(
                 date = currentState.dateMillis,
                 odometer = currentState.odometer.trim().toInt(),
                 liters = currentState.liters.trim().toDouble(),
-                cost = currentState.cost.trim().toDouble()
+                cost = currentState.cost.trim().toDouble(),
+                fuelCategory = currentState.fuelCategory.displayName
             )
 
             if (currentState.isEditMode) {

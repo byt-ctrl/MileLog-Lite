@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.update
 
 data class DashboardUiState(
     val latestOdometer: Int? = null,
+    val latestFuelCategory: FuelCategory? = null,
     val totalDistance: Int = 0,
     val totalFuel: Double = 0.0,
     val totalCost: Double = 0.0,
@@ -43,6 +45,8 @@ class DashboardViewModel(
             val stats = MileageCalculator.calculateDashboardStats(entries)
             DashboardUiState(
                 latestOdometer = stats.latestOdometer,
+                latestFuelCategory = entries.firstOrNull()
+                    ?.let { FuelCategory.fromDisplayName(it.fuelCategory) },
                 totalDistance = stats.totalDistance,
                 totalFuel = stats.totalFuel,
                 totalCost = stats.totalCost,

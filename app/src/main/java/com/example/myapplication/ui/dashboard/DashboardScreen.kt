@@ -130,7 +130,8 @@ fun DashboardScreen(
                             .weight(1f)
                             .fillMaxHeight(),
                         title = "Latest Odometer",
-                        value = uiState.latestOdometer?.let { NumberFormat.getNumberInstance(Locale.getDefault()).format(it) + " km" } ?: "—"
+                        value = uiState.latestOdometer?.let { NumberFormat.getNumberInstance(Locale.getDefault()).format(it) + " km" } ?: "—",
+                        subtitle = uiState.latestFuelCategory?.displayName
                     )
                     StatCard(
                         modifier = Modifier
@@ -250,7 +251,8 @@ fun DashboardScreen(
 fun StatCard(
     title: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
 ) {
     ElevatedCard(
         modifier = modifier
@@ -274,6 +276,15 @@ fun StatCard(
                 style = MaterialTheme.typography.displayMedium,
                 textAlign = TextAlign.Center
             )
+            if (subtitle != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
