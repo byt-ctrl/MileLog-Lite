@@ -141,11 +141,13 @@ fun ChartsScreen(
                     // Trend chart needs at least 2 points with mileage (3 entries total).
                     MileageTrendChart(
                         fillups = uiState.fillups,
+                        categorySeries = uiState.categoryMileageSeries,
                         modifier = Modifier.fillMaxWidth()
                     )
                     // Monthly spend chart shows even a single entry.
                     MonthlySpendChart(
                         spends = uiState.monthlySpends,
+                        categorySpends = uiState.categoryMonthlySpends,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

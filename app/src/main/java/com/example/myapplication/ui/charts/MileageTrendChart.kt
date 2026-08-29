@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.charts
 
-import android.graphics.Color
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,8 +14,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.myapplication.data.local.FuelCategory
+import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -30,22 +32,30 @@ import java.util.Locale
  * A reusable Composable that displays a mileage trend line chart (km/L per fill-up)
  * in chronological order using MPAndroidChart.
  *
+ * The combined (all-categories) trend is rendered as the primary line, and one
+ * additional overlay line is drawn per fuel category in [categorySeries] so
+ * per-category performance can be compared at a glance.
+ *
  * @param fillups List of [FillupMileage] sorted by odometer ascending. The first entry
  *   (with null mileage) is skipped since we can't compute mileage without a prior reading.
+ * @param categorySeries Per-category mileage overlays. Only categories with at least
+ *   one mileage-bearing entry are drawn.
  * @param modifier Modifier for the chart card container.
  */
 @Composable
 fun MileageTrendChart(
     fillups: List<FillupMileage>,
+    categorySeries: List<CategoryMileageSeries> = emptyList(),
     modifier: Modifier = Modifier
 ) {
-    // Only include entries that have a computed mileage value (skip the first entry)
-    val chartPoints = fillups.filter { it.mileageKmPerL != null }
-
-    val lineColor = MaterialTheme.colorScheme.primary.toArgb()
-    val fillColor = MaterialTheme.colorScheme.primaryContainer.toArgb()
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+
+    // Distinct color per category. Order matches FuelCategory.entries.
+    val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
 
     ElevatedCard(
         modifier = modifier
@@ -58,13 +68,19 @@ fun MileageTrendChart(
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
         )
         Text(
-            text = "km/L per fill-up",
+            text = "km/L per fill-up (combined + per fuel type)",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
 
-        if (chartPoints.size < 2) {
+        // Combined chart needs at least 2 mileage-bearing entries (3 entries total).
+        val combinedPoints = fillups.filter { it.mileageKmPerL != null }
+        val perCategoryPoints: List<List<FillupMileage>> = categorySeries.map { series ->
+            series.fillups.filter { it.mileageKmPerL != null }
+        }
+
+        if (combinedPoints.size < 2 && perCategoryPoints.all { it.size < 2 }) {
             Text(
                 text = "Add at least 3 entries to see the mileage trend.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -75,7 +91,7 @@ fun MileageTrendChart(
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(240.dp)
                     .padding(start = 8.dp, end = 16.dp, bottom = 16.dp),
                 factory = { context ->
                     LineChart(context).apply {
@@ -84,15 +100,22 @@ fun MileageTrendChart(
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
                         description.isEnabled = false
-                        legend.isEnabled = false
+                        legend.isEnabled = true
+                        legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
+                        legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+                        legend.orientation = Legend.LegendOrientation.HORIZONTAL
+                        legend.setDrawInside(false)
+                        legend.textSize = 11f
+                        legend.textColor = textColor
+                        legend.form = Legend.LegendForm.LINE
                         setTouchEnabled(true)
                         isDragEnabled = true
                         setScaleEnabled(false)
                         setPinchZoom(false)
                         setDrawGridBackground(false)
-                        setExtraOffsets(4f, 4f, 4f, 8f)
+                        setExtraOffsets(4f, 4f, 4f, 16f)
 
-                        // X axis (dates along the bottom)
+                        // X axis (dates along the bottom) - keyed to the combined series
                         xAxis.position = XAxis.XAxisPosition.BOTTOM
                         xAxis.setDrawGridLines(false)
                         xAxis.granularity = 1f
@@ -112,44 +135,67 @@ fun MileageTrendChart(
                 update = { chart ->
                     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
-                    // Build entries: x = index, y = mileage km/L
-                    val entries = chartPoints.mapIndexed { index, fillup ->
-                        Entry(index.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                    val dataSets = mutableListOf<LineDataSet>()
+
+                    // Combined (all-categories) trend
+                    if (combinedPoints.size >= 2) {
+                        val entries = combinedPoints.mapIndexed { index, fillup ->
+                            Entry(index.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                        }
+                        dataSets += LineDataSet(entries, "All fuels").apply {
+                            color = primaryColor
+                            setCircleColor(primaryColor)
+                            lineWidth = 3f
+                            circleRadius = 4f
+                            setDrawCircleHole(true)
+                            circleHoleRadius = 2f
+                            setDrawValues(true)
+                            valueTextSize = 10f
+                            valueTextColor = textColor
+                            valueFormatter = object : ValueFormatter() {
+                                override fun getFormattedValue(value: Float): String =
+                                    String.format(Locale.getDefault(), "%.1f", value)
+                            }
+                            mode = LineDataSet.Mode.CUBIC_BEZIER
+                            setDrawFilled(false)
+                        }
                     }
 
-                    // X-axis date labels
+                    // Per-category overlay lines
+                    categorySeries.forEachIndexed { index, series ->
+                        val points = perCategoryPoints[index]
+                        if (points.size < 2) return@forEachIndexed
+                        val color = categoryColors[FuelCategory.entries.indexOf(series.category)
+                            .coerceIn(0, categoryColors.lastIndex)]
+                        val entries = points.mapIndexed { idx, fillup ->
+                            Entry(idx.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                        }
+                        dataSets += LineDataSet(entries, series.category.displayName).apply {
+                            this.color = color
+                            setCircleColor(color)
+                            lineWidth = 1.75f
+                            circleRadius = 3f
+                            setDrawCircleHole(true)
+                            circleHoleRadius = 1.5f
+                            enableDashedLine(8f, 6f, 0f)
+                            setDrawValues(false)
+                            mode = LineDataSet.Mode.LINEAR
+                            setDrawFilled(false)
+                        }
+                    }
+
+                    // X-axis date labels use the combined (chronological) series
                     chart.xAxis.valueFormatter = object : ValueFormatter() {
                         override fun getFormattedValue(value: Float): String {
                             val idx = value.toInt()
-                            return if (idx in chartPoints.indices) {
-                                dateFormat.format(Date(chartPoints[idx].entry.date))
+                            return if (idx in combinedPoints.indices) {
+                                dateFormat.format(Date(combinedPoints[idx].entry.date))
                             } else ""
                         }
                     }
-                    chart.xAxis.labelCount = minOf(chartPoints.size, 4)
+                    chart.xAxis.labelCount = minOf(combinedPoints.size.coerceAtLeast(1), 4)
 
-                    val dataSet = LineDataSet(entries, "Mileage").apply {
-                        color = lineColor
-                        setCircleColor(lineColor)
-                        lineWidth = 2.5f
-                        circleRadius = 4f
-                        setDrawCircleHole(true)
-                        circleHoleRadius = 2f
-                        setDrawValues(true)
-                        valueTextSize = 11f
-                        valueTextColor = textColor
-                        valueFormatter = object : ValueFormatter() {
-                            override fun getFormattedValue(value: Float): String {
-                                return String.format(Locale.getDefault(), "%.1f", value)
-                            }
-                        }
-                        mode = LineDataSet.Mode.CUBIC_BEZIER
-                        setDrawFilled(true)
-                        setFillColor(fillColor)
-                        fillAlpha = 50
-                    }
-
-                    chart.data = LineData(dataSet)
+                    chart.data = if (dataSets.isNotEmpty()) LineData(*dataSets.toTypedArray()) else null
                     chart.invalidate()
                 }
             )

@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.domain.calculation.CategoryMileageSeries
+import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.domain.calculation.MileageCalculator
 import com.example.myapplication.domain.calculation.MonthlyFuelSpend
@@ -23,6 +25,8 @@ import kotlinx.coroutines.flow.update
 data class ChartsUiState(
     val fillups: List<FillupMileage> = emptyList(),
     val monthlySpends: List<MonthlyFuelSpend> = emptyList(),
+    val categoryMileageSeries: List<CategoryMileageSeries> = emptyList(),
+    val categoryMonthlySpends: List<CategoryMonthlySpendSeries> = emptyList(),
     val entryCount: Int = 0,
     val isLoading: Boolean = true,
     val errorMessage: String? = null
@@ -47,6 +51,11 @@ class ChartsViewModel(
             ChartsUiState(
                 fillups = MileageCalculator.calculatePerFillupMileage(entries),
                 monthlySpends = MileageCalculator.calculateMonthlySpend(entries),
+                categoryMileageSeries = MileageCalculator.calculatePerCategoryMileageSeries(entries),
+                categoryMonthlySpends = MileageCalculator.calculatePerCategoryMonthlySpend(
+                    entries,
+                    MileageCalculator.calculateMonthlySpend(entries)
+                ),
                 entryCount = entries.size,
                 isLoading = false
             )
