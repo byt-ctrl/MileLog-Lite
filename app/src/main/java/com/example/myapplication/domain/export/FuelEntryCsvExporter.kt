@@ -6,11 +6,11 @@ import com.example.myapplication.data.local.FuelEntry
  * Builds a simple CSV representation of fuel entries for export.
  *
  * Pure Kotlin (no Android dependencies) so the formatting logic is unit-testable.
- * Values are plain numbers, so no quoting/escaping is required.
+ * Values are plain numbers or enum display names, so no quoting/escaping is required.
  */
 object FuelEntryCsvExporter {
 
-    private const val HEADER = "id,date,odometer,liters,cost"
+    private const val HEADER = "id,date,odometer,liters,cost,Fuel Category"
     private const val LINE_SEPARATOR = "\n"
 
     /**
@@ -29,7 +29,8 @@ object FuelEntryCsvExporter {
                 entry.date.toString(),
                 entry.odometer.toString(),
                 entry.liters.toString(),
-                entry.cost.toString()
+                entry.cost.toString(),
+                entry.fuelCategory
             ).joinToString(",")
         }
 
