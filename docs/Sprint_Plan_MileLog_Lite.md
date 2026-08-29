@@ -144,7 +144,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Build fuel category dropdown selector in Add/Edit Entry form (Material3 `ExposedDropdownMenuBox`).
 - [x] Update Dashboard to show latest entry's fuel category in KPI card.
 - [x] Update Charts to group/split by fuel category (optional: per-category trend line).
-- [ ] Add category filter chips on History screen to filter entries by fuel type.
+- [x] Add category filter chips on History screen to filter entries by fuel type.
 - [ ] Update CSV export to include fuel category column.
 - [ ] Unit tests for fuel category enum and filtering logic.
 - [ ] Instrumented tests for DAO queries with category filters.

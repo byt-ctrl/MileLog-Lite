@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
@@ -24,10 +25,12 @@ import kotlinx.coroutines.launch
 
 data class HistoryUiState(
     val entries: List<FuelEntry> = emptyList(),
+    val selectedCategory: FuelCategory? = null,
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val exportReady: String? = null,
-    val exportMessage: String? = null
+    val exportMessage: String? = null,
+    val totalEntryCount: Int = 0
 )
 
 /**
@@ -47,6 +50,7 @@ class HistoryViewModel(
 ) : AndroidViewModel(application) {
 
     private val _retryTrigger = MutableStateFlow(0)
+    private val _selectedCategory = MutableStateFlow<FuelCategory?>(null)
 
     /**
      * Transient export state (CSV payload + result message) kept separate from
@@ -55,20 +59,32 @@ class HistoryViewModel(
     private val _exportState = MutableStateFlow(ExportState())
 
     /**
-     * Live list of all fuel entries, most recent first. Auto-updates on any insert/update/delete.
+     * Live list of fuel entries (optionally filtered by [selectedCategory]),
+     * most recent first. Auto-updates on any insert/update/delete or filter change.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HistoryUiState> = combine(
-        _retryTrigger.flatMapLatest { repository.getAllEntriesFlow() },
+        _retryTrigger,
+        _selectedCategory,
         _exportState
-    ) { entries, export ->
-        HistoryUiState(
-            entries = entries,
-            isLoading = false,
-            exportReady = export.exportReady,
-            exportMessage = export.exportMessage
-        )
+    ) { _, category, export ->
+        Triple(category, export, Unit)
     }
+        .flatMapLatest { (category, export, _) ->
+            combine(
+                repository.getAllEntriesFlow(category),
+                repository.getAllEntriesFlow()
+            ) { filtered, all ->
+                HistoryUiState(
+                    entries = filtered,
+                    selectedCategory = category,
+                    isLoading = false,
+                    exportReady = export.exportReady,
+                    exportMessage = export.exportMessage,
+                    totalEntryCount = all.size
+                )
+            }
+        }
         .catch { e ->
             emit(
                 HistoryUiState(
@@ -94,6 +110,13 @@ class HistoryViewModel(
 
     fun retry() {
         _retryTrigger.update { it + 1 }
+    }
+
+    /**
+     * Sets the active fuel category filter. Pass `null` to show all entries.
+     */
+    fun setCategoryFilter(category: FuelCategory?) {
+        _selectedCategory.value = category
     }
 
     /**

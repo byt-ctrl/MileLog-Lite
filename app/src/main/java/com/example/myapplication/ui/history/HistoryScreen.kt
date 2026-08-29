@@ -3,6 +3,7 @@ package com.example.myapplication.ui.history
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
@@ -25,6 +29,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,10 +51,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -187,39 +196,61 @@ fun HistoryScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No entries yet",
+                            text = if (uiState.selectedCategory != null) {
+                                "No ${uiState.selectedCategory!!.displayName} entries"
+                            } else {
+                                "No entries yet"
+                            },
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Your fuel history will appear here once you add entries.",
+                            text = if (uiState.selectedCategory != null) {
+                                "Try a different filter or add a ${uiState.selectedCategory!!.displayName} entry."
+                            } else {
+                                "Your fuel history will appear here once you add entries."
+                            },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = onAddEntry) {
-                            Text("Add your first entry")
+                        if (uiState.selectedCategory != null && uiState.totalEntryCount > 0) {
+                            Button(onClick = { viewModel.setCategoryFilter(null) }) {
+                                Text("Show all entries")
+                            }
+                        } else {
+                            Button(onClick = onAddEntry) {
+                                Text("Add your first entry")
+                            }
                         }
                     }
                 }
             }
 
             else -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(innerPadding)
                 ) {
-                    items(entries, key = { it.id }) { entry ->
-                        FuelEntryCard(
-                            entry = entry,
-                            onClick = { onEditEntry(entry.id) },
-                            onDeleteClick = { entryPendingDelete = entry }
-                        )
+                    CategoryFilterChips(
+                        selected = uiState.selectedCategory,
+                        onSelected = viewModel::setCategoryFilter
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(entries, key = { it.id }) { entry ->
+                            FuelEntryCard(
+                                entry = entry,
+                                onClick = { onEditEntry(entry.id) },
+                                onDeleteClick = { entryPendingDelete = entry }
+                            )
+                        }
                     }
                 }
             }
@@ -256,6 +287,65 @@ fun HistoryScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * Horizontally-scrolling row of [FilterChip]s: an "All" chip plus one per
+ * [FuelCategory]. Tapping the active chip clears the filter; tapping another
+ * chip switches the filter. Selected chips show a leading check icon per
+ * Material 3 idiom.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryFilterChips(
+    selected: FuelCategory?,
+    onSelected: (FuelCategory?) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilterChip(
+            selected = selected == null,
+            onClick = { onSelected(null) },
+            label = { Text("All") },
+            leadingIcon = if (selected == null) {
+                {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                    )
+                }
+            } else null,
+            modifier = Modifier.semantics {
+                contentDescription = "Filter: all fuel types"
+            }
+        )
+        FuelCategory.entries.forEach { category ->
+            val isSelected = selected == category
+            FilterChip(
+                selected = isSelected,
+                onClick = { onSelected(if (isSelected) null else category) },
+                label = { Text(category.displayName) },
+                leadingIcon = if (isSelected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    }
+                } else null,
+                modifier = Modifier.semantics {
+                    contentDescription = "Filter by ${category.displayName}"
+                }
+            )
+        }
     }
 }
 
