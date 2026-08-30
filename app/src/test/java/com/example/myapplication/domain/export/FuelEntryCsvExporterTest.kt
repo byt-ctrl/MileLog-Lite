@@ -72,4 +72,29 @@ class FuelEntryCsvExporterTest {
         assertEquals("Diesel", lines[2].substringAfterLast(","))
         assertEquals("CNG", lines[3].substringAfterLast(","))
     }
+
+    @Test
+    fun entriesWithDefaultCategoryExportAsPetrol() {
+        // U-CSV-04: Default fuelCategory="Petrol" exports correctly
+        val entryDefault = FuelEntry(id = 1, date = 1000L, odometer = 1000, liters = 50.0, cost = 100.0)
+        // fuelCategory defaults to "Petrol" in the data class
+        val csv = FuelEntryCsvExporter.buildCsv(listOf(entryDefault))
+
+        val lines = csv.split("\n")
+        assertEquals(2, lines.size)
+        assertEquals("Petrol", lines[1].substringAfterLast(","))
+    }
+
+    @Test
+    fun exportPreservesCategoryAfterEdit() {
+        // U-CSV-05: Entry edited to change category reflects in export
+        val entry = FuelEntry(id = 1, date = 1000L, odometer = 1000, liters = 50.0, cost = 100.0, fuelCategory = "Petrol")
+        val editedEntry = entry.copy(fuelCategory = "CNG")
+
+        val csv = FuelEntryCsvExporter.buildCsv(listOf(editedEntry))
+
+        val lines = csv.split("\n")
+        assertEquals(2, lines.size)
+        assertEquals("CNG", lines[1].substringAfterLast(","))
+    }
 }

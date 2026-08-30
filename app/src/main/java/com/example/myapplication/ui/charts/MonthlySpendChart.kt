@@ -10,10 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
 import com.example.myapplication.domain.calculation.MonthlyFuelSpend
@@ -25,6 +27,7 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import java.text.NumberFormat
+import java.util.Currency
 import java.util.Locale
 
 /**
@@ -33,6 +36,10 @@ import java.util.Locale
  *
  * When [categorySpends] is non-empty, one bar is drawn per fuel category per
  * month (grouped, side-by-side) so the spend mix across categories is visible.
+ *
+ * Currency formatting follows the device locale — `NumberFormat.getCurrencyInstance`
+ * picks the symbol and grouping rules, so a German device shows €, an Indian
+ * device shows ₹, and a US device shows $.
  *
  * @param spends List of [MonthlyFuelSpend] sorted chronologically.
  * @param categorySpends Per-category spend aligned to [spends] by index.
@@ -52,21 +59,34 @@ fun MonthlySpendChart(
 
     val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
 
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    val currencySymbol = runCatching {
+        Currency.getInstance(Locale.getDefault()).symbol
+    }.getOrDefault("¤")
+
+    val totalLabel = stringResource(R.string.charts_spend_total_label)
+    val categoryLabels: Map<FuelCategory, String> = buildMap {
+        FuelCategory.entries.forEach { category ->
+            put(category, stringResource(category.labelRes))
+        }
+    }
+    val spendA11y = stringResource(R.string.charts_spend_a11y)
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { contentDescription = "Monthly fuel spend chart showing total cost in rupees by calendar month" }
+            .semantics { contentDescription = spendA11y }
     ) {
         Text(
-            text = "Monthly Fuel Spend",
+            text = stringResource(R.string.charts_spend_card_title),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
         )
         Text(
             text = if (categorySpends.isEmpty()) {
-                "Total spend (₹) by calendar month"
+                stringResource(R.string.charts_spend_card_subtitle_single, currencySymbol)
             } else {
-                "Total spend (₹) by calendar month, split by fuel type"
+                stringResource(R.string.charts_spend_card_subtitle_split, currencySymbol)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -75,7 +95,7 @@ fun MonthlySpendChart(
 
         if (spends.isEmpty()) {
             Text(
-                text = "No fuel entries recorded yet.",
+                text = stringResource(R.string.charts_spend_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp)
@@ -109,32 +129,26 @@ fun MonthlySpendChart(
                         setDrawValueAboveBar(true)
                         setExtraOffsets(4f, 8f, 4f, 16f)
 
-                        // X axis (month labels along the bottom)
                         xAxis.position = XAxis.XAxisPosition.BOTTOM
                         xAxis.setDrawGridLines(false)
                         xAxis.granularity = 1f
                         xAxis.textColor = textColor
                         xAxis.textSize = 12f
 
-                        // Left Y axis (cost in ₹)
                         axisLeft.textColor = textColor
                         axisLeft.gridColor = gridColor
                         axisLeft.textSize = 12f
                         axisLeft.setDrawAxisLine(false)
                         axisLeft.axisMinimum = 0f
                         axisLeft.valueFormatter = object : ValueFormatter() {
-                            override fun getFormattedValue(value: Float): String {
-                                return "₹" + NumberFormat.getIntegerInstance(Locale.getDefault())
-                                    .format(value.toInt())
-                            }
+                            override fun getFormattedValue(value: Float): String =
+                                currencyFormatter.format(value.toDouble())
                         }
 
-                        // Disable right Y axis
                         axisRight.isEnabled = false
                     }
                 },
                 update = { chart ->
-                    // X-axis month labels
                     chart.xAxis.valueFormatter = object : ValueFormatter() {
                         override fun getFormattedValue(value: Float): String {
                             val idx = value.toInt()
@@ -147,15 +161,14 @@ fun MonthlySpendChart(
                         val entries = spends.mapIndexed { index, item ->
                             BarEntry(index.toFloat(), item.totalCost.toFloat())
                         }
-                        val dataSet = BarDataSet(entries, "Total spend").apply {
+                        val dataSet = BarDataSet(entries, totalLabel).apply {
                             color = primaryColor
                             setDrawValues(true)
                             valueTextSize = 11f
                             valueTextColor = textColor
                             valueFormatter = object : ValueFormatter() {
                                 override fun getFormattedValue(value: Float): String =
-                                    "₹" + NumberFormat.getIntegerInstance(Locale.getDefault())
-                                        .format(value.toInt())
+                                    currencyFormatter.format(value.toDouble())
                             }
                         }
                         val barData = BarData(dataSet).apply {
@@ -168,10 +181,11 @@ fun MonthlySpendChart(
                                 FuelCategory.entries.indexOf(series.category)
                                     .coerceIn(0, categoryColors.lastIndex)
                             ]
+                            val label = categoryLabels[series.category] ?: series.category.displayName
                             val entries = series.values.mapIndexed { index, value ->
                                 BarEntry(index.toFloat(), value.toFloat())
                             }
-                            BarDataSet(entries, series.category.displayName).apply {
+                            BarDataSet(entries, label).apply {
                                 this.color = color
                                 setDrawValues(false)
                             }
@@ -183,7 +197,6 @@ fun MonthlySpendChart(
                             val barSpace = 0.02f
                             val barWidth = 0.80f / seriesCount.coerceAtLeast(1)
                             this.barWidth = barWidth
-                            // groupBars sets the offsets so groups are centered per x-tick
                             chart.groupBars(0f, groupSpace, barSpace)
                         }
                         chart.data = barData

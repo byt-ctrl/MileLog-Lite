@@ -10,10 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.FillupMileage
@@ -57,148 +59,145 @@ fun MileageTrendChart(
     // Distinct color per category. Order matches FuelCategory.entries.
     val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
 
+    val combinedLabel = stringResource(R.string.charts_combined_label)
+    val categoryLabels: Map<FuelCategory, String> = buildMap {
+        FuelCategory.entries.forEach { category ->
+            put(category, stringResource(category.labelRes))
+        }
+    }
+    val trendA11y = stringResource(R.string.charts_trend_a11y)
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { contentDescription = "Mileage trend chart showing fuel efficiency in kilometers per liter over time" }
+            .semantics { contentDescription = trendA11y }
     ) {
         Text(
-            text = "Mileage Trend",
+            text = stringResource(R.string.charts_trend_card_title),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
         )
         Text(
-            text = "km/L per fill-up (combined + per fuel type)",
+            text = if (categorySeries.isEmpty()) {
+                stringResource(R.string.charts_trend_card_subtitle_single)
+            } else {
+                stringResource(R.string.charts_trend_card_subtitle_split)
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
 
-        // Combined chart needs at least 2 mileage-bearing entries (3 entries total).
-        val combinedPoints = fillups.filter { it.mileageKmPerL != null }
-        val perCategoryPoints: List<List<FillupMileage>> = categorySeries.map { series ->
-            series.fillups.filter { it.mileageKmPerL != null }
-        }
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .padding(start = 8.dp, end = 16.dp, bottom = 16.dp),
+            factory = { context ->
+                LineChart(context).apply {
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    description.isEnabled = false
+                    legend.isEnabled = true
+                    legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
+                    legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+                    legend.orientation = Legend.LegendOrientation.HORIZONTAL
+                    legend.setDrawInside(false)
+                    legend.textSize = 11f
+                    legend.textColor = textColor
+                    legend.form = Legend.LegendForm.LINE
+                    setTouchEnabled(true)
+                    isDragEnabled = true
+                    setScaleEnabled(false)
+                    setPinchZoom(false)
+                    setDrawGridBackground(false)
+                    setExtraOffsets(4f, 4f, 4f, 16f)
 
-        if (combinedPoints.size < 2 && perCategoryPoints.all { it.size < 2 }) {
-            Text(
-                text = "Add at least 3 entries to see the mileage trend.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp)
-            )
-        } else {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-                    .padding(start = 8.dp, end = 16.dp, bottom = 16.dp),
-                factory = { context ->
-                    LineChart(context).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        description.isEnabled = false
-                        legend.isEnabled = true
-                        legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
-                        legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
-                        legend.orientation = Legend.LegendOrientation.HORIZONTAL
-                        legend.setDrawInside(false)
-                        legend.textSize = 11f
-                        legend.textColor = textColor
-                        legend.form = Legend.LegendForm.LINE
-                        setTouchEnabled(true)
-                        isDragEnabled = true
-                        setScaleEnabled(false)
-                        setPinchZoom(false)
-                        setDrawGridBackground(false)
-                        setExtraOffsets(4f, 4f, 4f, 16f)
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.setDrawGridLines(false)
+                    xAxis.granularity = 1f
+                    xAxis.textColor = textColor
+                    xAxis.textSize = 12f
 
-                        // X axis (dates along the bottom) - keyed to the combined series
-                        xAxis.position = XAxis.XAxisPosition.BOTTOM
-                        xAxis.setDrawGridLines(false)
-                        xAxis.granularity = 1f
-                        xAxis.textColor = textColor
-                        xAxis.textSize = 12f
+                    axisLeft.textColor = textColor
+                    axisLeft.gridColor = gridColor
+                    axisLeft.textSize = 12f
+                    axisLeft.setDrawAxisLine(false)
 
-                        // Left Y axis (km/L)
-                        axisLeft.textColor = textColor
-                        axisLeft.gridColor = gridColor
-                        axisLeft.textSize = 12f
-                        axisLeft.setDrawAxisLine(false)
-
-                        // Disable right Y axis
-                        axisRight.isEnabled = false
-                    }
-                },
-                update = { chart ->
-                    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-
-                    val dataSets = mutableListOf<LineDataSet>()
-
-                    // Combined (all-categories) trend
-                    if (combinedPoints.size >= 2) {
-                        val entries = combinedPoints.mapIndexed { index, fillup ->
-                            Entry(index.toFloat(), fillup.mileageKmPerL!!.toFloat())
-                        }
-                        dataSets += LineDataSet(entries, "All fuels").apply {
-                            color = primaryColor
-                            setCircleColor(primaryColor)
-                            lineWidth = 3f
-                            circleRadius = 4f
-                            setDrawCircleHole(true)
-                            circleHoleRadius = 2f
-                            setDrawValues(true)
-                            valueTextSize = 10f
-                            valueTextColor = textColor
-                            valueFormatter = object : ValueFormatter() {
-                                override fun getFormattedValue(value: Float): String =
-                                    String.format(Locale.getDefault(), "%.1f", value)
-                            }
-                            mode = LineDataSet.Mode.CUBIC_BEZIER
-                            setDrawFilled(false)
-                        }
-                    }
-
-                    // Per-category overlay lines
-                    categorySeries.forEachIndexed { index, series ->
-                        val points = perCategoryPoints[index]
-                        if (points.size < 2) return@forEachIndexed
-                        val color = categoryColors[FuelCategory.entries.indexOf(series.category)
-                            .coerceIn(0, categoryColors.lastIndex)]
-                        val entries = points.mapIndexed { idx, fillup ->
-                            Entry(idx.toFloat(), fillup.mileageKmPerL!!.toFloat())
-                        }
-                        dataSets += LineDataSet(entries, series.category.displayName).apply {
-                            this.color = color
-                            setCircleColor(color)
-                            lineWidth = 1.75f
-                            circleRadius = 3f
-                            setDrawCircleHole(true)
-                            circleHoleRadius = 1.5f
-                            enableDashedLine(8f, 6f, 0f)
-                            setDrawValues(false)
-                            mode = LineDataSet.Mode.LINEAR
-                            setDrawFilled(false)
-                        }
-                    }
-
-                    // X-axis date labels use the combined (chronological) series
-                    chart.xAxis.valueFormatter = object : ValueFormatter() {
-                        override fun getFormattedValue(value: Float): String {
-                            val idx = value.toInt()
-                            return if (idx in combinedPoints.indices) {
-                                dateFormat.format(Date(combinedPoints[idx].entry.date))
-                            } else ""
-                        }
-                    }
-                    chart.xAxis.labelCount = minOf(combinedPoints.size.coerceAtLeast(1), 4)
-
-                    chart.data = if (dataSets.isNotEmpty()) LineData(*dataSets.toTypedArray()) else null
-                    chart.invalidate()
+                    axisRight.isEnabled = false
                 }
-            )
-        }
+            },
+            update = { chart ->
+                val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+
+                val dataSets = mutableListOf<LineDataSet>()
+
+                val combinedPoints = fillups.filter { it.mileageKmPerL != null }
+                val perCategoryPoints: List<List<FillupMileage>> = categorySeries.map { series ->
+                    series.fillups.filter { it.mileageKmPerL != null }
+                }
+
+                if (combinedPoints.size >= 2) {
+                    val entries = combinedPoints.mapIndexed { index, fillup ->
+                        Entry(index.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                    }
+                    dataSets += LineDataSet(entries, combinedLabel).apply {
+                        color = primaryColor
+                        setCircleColor(primaryColor)
+                        lineWidth = 3f
+                        circleRadius = 4f
+                        setDrawCircleHole(true)
+                        circleHoleRadius = 2f
+                        setDrawValues(true)
+                        valueTextSize = 11f
+                        valueTextColor = textColor
+                        valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String =
+                                String.format(Locale.getDefault(), "%.1f", value)
+                        }
+                        mode = LineDataSet.Mode.CUBIC_BEZIER
+                        setDrawFilled(false)
+                    }
+                }
+
+                categorySeries.forEachIndexed { index, series ->
+                    val points = perCategoryPoints[index]
+                    if (points.size < 2) return@forEachIndexed
+                    val color = categoryColors[FuelCategory.entries.indexOf(series.category)
+                        .coerceIn(0, categoryColors.lastIndex)]
+                    val categoryLabel = categoryLabels[series.category] ?: series.category.displayName
+                    val entries = points.mapIndexed { idx, fillup ->
+                        Entry(idx.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                    }
+                    dataSets += LineDataSet(entries, categoryLabel).apply {
+                        this.color = color
+                        setCircleColor(color)
+                        lineWidth = 1.75f
+                        circleRadius = 3f
+                        setDrawCircleHole(true)
+                        circleHoleRadius = 1.5f
+                        enableDashedLine(8f, 6f, 0f)
+                        setDrawValues(false)
+                        mode = LineDataSet.Mode.LINEAR
+                        setDrawFilled(false)
+                    }
+                }
+
+                chart.xAxis.valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        val idx = value.toInt()
+                        return if (idx in combinedPoints.indices) {
+                            dateFormat.format(Date(combinedPoints[idx].entry.date))
+                        } else ""
+                    }
+                }
+                chart.xAxis.labelCount = minOf(combinedPoints.size.coerceAtLeast(1), 4)
+
+                chart.data = if (dataSets.isNotEmpty()) LineData(*dataSets.toTypedArray()) else null
+                chart.invalidate()
+            }
+        )
     }
 }

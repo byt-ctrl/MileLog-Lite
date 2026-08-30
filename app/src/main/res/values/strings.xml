@@ -1,3 +1,116 @@
 <resources>
     <string name="app_name">MileLog Lite</string>
+
+    <!-- Common -->
+    <string name="action_retry">Retry</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save Entry</string>
+    <string name="action_update">Update Entry</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_navigate_back">Navigate back</string>
+    <string name="action_add_fuel_entry">Add Fuel Entry</string>
+    <string name="loading_generic">Loading</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_fab_add_entry">Add fuel entry</string>
+    <string name="dashboard_empty_title">No entries yet</string>
+    <string name="dashboard_empty_subtitle">Add your first fuel entry to start tracking your mileage and expenses.</string>
+    <string name="dashboard_empty_cta">Add your first entry</string>
+    <string name="dashboard_stat_latest_odometer_title">Latest Odometer</string>
+    <string name="dashboard_stat_latest_odometer_empty">—</string>
+    <string name="dashboard_stat_latest_odometer_unit">%1$s km</string>
+    <string name="dashboard_stat_latest_odometer_subtitle">Fuel: %1$s</string>
+    <string name="dashboard_stat_total_cost_title">Total Fuel Spend</string>
+    <string name="dashboard_stat_total_cost_subtitle">%1$d entries total</string>
+    <string name="dashboard_stat_avg_mileage_title">Avg Mileage</string>
+    <string name="dashboard_stat_avg_mileage_value">%1$.1f km/L</string>
+    <string name="dashboard_stat_avg_mileage_subtitle">%1$d km tracked</string>
+    <string name="dashboard_stat_cost_per_km_title">Cost per km</string>
+    <string name="dashboard_stat_cost_per_km_subtitle">%1$d km tracked</string>
+    <string name="dashboard_error_load">Couldn\'t load dashboard data. Please try again.</string>
+    <string name="dashboard_nav_history_title">View History</string>
+    <string name="dashboard_nav_history_subtitle">%1$d entries total</string>
+    <string name="dashboard_nav_charts_title">Charts &amp; Insights</string>
+    <string name="dashboard_nav_charts_subtitle">Mileage &amp; spend trends</string>
+
+    <!-- History -->
+    <string name="history_title">Fuel History</string>
+    <string name="history_export_action">Export entries to CSV</string>
+    <string name="history_fab_add_entry">Add fuel entry</string>
+    <string name="history_empty_title_all">No entries yet</string>
+    <string name="history_empty_subtitle_all">Your fuel history will appear here once you add entries.</string>
+    <string name="history_empty_title_filter">No %1$s entries</string>
+    <string name="history_empty_subtitle_filter">Try a different filter or add a %1$s entry.</string>
+    <string name="history_empty_cta_add">Add your first entry</string>
+    <string name="history_empty_cta_clear_filter">Show all entries</string>
+    <string name="history_delete_dialog_title">Delete entry?</string>
+    <string name="history_delete_dialog_body">This will permanently delete the entry from %1$s. This action cannot be undone.</string>
+    <string name="history_card_delete">Delete entry from %1$s</string>
+    <string name="history_row_odometer">Odometer: %1$d km</string>
+    <string name="history_row_fuel_cost">Fuel: %1$.2f L  •  Cost: %2$s</string>
+    <string name="history_error_load">Couldn\'t load history. Please try again.</string>
+    <string name="history_export_build_failed">Couldn\'t prepare the export. Please try again.</string>
+    <string name="history_entry_deleted">Entry deleted</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_all_a11y">Filter: all fuel types</string>
+    <string name="history_filter_category_a11y">Filter by %1$s</string>
+    <string name="history_export_ready">Export ready</string>
+
+    <!-- Charts -->
+    <string name="charts_title">Charts &amp; Insights</string>
+    <string name="charts_empty_title">Not enough data yet</string>
+    <string name="charts_empty_subtitle">Add at least 2 fuel entries to see charts and insights.</string>
+    <string name="charts_trend_card_title">Mileage Trend</string>
+    <string name="charts_trend_card_subtitle_single">km/L per fill-up</string>
+    <string name="charts_trend_card_subtitle_split">km/L per fill-up (combined + per fuel type)</string>
+    <string name="charts_trend_empty">Add at least 2 fuel entries to see the mileage trend.</string>
+    <string name="charts_trend_a11y">Mileage trend chart showing fuel efficiency in kilometers per liter over time</string>
+    <string name="charts_spend_card_title">Monthly Fuel Spend</string>
+    <string name="charts_spend_card_subtitle_single">Total spend (%1$s) by calendar month</string>
+    <string name="charts_spend_card_subtitle_split">Total spend (%1$s) by calendar month, split by fuel type</string>
+    <string name="charts_spend_empty">No fuel entries recorded yet.</string>
+    <string name="charts_spend_a11y">Monthly fuel spend chart showing total cost by calendar month</string>
+    <string name="charts_combined_label">All fuels</string>
+    <string name="charts_spend_total_label">Total spend</string>
+    <string name="charts_error_load">Couldn\'t load charts. Please try again.</string>
+    <string name="charts_loading">Loading charts</string>
+
+    <!-- Add / Edit Entry -->
+    <string name="entry_title_add">Add Fuel Entry</string>
+    <string name="entry_title_edit">Edit Fuel Entry</string>
+    <string name="entry_field_date_label">Date of Fill-up</string>
+    <string name="entry_field_date_a11y">Select date</string>
+    <string name="entry_field_date_dialog_confirm">Select date</string>
+    <string name="entry_field_odometer_label">Odometer Reading</string>
+    <string name="entry_field_odometer_suffix">km</string>
+    <string name="entry_field_odometer_helper">Previous reading: %1$d km</string>
+    <string name="entry_field_liters_label">Fuel Quantity</string>
+    <string name="entry_field_liters_suffix">L</string>
+    <string name="entry_field_cost_label">Total Cost</string>
+    <string name="entry_field_category_label">Fuel Category</string>
+    <string name="entry_error_load_missing">This entry no longer exists. It may have been deleted.</string>
+    <string name="entry_error_load_failed">Couldn\'t load this entry. Please try again.</string>
+    <string name="entry_loading">Loading entry</string>
+
+    <!-- Validation (validator produces these via displayName lookup) -->
+    <string name="error_date_required">Date is required</string>
+    <string name="error_odometer_required">Odometer reading is required</string>
+    <string name="error_odometer_positive">Odometer must be a positive number</string>
+    <string name="error_odometer_monotonic">Odometer must be greater than the previous reading (%1$d km)</string>
+    <string name="error_odometer_monotonic_no_prev">Odometer must be greater than zero</string>
+    <string name="error_liters_required">Fuel quantity is required</string>
+    <string name="error_liters_positive">Fuel quantity must be greater than 0</string>
+    <string name="error_cost_required">Total cost is required</string>
+    <string name="error_cost_positive">Cost must be greater than 0</string>
+
+    <!-- Fuel categories (also surfaced in dropdown) -->
+    <string name="fuel_category_petrol">Petrol</string>
+    <string name="fuel_category_diesel">Diesel</string>
+    <string name="fuel_category_cng">CNG</string>
+
+    <!-- Export snackbar outcomes -->
+    <string name="export_success">Exported %1$d entries to CSV</string>
+    <string name="export_failure">Export failed: %1$s</string>
 </resources>

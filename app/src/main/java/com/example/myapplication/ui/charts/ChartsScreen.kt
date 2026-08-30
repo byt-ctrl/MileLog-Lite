@@ -27,20 +27,32 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.R
 
 /**
  * Charts/Insights screen hosting the mileage trend line chart and the
  * monthly fuel spend bar chart. Charts refresh automatically as entries
  * are added, edited, or deleted.
+ *
+ * The empty-state threshold is owned here: charts only render when both
+ * the mileage series (≥2 mileage-bearing fill-ups) and the monthly spend
+ * series (≥1 entry) are present. Each chart composable is responsible for
+ * its own "not enough data" message if it can't fill a view; the screen
+ * level threshold prevents the conflicting thresholds previously found in
+ * the audit.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChartsScreen(
     onNavigateUp: () -> Unit,
+    onAddEntry: () -> Unit = {},
     viewModel: ChartsViewModel = viewModel(factory = ChartsViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -48,12 +60,12 @@ fun ChartsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Charts & Insights") },
+                title = { Text(stringResource(R.string.charts_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back"
+                            contentDescription = stringResource(R.string.action_navigate_back)
                         )
                     }
                 },
@@ -65,10 +77,12 @@ fun ChartsScreen(
     ) { innerPadding ->
         when {
             uiState.isLoading -> {
+                val loadingLabel = stringResource(R.string.charts_loading)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
+                        .padding(innerPadding)
+                        .semantics(mergeDescendants = true) { contentDescription = loadingLabel },
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -88,14 +102,14 @@ fun ChartsScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = uiState.errorMessage!!,
+                            text = stringResource(uiState.errorMessage!!.messageRes),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = viewModel::retry) {
-                            Text("Retry")
+                            Text(stringResource(R.string.action_retry))
                         }
                     }
                 }
@@ -114,17 +128,21 @@ fun ChartsScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Not enough data yet",
+                            text = stringResource(R.string.charts_empty_title),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Add at least 2 fuel entries to see charts and insights.",
+                            text = stringResource(R.string.charts_empty_subtitle),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(onClick = onAddEntry) {
+                            Text(stringResource(R.string.dashboard_empty_cta))
+                        }
                     }
                 }
             }
@@ -138,13 +156,17 @@ fun ChartsScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Trend chart needs at least 2 points with mileage (3 entries total).
-                    MileageTrendChart(
-                        fillups = uiState.fillups,
-                        categorySeries = uiState.categoryMileageSeries,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    // Monthly spend chart shows even a single entry.
+                    val mileagePoints = uiState.fillups.filter { it.mileageKmPerL != null }
+                    val hasMileage = mileagePoints.size >= 2
+
+                    if (hasMileage) {
+                        MileageTrendChart(
+                            fillups = uiState.fillups,
+                            categorySeries = uiState.categoryMileageSeries,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     MonthlySpendChart(
                         spends = uiState.monthlySpends,
                         categorySpends = uiState.categoryMonthlySpends,

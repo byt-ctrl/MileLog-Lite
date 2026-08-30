@@ -43,7 +43,8 @@ fun MileLiteNavHost(
         }
         composable(MileLogRoutes.CHARTS) {
             ChartsScreen(
-                onNavigateUp = { navController.navigateUp() }
+                onNavigateUp = { navController.navigateUp() },
+                onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) }
             )
         }
         composable(MileLogRoutes.HISTORY) {

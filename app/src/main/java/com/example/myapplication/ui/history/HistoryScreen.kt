@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -51,14 +53,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,6 +88,8 @@ fun HistoryScreen(
     val entries = uiState.entries
     var entryPendingDelete by remember { mutableStateOf<FuelEntry?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
+    val context = LocalContext.current
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -103,20 +111,48 @@ fun HistoryScreen(
 
     // Surface export outcomes (success/failure) via a snackbar.
     LaunchedEffect(uiState.exportMessage) {
-        val message = uiState.exportMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
+        val key = uiState.exportMessage ?: return@LaunchedEffect
+        val text = when (key) {
+            HistoryMessage.EXPORT_SUCCESS ->
+                context.getString(key.messageRes, uiState.exportMessageCount)
+            HistoryMessage.EXPORT_WRITE_FAILED -> {
+                val detail = uiState.exportMessageDetail.orEmpty()
+                context.getString(key.messageRes, detail)
+            }
+            else -> context.getString(key.messageRes)
+        }
+        snackbarHostState.showSnackbar(text)
         viewModel.consumeExportMessage()
+    }
+
+    // Undo affordance for the most recent delete. The snackbar carries a
+    // localized label and an Undo action that re-inserts the entry.
+    LaunchedEffect(uiState.lastDeleted) {
+        val deleted = uiState.lastDeleted ?: return@LaunchedEffect
+        val undoLabel = context.getString(R.string.action_undo)
+        val result = snackbarHostState.showSnackbar(
+            message = context.getString(R.string.history_entry_deleted),
+            actionLabel = undoLabel,
+            withDismissAction = true,
+            duration = androidx.compose.material3.SnackbarDuration.Short
+        )
+        when (result) {
+            androidx.compose.material3.SnackbarResult.ActionPerformed ->
+                viewModel.undoDelete()
+            androidx.compose.material3.SnackbarResult.Dismissed ->
+                viewModel.consumeDeleted()
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Fuel History") },
+                title = { Text(stringResource(R.string.history_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back"
+                            contentDescription = stringResource(R.string.action_navigate_back)
                         )
                     }
                 },
@@ -125,7 +161,7 @@ fun HistoryScreen(
                         IconButton(onClick = viewModel::exportEntries) {
                             Icon(
                                 imageVector = Icons.Filled.Download,
-                                contentDescription = "Export entries to CSV"
+                                contentDescription = stringResource(R.string.history_export_action)
                             )
                         }
                     }
@@ -140,17 +176,19 @@ fun HistoryScreen(
             FloatingActionButton(onClick = onAddEntry) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add fuel entry"
+                    contentDescription = stringResource(R.string.history_fab_add_entry)
                 )
             }
         }
     ) { innerPadding ->
         when {
             uiState.isLoading -> {
+                val loadingLabel = stringResource(R.string.loading_generic)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
+                        .padding(innerPadding)
+                        .semantics(mergeDescendants = true) { contentDescription = loadingLabel },
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -170,20 +208,21 @@ fun HistoryScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = uiState.errorMessage!!,
+                            text = stringResource(R.string.history_error_load),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = viewModel::retry) {
-                            Text("Retry")
+                            Text(stringResource(R.string.action_retry))
                         }
                     }
                 }
             }
 
             entries.isEmpty() -> {
+                val filterCategory = uiState.selectedCategory
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -196,33 +235,33 @@ fun HistoryScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = if (uiState.selectedCategory != null) {
-                                "No ${uiState.selectedCategory!!.displayName} entries"
+                            text = if (filterCategory != null) {
+                                stringResource(R.string.history_empty_title_filter, stringResource(filterCategory.labelRes))
                             } else {
-                                "No entries yet"
+                                stringResource(R.string.history_empty_title_all)
                             },
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (uiState.selectedCategory != null) {
-                                "Try a different filter or add a ${uiState.selectedCategory!!.displayName} entry."
+                            text = if (filterCategory != null) {
+                                stringResource(R.string.history_empty_subtitle_filter, stringResource(filterCategory.labelRes))
                             } else {
-                                "Your fuel history will appear here once you add entries."
+                                stringResource(R.string.history_empty_subtitle_all)
                             },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        if (uiState.selectedCategory != null && uiState.totalEntryCount > 0) {
+                        if (filterCategory != null && uiState.totalEntryCount > 0) {
                             Button(onClick = { viewModel.setCategoryFilter(null) }) {
-                                Text("Show all entries")
+                                Text(stringResource(R.string.history_empty_cta_clear_filter))
                             }
                         } else {
                             Button(onClick = onAddEntry) {
-                                Text("Add your first entry")
+                                Text(stringResource(R.string.history_empty_cta_add))
                             }
                         }
                     }
@@ -247,6 +286,7 @@ fun HistoryScreen(
                         items(entries, key = { it.id }) { entry ->
                             FuelEntryCard(
                                 entry = entry,
+                                currencyFormatter = currencyFormatter,
                                 onClick = { onEditEntry(entry.id) },
                                 onDeleteClick = { entryPendingDelete = entry }
                             )
@@ -263,12 +303,13 @@ fun HistoryScreen(
         }
         AlertDialog(
             onDismissRequest = { entryPendingDelete = null },
-            title = { Text("Delete entry?") },
+            title = { Text(stringResource(R.string.history_delete_dialog_title)) },
             text = {
                 Text(
-                    "This will permanently delete the entry from " +
-                        "${deleteDateFormatter.format(Date(entry.date))}. " +
-                        "This action cannot be undone."
+                    stringResource(
+                        R.string.history_delete_dialog_body,
+                        deleteDateFormatter.format(Date(entry.date))
+                    )
                 )
             },
             confirmButton = {
@@ -278,12 +319,15 @@ fun HistoryScreen(
                         entryPendingDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        stringResource(R.string.action_delete),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { entryPendingDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -309,10 +353,18 @@ private fun CategoryFilterChips(
             .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val allFilterLabel = stringResource(R.string.history_filter_all)
+        val allFilterA11y = stringResource(R.string.history_filter_all_a11y)
         FilterChip(
             selected = selected == null,
             onClick = { onSelected(null) },
-            label = { Text("All") },
+            label = {
+                Text(
+                    allFilterLabel,
+                    modifier = Modifier.heightIn(min = 44.dp)
+                        .wrapContentHeight(Alignment.CenterVertically)
+                )
+            },
             leadingIcon = if (selected == null) {
                 {
                     Icon(
@@ -322,16 +374,29 @@ private fun CategoryFilterChips(
                     )
                 }
             } else null,
-            modifier = Modifier.semantics {
-                contentDescription = "Filter: all fuel types"
-            }
+            modifier = Modifier
+                .heightIn(min = 44.dp)
+                .semantics {
+                    contentDescription = allFilterA11y
+                }
         )
         FuelCategory.entries.forEach { category ->
             val isSelected = selected == category
+            val categoryLabel = stringResource(category.labelRes)
+            val categoryA11y = stringResource(
+                R.string.history_filter_category_a11y,
+                categoryLabel
+            )
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelected(if (isSelected) null else category) },
-                label = { Text(category.displayName) },
+                label = {
+                    Text(
+                        categoryLabel,
+                        modifier = Modifier.heightIn(min = 44.dp)
+                            .wrapContentHeight(Alignment.CenterVertically)
+                    )
+                },
                 leadingIcon = if (isSelected) {
                     {
                         Icon(
@@ -341,9 +406,11 @@ private fun CategoryFilterChips(
                         )
                     }
                 } else null,
-                modifier = Modifier.semantics {
-                    contentDescription = "Filter by ${category.displayName}"
-                }
+                modifier = Modifier
+                    .heightIn(min = 44.dp)
+                    .semantics {
+                        contentDescription = categoryA11y
+                    }
             )
         }
     }
@@ -351,52 +418,65 @@ private fun CategoryFilterChips(
 
 /**
  * Card rendering a single fuel entry with its details.
+ *
+ * The card body (date/odometer/fuel/cost) is the clickable target for edit;
+ * the delete IconButton sits beside it as an independent control. The two
+ * never share a clickable parent, which keeps TalkBack's double-tap model
+ * honest — one focus, one action.
  */
 @Composable
 private fun FuelEntryCard(
     entry: FuelEntry,
+    currencyFormatter: NumberFormat,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     val dateFormatter = remember(entry.date) {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     }
+    val formattedDate = remember(entry.date) { dateFormatter.format(Date(entry.date)) }
 
     ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 8.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onClick)
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = dateFormatter.format(Date(entry.date)),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f, fill = false)
+                    text = formattedDate,
+                    style = MaterialTheme.typography.titleMedium
                 )
-                IconButton(onClick = onDeleteClick) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete entry from ${dateFormatter.format(Date(entry.date))}"
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.history_row_odometer, entry.odometer),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = stringResource(
+                        R.string.history_row_fuel_cost,
+                        entry.liters,
+                        currencyFormatter.format(entry.cost)
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Text(
-                text = "Odometer: ${entry.odometer} km",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Fuel: %.2f L  •  Cost: ₹ %.2f".format(entry.liters, entry.cost),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(
+                        R.string.history_card_delete,
+                        formattedDate
+                    )
+                )
+            }
         }
     }
 }

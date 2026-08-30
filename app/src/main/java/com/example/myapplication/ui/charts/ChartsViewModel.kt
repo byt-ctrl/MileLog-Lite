@@ -1,11 +1,13 @@
 package com.example.myapplication.ui.charts
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
+import com.example.myapplication.R
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
@@ -22,6 +24,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
+/**
+ * Stable identifiers for charts-screen messages. The UI resolves each key
+ * to a localized `stringResource`.
+ */
+enum class ChartsMessage(@StringRes val messageRes: Int) {
+    LOAD_FAILED(R.string.charts_error_load)
+}
+
 data class ChartsUiState(
     val fillups: List<FillupMileage> = emptyList(),
     val monthlySpends: List<MonthlyFuelSpend> = emptyList(),
@@ -29,15 +39,9 @@ data class ChartsUiState(
     val categoryMonthlySpends: List<CategoryMonthlySpendSeries> = emptyList(),
     val entryCount: Int = 0,
     val isLoading: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: ChartsMessage? = null
 )
 
-/**
- * ViewModel feeding the Charts/Insights screen.
- *
- * Exposes the per-fill-up mileage series and the monthly fuel spend series,
- * recomputed automatically whenever entries change in the database.
- */
 class ChartsViewModel(
     private val repository: FuelEntryRepository
 ) : ViewModel() {
@@ -60,11 +64,11 @@ class ChartsViewModel(
                 isLoading = false
             )
         }
-        .catch { e ->
+        .catch { _ ->
             emit(
                 ChartsUiState(
                     isLoading = false,
-                    errorMessage = "Couldn't load chart data. Please try again."
+                    errorMessage = ChartsMessage.LOAD_FAILED
                 )
             )
         }

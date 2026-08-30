@@ -1,11 +1,13 @@
 package com.example.myapplication.ui.dashboard
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
+import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
@@ -19,6 +21,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
+/**
+ * Stable identifiers for dashboard messages. The UI resolves each key to
+ * a localized `stringResource`.
+ */
+enum class DashboardMessage(@StringRes val messageRes: Int) {
+    LOAD_FAILED(R.string.dashboard_error_load)
+}
+
 data class DashboardUiState(
     val latestOdometer: Int? = null,
     val latestFuelCategory: FuelCategory? = null,
@@ -29,7 +39,7 @@ data class DashboardUiState(
     val costPerKm: Double? = null,
     val entryCount: Int = 0,
     val isLoading: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: DashboardMessage? = null
 )
 
 class DashboardViewModel(
@@ -56,11 +66,11 @@ class DashboardViewModel(
                 isLoading = false
             )
         }
-        .catch { e ->
+        .catch { _ ->
             emit(
                 DashboardUiState(
                     isLoading = false,
-                    errorMessage = "Couldn't load dashboard data. Please try again."
+                    errorMessage = DashboardMessage.LOAD_FAILED
                 )
             )
         }

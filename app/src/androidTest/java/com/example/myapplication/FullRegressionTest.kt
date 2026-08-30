@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.local.FuelEntryDao
 import com.example.myapplication.data.local.MileLiteDatabase
@@ -359,5 +360,172 @@ class FullRegressionTest {
         assertEquals(2, monthly.size)
         assertEquals(3000.0, monthly[0].totalCost, 0.001) // Apr
         assertEquals(3400.0, monthly[1].totalCost, 0.001) // May
+    }
+
+    // ========================================================================
+    // Category-Aware Regression Tests (I-REG-01 through I-REG-04)
+    // ========================================================================
+
+    @Test
+    fun fullRegression_categoryAware_addEditDeleteWithFilters() = runBlocking {
+        // I-REG-01: Add entries with different categories → edit category → delete → verify filter counts
+        val date1 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 10) }.timeInMillis
+        val date2 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 20) }.timeInMillis
+        val date3 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 5) }.timeInMillis
+        val date4 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 15) }.timeInMillis
+
+        // Add entries with different categories
+        val id1 = repository.insertEntry(FuelEntry(date = date1, odometer = 1000, liters = 30.0, cost = 3000.0, fuelCategory = "Petrol"))
+        val id2 = repository.insertEntry(FuelEntry(date = date2, odometer = 1500, liters = 25.0, cost = 2500.0, fuelCategory = "Diesel"))
+        val id3 = repository.insertEntry(FuelEntry(date = date3, odometer = 2000, liters = 20.0, cost = 2000.0, fuelCategory = "CNG"))
+        val id4 = repository.insertEntry(FuelEntry(date = date4, odometer = 2500, liters = 35.0, cost = 3500.0, fuelCategory = "Petrol"))
+
+        // Verify filter counts
+        val petrolEntries = repository.getAllEntries(FuelCategory.PETROL)
+        val dieselEntries = repository.getAllEntries(FuelCategory.DIESEL)
+        val cngEntries = repository.getAllEntries(FuelCategory.CNG)
+        assertEquals(2, petrolEntries.size)
+        assertEquals(1, dieselEntries.size)
+        assertEquals(1, cngEntries.size)
+
+        // Edit: change id2 from Diesel to Petrol
+        val entry2 = repository.getEntryById(id2)!!
+        repository.updateEntry(entry2.copy(fuelCategory = "Petrol"))
+
+        val petrolAfterEdit = repository.getAllEntries(FuelCategory.PETROL)
+        val dieselAfterEdit = repository.getAllEntries(FuelCategory.DIESEL)
+        assertEquals(3, petrolAfterEdit.size)
+        assertEquals(0, dieselAfterEdit.size)
+
+        // Delete one Petrol entry
+        val entryToDelete = repository.getEntryById(id4)!!
+        repository.deleteEntry(entryToDelete)
+
+        val petrolAfterDelete = repository.getAllEntries(FuelCategory.PETROL)
+        assertEquals(2, petrolAfterDelete.size)
+
+        // Verify all categories still work
+        val allEntries = repository.getAllEntries()
+        assertEquals(3, allEntries.size)
+    }
+
+    @Test
+    fun fullRegression_categoryFilter_dashboardReflectsLatestCategory() = runBlocking {
+        // I-REG-02: Dashboard shows correct category of latest entry after CRUD
+        val date1 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 10) }.timeInMillis
+        val date2 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 10) }.timeInMillis
+        val date3 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 10) }.timeInMillis
+
+        // Add Petrol entry (lowest odometer)
+        val id1 = repository.insertEntry(FuelEntry(date = date1, odometer = 1000, liters = 30.0, cost = 3000.0, fuelCategory = "Petrol"))
+        // Add Diesel entry (highest odometer)
+        val id2 = repository.insertEntry(FuelEntry(date = date2, odometer = 5000, liters = 25.0, cost = 2500.0, fuelCategory = "Diesel"))
+        // Add CNG entry (middle odometer)
+        val id3 = repository.insertEntry(FuelEntry(date = date3, odometer = 3000, liters = 20.0, cost = 2000.0, fuelCategory = "CNG"))
+
+        // Latest entry by odometer is Diesel (5000)
+        val allEntries = repository.getAllEntries()
+        val latestCategory = FuelCategory.fromDisplayName(allEntries.first().fuelCategory)
+        assertEquals(FuelCategory.DIESEL, latestCategory)
+
+        // Edit Diesel to have lower odometer
+        val entry2 = repository.getEntryById(id2)!!
+        repository.updateEntry(entry2.copy(odometer = 500))
+
+        // Now latest is CNG (3000)
+        val allAfterEdit = repository.getAllEntries()
+        val latestCategoryAfterEdit = FuelCategory.fromDisplayName(allAfterEdit.first().fuelCategory)
+        assertEquals(FuelCategory.CNG, latestCategoryAfterEdit)
+
+        // Delete CNG entry
+        val entry3 = repository.getEntryById(id3)!!
+        repository.deleteEntry(entry3)
+
+        // Now latest is Petrol (1000)
+        val allAfterDelete = repository.getAllEntries()
+        val latestCategoryAfterDelete = FuelCategory.fromDisplayName(allAfterDelete.first().fuelCategory)
+        assertEquals(FuelCategory.PETROL, latestCategoryAfterDelete)
+    }
+
+    @Test
+    fun fullRegression_categoryFilter_chartsReflectPerCategoryData() = runBlocking {
+        // I-REG-03: Charts per-category series match expected values after CRUD
+        val date1 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 10) }.timeInMillis
+        val date2 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 20) }.timeInMillis
+        val date3 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 10) }.timeInMillis
+
+        // Add entries: 2 Petrol, 1 Diesel
+        val id1 = repository.insertEntry(FuelEntry(date = date1, odometer = 1000, liters = 30.0, cost = 3000.0, fuelCategory = "Petrol"))
+        val id2 = repository.insertEntry(FuelEntry(date = date2, odometer = 1500, liters = 25.0, cost = 2500.0, fuelCategory = "Diesel"))
+        val id3 = repository.insertEntry(FuelEntry(date = date3, odometer = 2000, liters = 20.0, cost = 2000.0, fuelCategory = "Petrol"))
+
+        val entries = repository.getAllEntries()
+
+        // Verify per-category mileage series
+        val mileageSeries = MileageCalculator.calculatePerCategoryMileageSeries(entries)
+        assertEquals(2, mileageSeries.size) // Petrol and Diesel
+
+        val petrolMileage = mileageSeries.first { it.category == FuelCategory.PETROL }
+        val dieselMileage = mileageSeries.first { it.category == FuelCategory.DIESEL }
+
+        // Petrol: 2 entries (1000→2000), mileage = (2000-1000)/20 = 50
+        assertEquals(2, petrolMileage.fillups.size)
+        assertNull(petrolMileage.fillups[0].mileageKmPerL)
+        assertEquals(50.0, petrolMileage.fillups[1].mileageKmPerL!!, 0.001)
+
+        // Diesel: 1 entry, no mileage
+        assertEquals(1, dieselMileage.fillups.size)
+        assertNull(dieselMileage.fillups[0].mileageKmPerL)
+
+        // Verify per-category monthly spend
+        val monthlySpends = MileageCalculator.calculateMonthlySpend(entries)
+        val categorySpends = MileageCalculator.calculatePerCategoryMonthlySpend(entries, monthlySpends)
+
+        assertEquals(2, categorySpends.size) // Petrol and Diesel
+        val petrolSpend = categorySpends.first { it.category == FuelCategory.PETROL }
+        val dieselSpend = categorySpends.first { it.category == FuelCategory.DIESEL }
+
+        // Jan: Petrol=3000+2000=5000, Diesel=2500
+        assertEquals(5000.0, petrolSpend.values[0], 0.001)
+        assertEquals(2500.0, dieselSpend.values[0], 0.001)
+
+        // Delete Diesel entry
+        val entry2 = repository.getEntryById(id2)!!
+        repository.deleteEntry(entry2)
+
+        val entriesAfterDelete = repository.getAllEntries()
+        val mileageSeriesAfterDelete = MileageCalculator.calculatePerCategoryMileageSeries(entriesAfterDelete)
+        assertEquals(1, mileageSeriesAfterDelete.size) // Only Petrol
+        assertEquals(FuelCategory.PETROL, mileageSeriesAfterDelete[0].category)
+    }
+
+    @Test
+    fun fullRegression_allCategoriesEmptyExceptOne_filterShowsCorrectSubset() = runBlocking {
+        // I-REG-04: Single-category dataset: filter returns all, other filters return empty
+        val date1 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 10) }.timeInMillis
+        val date2 = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 20) }.timeInMillis
+
+        // Only Petrol entries
+        repository.insertEntry(FuelEntry(date = date1, odometer = 1000, liters = 30.0, cost = 3000.0, fuelCategory = "Petrol"))
+        repository.insertEntry(FuelEntry(date = date2, odometer = 1500, liters = 25.0, cost = 2500.0, fuelCategory = "Petrol"))
+
+        val petrol = repository.getAllEntries(FuelCategory.PETROL)
+        val diesel = repository.getAllEntries(FuelCategory.DIESEL)
+        val cng = repository.getAllEntries(FuelCategory.CNG)
+        val all = repository.getAllEntries()
+
+        assertEquals(2, petrol.size)
+        assertEquals(0, diesel.size)
+        assertEquals(0, cng.size)
+        assertEquals(2, all.size)
+
+        // Flow also works correctly
+        val petrolFlow = repository.getAllEntriesFlow(FuelCategory.PETROL).first()
+        val dieselFlow = repository.getAllEntriesFlow(FuelCategory.DIESEL).first()
+        val cngFlow = repository.getAllEntriesFlow(FuelCategory.CNG).first()
+
+        assertEquals(2, petrolFlow.size)
+        assertEquals(0, dieselFlow.size)
+        assertEquals(0, cngFlow.size)
     }
 }

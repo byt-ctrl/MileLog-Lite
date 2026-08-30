@@ -9,6 +9,7 @@ import com.example.myapplication.MileLogApplication
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.domain.validation.FieldError
 import com.example.myapplication.domain.validation.FuelEntryValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,9 @@ import kotlinx.coroutines.launch
 
 /**
  * UI State representing the Add/Edit Fuel Entry form.
+ *
+ * Error fields carry [FieldError] keys; the UI resolves them via
+ * `stringResource()` so error copy follows the user's locale.
  */
 data class AddEditUiState(
     val entryId: Long = 0L,
@@ -26,13 +30,15 @@ data class AddEditUiState(
     val liters: String = "",
     val cost: String = "",
     val fuelCategory: FuelCategory = FuelCategory.DEFAULT,
-    val dateError: String? = null,
-    val odometerError: String? = null,
-    val litersError: String? = null,
-    val costError: String? = null,
+    val dateError: FieldError? = null,
+    val odometerError: FieldError? = null,
+    val odometerMonotonicContext: Int? = null,
+    val litersError: FieldError? = null,
+    val costError: FieldError? = null,
     val previousOdometer: Int? = null,
     val isLoading: Boolean = false,
-    val loadError: String? = null,
+    val loadError: FieldError? = null,
+    val loadErrorContext: String? = null,
     val isEntrySaved: Boolean = false
 ) {
     val isEditMode: Boolean get() = entryId > 0L
@@ -88,7 +94,7 @@ class AddEditViewModel(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                loadError = "This entry no longer exists. It may have been deleted."
+                                loadError = FieldError.LOAD_MISSING
                             )
                         }
                     }
@@ -97,7 +103,7 @@ class AddEditViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            loadError = "Couldn't load this entry. Please try again."
+                            loadError = FieldError.LOAD_FAILED
                         )
                     }
                 }
@@ -121,7 +127,8 @@ class AddEditViewModel(
         _uiState.update {
             it.copy(
                 odometer = value,
-                odometerError = null
+                odometerError = null,
+                odometerMonotonicContext = null
             )
         }
     }
@@ -163,6 +170,7 @@ class AddEditViewModel(
                 it.copy(
                     dateError = validationResult.dateError,
                     odometerError = validationResult.odometerError,
+                    odometerMonotonicContext = validationResult.odometerMonotonicContext,
                     litersError = validationResult.litersError,
                     costError = validationResult.costError
                 )

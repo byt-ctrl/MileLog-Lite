@@ -150,12 +150,12 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Instrumented tests for DAO queries with category filters.
 
 ### 5.2 Sprint 5 Milestone
-- [ ] User can select a fuel type (Petrol, Diesel, CNG) when adding/editing entries, and filter history/charts by fuel category.
+- [x] User can select a fuel type (Petrol, Diesel, CNG) when adding/editing entries, and filter history/charts by fuel category.
 
 ### 5.3 Sprint 5 Testing
-- [ ] Unit tests: fuel category enum values, filtering by category.
-- [ ] Instrumented tests: DAO insert/query with category field, filter queries.
-- [ ] Manual test: add entries with Petrol, Diesel, CNG types, verify charts show category-specific data.
+- [x] Unit tests: fuel category enum values, filtering by category.
+- [x] Instrumented tests: DAO insert/query with category field, filter queries.
+- [x] Manual test: add entries with Petrol, Diesel, CNG types, verify charts show category-specific data.
 
 ---
 

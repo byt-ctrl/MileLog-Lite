@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -45,9 +47,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
+import com.example.myapplication.domain.validation.FieldError
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
@@ -90,14 +98,17 @@ fun AddEditEntryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (uiState.isEditMode) "Edit Fuel Entry" else "Add Fuel Entry"
+                        text = stringResource(
+                            if (uiState.isEditMode) R.string.entry_title_edit
+                            else R.string.entry_title_add
+                        )
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back"
+                            contentDescription = stringResource(R.string.action_navigate_back)
                         )
                     }
                 },
@@ -109,10 +120,12 @@ fun AddEditEntryScreen(
     ) { innerPadding ->
         when {
             uiState.isLoading -> {
+                val loadingLabel = stringResource(R.string.entry_loading)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
+                        .padding(innerPadding)
+                        .semantics(mergeDescendants = true) { contentDescription = loadingLabel },
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -120,6 +133,7 @@ fun AddEditEntryScreen(
             }
 
             uiState.loadError != null -> {
+                val loadErrorText = stringResource(uiState.loadError!!.messageRes)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -132,20 +146,21 @@ fun AddEditEntryScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = uiState.loadError!!,
+                            text = loadErrorText,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = viewModel::retryLoad) {
-                            Text("Retry")
+                            Text(stringResource(R.string.action_retry))
                         }
                     }
                 }
             }
 
             else -> {
+                val datePickerA11y = stringResource(R.string.entry_field_date_a11y)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -155,71 +170,97 @@ fun AddEditEntryScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-            // Date Picker Field
             OutlinedTextField(
                 value = dateFormatter.format(Date(uiState.dateMillis)),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Date of Fill-up") },
+                label = { Text(stringResource(R.string.entry_field_date_label)) },
                 trailingIcon = {
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
-                            contentDescription = "Select date"
+                            contentDescription = stringResource(R.string.entry_field_date_a11y)
                         )
                     }
                 },
                 isError = uiState.dateError != null,
-                supportingText = uiState.dateError?.let { { Text(it) } },
-                modifier = Modifier.fillMaxWidth()
+                supportingText = uiState.dateError?.let { {
+                    Text(stringResource(it.messageRes))
+                } },
+                // The field itself is the picker entry: tapping anywhere opens
+                // the date picker, and TalkBack reads it as a single Button so
+                // keyboard / screen-reader users get one focus, one action.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = { showDatePicker = true })
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = datePickerA11y
+                    }
             )
 
-            // Odometer Field
+            val odometerHelper: String? = when {
+                uiState.odometerError != null -> {
+                    val res = uiState.odometerError!!
+                    val ctx = uiState.odometerMonotonicContext
+                    if (res == FieldError.ODOMETER_NOT_MONOTONIC && ctx != null) {
+                        stringResource(res.messageRes, ctx)
+                    } else {
+                        stringResource(res.messageRes)
+                    }
+                }
+                uiState.previousOdometer != null && !uiState.isEditMode -> {
+                    stringResource(R.string.entry_field_odometer_helper, uiState.previousOdometer!!)
+                }
+                else -> null
+            }
+
             OutlinedTextField(
                 value = uiState.odometer,
                 onValueChange = { viewModel.onOdometerChanged(it) },
-                label = { Text("Odometer Reading") },
-                suffix = { Text("km") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = { Text(stringResource(R.string.entry_field_odometer_label)) },
+                suffix = { Text(stringResource(R.string.entry_field_odometer_suffix)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
                 isError = uiState.odometerError != null,
-                supportingText = {
-                    if (uiState.odometerError != null) {
-                        Text(uiState.odometerError!!)
-                    } else if (uiState.previousOdometer != null && !uiState.isEditMode) {
-                        Text("Previous reading: ${uiState.previousOdometer} km")
-                    }
-                },
+                supportingText = odometerHelper?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Fuel Quantity Field
             OutlinedTextField(
                 value = uiState.liters,
                 onValueChange = { viewModel.onLitersChanged(it) },
-                label = { Text("Fuel Quantity") },
-                suffix = { Text("L") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                label = { Text(stringResource(R.string.entry_field_liters_label)) },
+                suffix = { Text(stringResource(R.string.entry_field_liters_suffix)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
                 isError = uiState.litersError != null,
-                supportingText = uiState.litersError?.let { { Text(it) } },
+                supportingText = uiState.litersError?.let { { Text(stringResource(it.messageRes)) } },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Total Cost Field
             OutlinedTextField(
                 value = uiState.cost,
                 onValueChange = { viewModel.onCostChanged(it) },
-                label = { Text("Total Cost") },
-                prefix = { Text("₹ ") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                label = { Text(stringResource(R.string.entry_field_cost_label)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { viewModel.saveEntry() }
+                ),
                 singleLine = true,
                 isError = uiState.costError != null,
-                supportingText = uiState.costError?.let { { Text(it) } },
+                supportingText = uiState.costError?.let { { Text(stringResource(it.messageRes)) } },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Fuel Category Dropdown (Material 3 ExposedDropdownMenuBox)
             FuelCategoryDropdown(
                 selected = uiState.fuelCategory,
                 onCategorySelected = viewModel::onFuelCategoryChanged,
@@ -228,7 +269,6 @@ fun AddEditEntryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Save Button
             Button(
                 onClick = { viewModel.saveEntry() },
                 modifier = Modifier
@@ -236,7 +276,10 @@ fun AddEditEntryScreen(
                     .heightIn(min = 52.dp)
             ) {
                 Text(
-                    text = if (uiState.isEditMode) "Update Entry" else "Save Entry",
+                    text = stringResource(
+                        if (uiState.isEditMode) R.string.action_update
+                        else R.string.action_save
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center
                 )
@@ -261,12 +304,12 @@ fun AddEditEntryScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("Select date")
+                    Text(stringResource(R.string.entry_field_date_dialog_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         ) {
@@ -297,11 +340,11 @@ private fun FuelCategoryDropdown(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selected.displayName,
+            value = stringResource(selected.labelRes),
             onValueChange = {},
             readOnly = true,
             singleLine = true,
-            label = { Text("Fuel Category") },
+            label = { Text(stringResource(R.string.entry_field_category_label)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
@@ -317,7 +360,7 @@ private fun FuelCategoryDropdown(
         ) {
             FuelCategory.entries.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category.displayName) },
+                    text = { Text(stringResource(category.labelRes)) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

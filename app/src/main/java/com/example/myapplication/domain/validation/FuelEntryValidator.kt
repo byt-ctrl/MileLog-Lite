@@ -1,14 +1,38 @@
 package com.example.myapplication.domain.validation
 
+import androidx.annotation.StringRes
+import com.example.myapplication.R
+
 /**
- * Result of validating a fuel entry input form.
+ * Stable error identifiers for fuel-entry form validation. The domain layer
+ * returns these keys; the UI layer resolves them to localized messages via
+ * `stringResource()` so the validator stays free of Android resources.
+ */
+enum class FieldError(@StringRes val messageRes: Int) {
+    DATE_REQUIRED(R.string.error_date_required),
+    ODOMETER_REQUIRED(R.string.error_odometer_required),
+    ODOMETER_NOT_POSITIVE(R.string.error_odometer_positive),
+    ODOMETER_NOT_MONOTONIC(R.string.error_odometer_monotonic),
+    LITERS_REQUIRED(R.string.error_liters_required),
+    LITERS_NOT_POSITIVE(R.string.error_liters_positive),
+    COST_REQUIRED(R.string.error_cost_required),
+    COST_NOT_POSITIVE(R.string.error_cost_positive),
+    LOAD_MISSING(R.string.entry_error_load_missing),
+    LOAD_FAILED(R.string.entry_error_load_failed)
+}
+
+/**
+ * Result of validating a fuel entry input form. Each field carries either
+ * null (valid) or a [FieldError] key. The UI resolves the key to the
+ * locale-appropriate message and supplies any required arguments.
  */
 data class ValidationResult(
     val isValid: Boolean,
-    val dateError: String? = null,
-    val odometerError: String? = null,
-    val litersError: String? = null,
-    val costError: String? = null
+    val dateError: FieldError? = null,
+    val odometerError: FieldError? = null,
+    val odometerMonotonicContext: Int? = null,
+    val litersError: FieldError? = null,
+    val costError: FieldError? = null
 )
 
 /**
@@ -32,48 +56,48 @@ object FuelEntryValidator {
         costStr: String,
         previousOdometer: Int? = null
     ): ValidationResult {
-        var dateError: String? = null
-        var odometerError: String? = null
-        var litersError: String? = null
-        var costError: String? = null
+        var dateError: FieldError? = null
+        var odometerError: FieldError? = null
+        var odometerMonotonicContext: Int? = null
+        var litersError: FieldError? = null
+        var costError: FieldError? = null
 
-        // 1. Validate Date
         if (dateMillis == null || dateMillis <= 0) {
-            dateError = "Please select a valid date"
+            dateError = FieldError.DATE_REQUIRED
         }
 
-        // 2. Validate Odometer
         val odometerInt = odometerStr.trim().toIntOrNull()
         if (odometerStr.trim().isEmpty()) {
-            odometerError = "Odometer reading is required"
+            odometerError = FieldError.ODOMETER_REQUIRED
         } else if (odometerInt == null || odometerInt <= 0) {
-            odometerError = "Odometer must be a positive number"
+            odometerError = FieldError.ODOMETER_NOT_POSITIVE
         } else if (previousOdometer != null && odometerInt <= previousOdometer) {
-            odometerError = "Odometer must be greater than previous reading ($previousOdometer km)"
+            odometerError = FieldError.ODOMETER_NOT_MONOTONIC
+            odometerMonotonicContext = previousOdometer
         }
 
-        // 3. Validate Liters (Fuel Volume)
         val litersDouble = litersStr.trim().toDoubleOrNull()
         if (litersStr.trim().isEmpty()) {
-            litersError = "Fuel quantity is required"
+            litersError = FieldError.LITERS_REQUIRED
         } else if (litersDouble == null || litersDouble <= 0.0) {
-            litersError = "Fuel quantity must be greater than 0"
+            litersError = FieldError.LITERS_NOT_POSITIVE
         }
 
-        // 4. Validate Cost
         val costDouble = costStr.trim().toDoubleOrNull()
         if (costStr.trim().isEmpty()) {
-            costError = "Total cost is required"
+            costError = FieldError.COST_REQUIRED
         } else if (costDouble == null || costDouble <= 0.0) {
-            costError = "Cost must be greater than 0"
+            costError = FieldError.COST_NOT_POSITIVE
         }
 
-        val isValid = dateError == null && odometerError == null && litersError == null && costError == null
+        val isValid = dateError == null && odometerError == null &&
+            litersError == null && costError == null
 
         return ValidationResult(
             isValid = isValid,
             dateError = dateError,
             odometerError = odometerError,
+            odometerMonotonicContext = odometerMonotonicContext,
             litersError = litersError,
             costError = costError
         )
