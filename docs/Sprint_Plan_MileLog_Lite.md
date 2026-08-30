@@ -147,7 +147,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Add category filter chips on History screen to filter entries by fuel type.
 - [x] Update CSV export to include fuel category column.
 - [x] Unit tests for fuel category enum and filtering logic.
-- [ ] Instrumented tests for DAO queries with category filters.
+- [x] Instrumented tests for DAO queries with category filters.
 
 ### 5.2 Sprint 5 Milestone
 - [ ] User can select a fuel type (Petrol, Diesel, CNG) when adding/editing entries, and filter history/charts by fuel category.
