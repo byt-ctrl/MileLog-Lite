@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MileLog" parent="android:Theme.Material.NoActionBar" />
+    <!--
+        Host theme for the Compose surface. The actual M3 ColorScheme, Typography,
+        and Shapes are applied by MileLogTheme in Compose; this XML theme only
+        controls the pre-Compose backdrop, status / navigation bar appearance,
+        and the system-bar color before the first frame paints.
+
+        We stay on a built-in platform parent so we don't require a dependency
+        on com.google.android.material (which would be needed for Theme.Material3.*).
+        The Compose M3 theme owns the visual surface end-to-end.
+    -->
+    <style name="Theme.MileLog" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>
