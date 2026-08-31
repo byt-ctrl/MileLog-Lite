@@ -8,19 +8,19 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 /**
- * MileLog Lite color schemes built from the fuel-brand palette in [Color.kt].
+ * MileLog Lite color schemes built from the Kinetic Logic palette in [Color.kt].
  * Dynamic color is intentionally OFF so the brand identity stays consistent
  * across devices (per DESIGN.md §7.1).
  */
 private val LightColorScheme = lightColorScheme(
-    primary = TealPrimaryLight,
-    onPrimary = OnTealPrimaryLight,
-    primaryContainer = TealContainerLight,
-    onPrimaryContainer = OnTealContainerLight,
-    secondary = AmberSecondaryLight,
-    onSecondary = OnAmberSecondaryLight,
-    secondaryContainer = AmberContainerLight,
-    onSecondaryContainer = OnAmberContainerLight,
+    primary = BluePrimaryLight,
+    onPrimary = OnBluePrimaryLight,
+    primaryContainer = BlueContainerLight,
+    onPrimaryContainer = OnBlueContainerLight,
+    secondary = GreenSecondaryLight,
+    onSecondary = OnGreenSecondaryLight,
+    secondaryContainer = GreenContainerLight,
+    onSecondaryContainer = OnGreenContainerLight,
     tertiary = AsphaltTertiaryLight,
     onTertiary = OnSurfaceLight,
     background = BackgroundLight,
@@ -38,18 +38,18 @@ private val LightColorScheme = lightColorScheme(
 )
 
 /**
- * Authored dark scheme, not an inversion of the light one: lighter teal primary,
- * deeper asphalt surfaces, amber softened so it does not glow.
+ * Authored dark scheme, not an inversion of the light one: lighter blue primary,
+ * deeper asphalt surfaces, green softened so it does not glow.
  */
 private val DarkColorScheme = darkColorScheme(
-    primary = TealPrimaryDark,
-    onPrimary = OnTealPrimaryDark,
-    primaryContainer = TealContainerDark,
-    onPrimaryContainer = OnTealContainerDark,
-    secondary = AmberSecondaryDark,
-    onSecondary = OnAmberSecondaryDark,
-    secondaryContainer = AmberContainerDark,
-    onSecondaryContainer = OnAmberContainerDark,
+    primary = BluePrimaryDark,
+    onPrimary = OnBluePrimaryDark,
+    primaryContainer = BlueContainerDark,
+    onPrimaryContainer = OnBlueContainerDark,
+    secondary = GreenSecondaryDark,
+    onSecondary = OnGreenSecondaryDark,
+    secondaryContainer = GreenContainerDark,
+    onSecondaryContainer = OnGreenContainerDark,
     tertiary = AsphaltTertiaryDark,
     onTertiary = OnSurfaceDark,
     background = BackgroundDark,

@@ -2,33 +2,33 @@ package com.example.myapplication.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// --- MileLog Lite brand palette (fuel teal + amber accent + asphalt neutrals) ---
+// --- MileLog Lite brand palette (dependable blue + business green + asphalt neutrals) ---
 
-// Primary: fuel teal
-val TealPrimaryLight = Color(0xFF1B4D4A)
-val TealPrimaryDark = Color(0xFF7ED4CF)
-val OnTealPrimaryLight = Color(0xFFFFFFFF)
-val OnTealPrimaryDark = Color(0xFF003734)
-val TealContainerLight = Color(0xFFB2F0EA)
-val TealContainerDark = Color(0xFF0A4F4B)
-val OnTealContainerLight = Color(0xFF00201E)
-val OnTealContainerDark = Color(0xFFB2F0EA)
+// Primary: dependable blue
+val BluePrimaryLight = Color(0xFF003D9B)
+val BluePrimaryDark = Color(0xFFB2C5FF)
+val OnBluePrimaryLight = Color(0xFFFFFFFF)
+val OnBluePrimaryDark = Color(0xFF00215F)
+val BlueContainerLight = Color(0xFF0052CC)
+val BlueContainerDark = Color(0xFF0052CC)
+val OnBlueContainerLight = Color(0xFFC4D2FF)
+val OnBlueContainerDark = Color(0xFFC4D2FF)
 
-// Secondary: fuel amber (accent, used sparingly)
-val AmberSecondaryLight = Color(0xFFE8A838)
-val AmberSecondaryDark = Color(0xFFFFC96B)
-val OnAmberSecondaryLight = Color(0xFF3E2E04)
-val OnAmberSecondaryDark = Color(0xFF452F00)
-val AmberContainerLight = Color(0xFFFFE3A1)
-val AmberContainerDark = Color(0xFF5C4200)
-val OnAmberContainerLight = Color(0xFF3E2E04)
-val OnAmberContainerDark = Color(0xFFFFE3A1)
+// Secondary: business/success green
+val GreenSecondaryLight = Color(0xFF006C47)
+val GreenSecondaryDark = Color(0xFF65DCA4)
+val OnGreenSecondaryLight = Color(0xFFFFFFFF)
+val OnGreenSecondaryDark = Color(0xFF005235)
+val GreenContainerLight = Color(0xFF82F9BE)
+val GreenContainerDark = Color(0xFF005235)
+val OnGreenContainerLight = Color(0xFF00734C)
+val OnGreenContainerDark = Color(0xFF82F9BE)
 
 // Tertiary: asphalt (used for tertiary text/icons)
 val AsphaltTertiaryLight = Color(0xFF3A3D40)
 val AsphaltTertiaryDark = Color(0xFFBFC8CB)
 
-// Neutrals tinted toward asphalt/teal (never pure gray)
+// Neutrals tinted toward asphalt (never pure gray)
 val SurfaceLight = Color(0xFFFFFFFF)
 val SurfaceDark = Color(0xFF1E2121)
 val BackgroundLight = Color(0xFFF6F8F7)
