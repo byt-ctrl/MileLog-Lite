@@ -218,13 +218,13 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] Add new routes: `SETTINGS`, `REPORTS` (alias for Charts)
 - [ ] Update `MileLogRoutes` object with new route constants
 - [ ] Create `BottomNavBar.kt` composable with 5 items:
-    - Dashboard (icon: `Dashboard`, label: "Dashboard")
-    - History (icon: `History`, label: "History")
-    - Add (icon: `AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
-    - Reports (icon: `Assessment`, label: "Reports")
-    - Settings (icon: `Settings`, label: "Settings") — active state uses `fontVariationSettings = "'FILL' 1"` (filled icon)
-- [ ] Active tab styling: `bg=primaryContainer`, `color=onPrimaryContainer`, `RoundedCornerShape(12.dp)`
-- [ ] Inactive tab styling: `color=onSurfaceVariant`
+    - Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
+    - History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
+    - Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
+    - Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
+    - Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
+- [ ] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
+- [ ] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
 - [ ] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
 - [ ] Bottom nav bar: `h=64dp`, `bg=surface`, `shadow(elevation=4.dp, blurRadius=12.dp, alpha=0.15)`, `roundedTopStart=16.dp`, `roundedTopEnd=16.dp`
 
@@ -331,7 +331,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 #### 6.6.3 Manual Testing
 - [ ] Theme switching: Light → Dark → System, verify all screens update
 - [ ] Distance units: Switch km ↔ mi, verify Dashboard KPIs and History entries convert
-- [ ] Bottom nav: All 5 tabs navigate correctly, active state highlights properly
+- [ ] Bottom nav: All 5 tabs navigate correctly, active tab shows filled icon (Icons.Rounded), inactive tabs show outlined icon (Icons.Outlined)
 - [ ] Add tab: Opens entry form from any screen
 - [ ] Settings: Export Logs works from Settings screen
 - [ ] Settings: Clear Data shows confirmation, clears all entries, dashboard resets to empty state
