@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -17,53 +16,105 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = OnBluePrimaryLight,
     primaryContainer = BlueContainerLight,
     onPrimaryContainer = OnBlueContainerLight,
+    primaryFixed = PrimaryFixed,
+    primaryFixedDim = PrimaryFixedDim,
+    onPrimaryFixed = OnPrimaryFixed,
+    onPrimaryFixedVariant = OnPrimaryFixedVariant,
     secondary = GreenSecondaryLight,
     onSecondary = OnGreenSecondaryLight,
     secondaryContainer = GreenContainerLight,
     onSecondaryContainer = OnGreenContainerLight,
-    tertiary = AsphaltTertiaryLight,
-    onTertiary = OnSurfaceLight,
+    secondaryFixed = SecondaryFixed,
+    secondaryFixedDim = SecondaryFixedDim,
+    onSecondaryFixed = OnSecondaryFixed,
+    onSecondaryFixedVariant = OnSecondaryFixedVariant,
+    tertiary = TertiaryLight,
+    onTertiary = OnTertiaryLight,
+    tertiaryContainer = TertiaryContainerLight,
+    onTertiaryContainer = OnTertiaryContainerLight,
+    tertiaryFixed = TertiaryFixed,
+    tertiaryFixedDim = TertiaryFixedDim,
+    onTertiaryFixed = OnTertiaryFixed,
+    onTertiaryFixedVariant = OnTertiaryFixedVariant,
+    error = ErrorLight,
+    onError = OnErrorLight,
+    errorContainer = ErrorContainerLight,
+    onErrorContainer = OnErrorContainerLight,
     background = BackgroundLight,
     onBackground = OnSurfaceLight,
     surface = SurfaceLight,
     onSurface = OnSurfaceLight,
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = OnSurfaceVariantLight,
+    surfaceDim = SurfaceDimLight,
+    surfaceBright = SurfaceBrightLight,
+    surfaceContainerLowest = SurfaceContainerLowestLight,
+    surfaceContainerLow = SurfaceContainerLowLight,
+    surfaceContainer = SurfaceContainerLight,
+    surfaceContainerHigh = SurfaceContainerHighLight,
+    surfaceContainerHighest = SurfaceContainerHighestLight,
+    surfaceTint = SurfaceTintLight,
+    inverseSurface = InverseSurfaceLight,
+    inverseOnSurface = InverseOnSurfaceLight,
+    inversePrimary = InversePrimaryLight,
     outline = OutlineLight,
-    outlineVariant = OutlineVariantLight,
-    error = ErrorLight,
-    onError = OnErrorLight,
-    errorContainer = ErrorContainerLight,
-    onErrorContainer = OnErrorContainerLight
+    outlineVariant = OutlineVariantLight
 )
 
 /**
- * Authored dark scheme, not an inversion of the light one: lighter blue primary,
- * deeper asphalt surfaces, green softened so it does not glow.
+ * Authored dark scheme derived from the light one's inverse counterparts: surface takes
+ * inverseSurface (#243145), onSurface takes inverseOnSurface (#EBF1FF), primary takes
+ * inversePrimary (#B2C5FF). Container tones step lighter than the canvas so elevation
+ * still reads, and on/outline roles mirror the light scheme at opposite tonal ends.
  */
 private val DarkColorScheme = darkColorScheme(
     primary = BluePrimaryDark,
     onPrimary = OnBluePrimaryDark,
     primaryContainer = BlueContainerDark,
     onPrimaryContainer = OnBlueContainerDark,
+    primaryFixed = PrimaryFixed,
+    primaryFixedDim = PrimaryFixedDim,
+    onPrimaryFixed = OnPrimaryFixed,
+    onPrimaryFixedVariant = OnPrimaryFixedVariant,
     secondary = GreenSecondaryDark,
     onSecondary = OnGreenSecondaryDark,
     secondaryContainer = GreenContainerDark,
     onSecondaryContainer = OnGreenContainerDark,
-    tertiary = AsphaltTertiaryDark,
-    onTertiary = OnSurfaceDark,
+    secondaryFixed = SecondaryFixed,
+    secondaryFixedDim = SecondaryFixedDim,
+    onSecondaryFixed = OnSecondaryFixed,
+    onSecondaryFixedVariant = OnSecondaryFixedVariant,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+    tertiaryFixed = TertiaryFixed,
+    tertiaryFixedDim = TertiaryFixedDim,
+    onTertiaryFixed = OnTertiaryFixed,
+    onTertiaryFixedVariant = OnTertiaryFixedVariant,
+    error = ErrorDark,
+    onError = OnErrorDark,
+    errorContainer = ErrorContainerDark,
+    onErrorContainer = OnErrorContainerDark,
     background = BackgroundDark,
     onBackground = OnSurfaceDark,
     surface = SurfaceDark,
     onSurface = OnSurfaceDark,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnSurfaceVariantDark,
+    surfaceDim = SurfaceDimDark,
+    surfaceBright = SurfaceBrightDark,
+    surfaceContainerLowest = SurfaceContainerLowestDark,
+    surfaceContainerLow = SurfaceContainerLowDark,
+    surfaceContainer = SurfaceContainerDark,
+    surfaceContainerHigh = SurfaceContainerHighDark,
+    surfaceContainerHighest = SurfaceContainerHighestDark,
+    surfaceTint = SurfaceTintDark,
+    inverseSurface = InverseSurfaceDark,
+    inverseOnSurface = InverseOnSurfaceDark,
+    inversePrimary = InversePrimaryDark,
     outline = OutlineDark,
-    outlineVariant = OutlineVariantDark,
-    error = ErrorDark,
-    onError = OnErrorDark,
-    errorContainer = ErrorContainerDark,
-    onErrorContainer = OnErrorContainerDark
+    outlineVariant = OutlineVariantDark
 )
 
 @Composable

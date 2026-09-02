@@ -174,10 +174,10 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Replace current Primary (`#1B4D4A` Teal) → `#003D9B` (Dependable Blue)
 - [x] Replace Secondary (`#E8A838` Amber) → `#006C47` (Business/Success Green)
 - [x] Add new accent tokens: `#FF8B00` (Personal Orange), `#36B37E` (Business Green), `#DE350B` (Active Status red)
-- [ ] Map all M3 color roles to new Kinetic Logic tokens:
+- [x] Map all M3 color roles to new Kinetic Logic tokens:
     - Light scheme: `surface=#F9F9FF`, `surfaceBg=#F4F5F7`, `surfaceContainerLowest=#FFFFFF`, `surfaceContainerLow=#F0F3FF`, `surfaceContainer=#E7EEFF`, `surfaceContainerHigh=#DEE8FF`, `surfaceContainerHighest=#D6E3FE`, `onSurface=#0E1C2F`, `onSurfaceVariant=#434654`, `outline=#737685`, `outlineVariant=#C3C6D6`
     - Dark scheme: derive inverse counterparts (`inverseSurface=#243145`, `inverseOnSurface=#EBF1FF`, `inversePrimary=#B2C5FF`)
-- [ ] Ensure both Light and Dark schemes use the new palette
+- [x] Ensure both Light and Dark schemes use the new palette
 
 #### 6.1.2 Typography Overhaul (`Type.kt`)
 - [ ] Add Inter font family (download `Inter-Regular.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf` into `res/font/`)
