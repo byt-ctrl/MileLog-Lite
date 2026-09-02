@@ -24,6 +24,11 @@ val GreenContainerDark = Color(0xFF005235)
 val OnGreenContainerLight = Color(0xFF00734C)
 val OnGreenContainerDark = Color(0xFF82F9BE)
 
+// Accents: trip classification & active status (Kinetic Logic)
+val PersonalOrange = Color(0xFFFF8B00)
+val BusinessGreen = Color(0xFF36B37E)
+val ActiveStatusRed = Color(0xFFDE350B)
+
 // Tertiary: asphalt (used for tertiary text/icons)
 val AsphaltTertiaryLight = Color(0xFF3A3D40)
 val AsphaltTertiaryDark = Color(0xFFBFC8CB)
