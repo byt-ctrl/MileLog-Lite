@@ -187,9 +187,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Update `labelSmall` with 0.05em letter spacing for metadata labels
 
 #### 6.1.3 Spacing & Shape System
-- [ ] Create `Spacing.kt` object with 8px base scale: `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48`
-- [ ] Create `Shape.kt` with rounded shape tokens matching design: `sm=4` (0.25rem), `md=8` (0.5rem), `lg=12` (0.75rem), `xl=16` (1rem), `xxl=24` (1.5rem), `full=9999`
-- [ ] Update `Theme.kt` to use new shapes: 8px default for cards/buttons/inputs, 16px for chips/tags
+- [x] Create `Spacing.kt` object with 8px base scale: `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48`
+- [x] Create `Shape.kt` with rounded shape tokens matching design: `sm=4` (0.25rem), `md=8` (0.5rem), `lg=12` (0.75rem), `xl=16` (1rem), `xxl=24` (1.5rem), `full=9999`
+- [x] Update `Theme.kt` to use new shapes: 8px default for cards/buttons/inputs, 16px for chips/tags
 
 #### 6.1.4 Elevation System
 - [ ] Implement tonal layer approach:

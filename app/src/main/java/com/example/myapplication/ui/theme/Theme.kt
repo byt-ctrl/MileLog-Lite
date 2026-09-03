@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 
 /**
  * MileLog Lite color schemes built from the Kinetic Logic palette in [Color.kt].
@@ -124,9 +125,15 @@ fun MileLogTheme(
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalSpacing provides Spacing,
+        LocalMileLogShapes provides MileLogShapes
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = MileLogM3Shapes,
+            content = content
+        )
+    }
 }
