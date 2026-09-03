@@ -180,11 +180,11 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Ensure both Light and Dark schemes use the new palette
 
 #### 6.1.2 Typography Overhaul (`Type.kt`)
-- [ ] Add Inter font family (download `Inter-Regular.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf` into `res/font/`)
-- [ ] Replace system font with Inter across all text styles
-- [ ] Add specialized `displayLarge` style (48sp, Bold, -0.02em letterSpacing, `fontFeatureSettings = "tnum"`) for dashboard KPIs — tabular figures ensure vertical number alignment
-- [ ] Add `displayMedium` variant (36sp, Bold, -0.02em) for smaller-screen KPIs
-- [ ] Update `labelSmall` with 0.05em letter spacing for metadata labels
+- [x] Add Inter font family (download `Inter-Regular.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf` into `res/font/`)
+- [x] Replace system font with Inter across all text styles
+- [x] Add specialized `displayLarge` style (48sp, Bold, -0.02em letterSpacing, `fontFeatureSettings = "tnum"`) for dashboard KPIs — tabular figures ensure vertical number alignment
+- [x] Add `displayMedium` variant (36sp, Bold, -0.02em) for smaller-screen KPIs
+- [x] Update `labelSmall` with 0.05em letter spacing for metadata labels
 
 #### 6.1.3 Spacing & Shape System
 - [ ] Create `Spacing.kt` object with 8px base scale: `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48`
