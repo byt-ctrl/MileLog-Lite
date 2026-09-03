@@ -127,7 +127,8 @@ fun MileLogTheme(
 
     CompositionLocalProvider(
         LocalSpacing provides Spacing,
-        LocalMileLogShapes provides MileLogShapes
+        LocalMileLogShapes provides MileLogShapes,
+        LocalMileLogElevation provides MileLogElevation
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

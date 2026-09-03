@@ -20,6 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.MileLogElevation
+import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.level1Shadow
+import com.example.myapplication.ui.theme.level2Shadow
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -50,7 +54,16 @@ fun DashboardScreen(
             // Always available except during load/error — quick-add is the
             // primary task and stays predictable even on an empty state.
             if (!uiState.isLoading && uiState.errorMessage == null) {
-                FloatingActionButton(onClick = onAddEntry) {
+                FloatingActionButton(
+                    onClick = onAddEntry,
+                    modifier = Modifier.level2Shadow(FloatingActionButtonDefaults.shape),
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = MileLogElevation.level2,
+                        pressedElevation = MileLogElevation.level2,
+                        focusedElevation = MileLogElevation.level2,
+                        hoveredElevation = MileLogElevation.level2
+                    )
+                ) {
                     Icon(
                         Icons.Filled.Add,
                         contentDescription = stringResource(R.string.dashboard_fab_add_entry)
@@ -215,8 +228,16 @@ fun DashboardScreen(
                     ElevatedCard(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                        onClick = onViewHistory
+                            .fillMaxHeight()
+                            .level1Shadow(MileLogShapes.md),
+                        onClick = onViewHistory,
+                        shape = MileLogShapes.md,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(
+                            defaultElevation = MileLogElevation.level1
+                        )
                     ) {
                         Column(
                             modifier = Modifier
@@ -247,8 +268,16 @@ fun DashboardScreen(
                     ElevatedCard(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                        onClick = onViewCharts
+                            .fillMaxHeight()
+                            .level1Shadow(MileLogShapes.md),
+                        onClick = onViewCharts,
+                        shape = MileLogShapes.md,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(
+                            defaultElevation = MileLogElevation.level1
+                        )
                     ) {
                         Column(
                             modifier = Modifier
@@ -286,7 +315,14 @@ fun StatCard(
     subtitle: String? = null
 ) {
     ElevatedCard(
-        modifier = modifier
+        modifier = modifier.level1Shadow(MileLogShapes.md),
+        shape = MileLogShapes.md,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = MileLogElevation.level1
+        )
     ) {
         Column(
             modifier = Modifier

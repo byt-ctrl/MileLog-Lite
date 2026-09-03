@@ -192,12 +192,12 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Update `Theme.kt` to use new shapes: 8px default for cards/buttons/inputs, 16px for chips/tags
 
 #### 6.1.4 Elevation System
-- [ ] Implement tonal layer approach:
+- [x] Implement tonal layer approach:
     - Level 0 (Base): `surfaceBg=#F4F5F7` for application background
     - Level 1 (Cards): White surfaces (`surfaceContainerLowest`) with `shadow(elevation=1.dp, shape=RoundedCornerShape(8.dp), color=Color.Black.copy(alpha=0.10), blurRadius=4.dp)`
     - Level 2 (Active Elements): FAB and Bottom Nav with `shadow(elevation=4.dp, shape=..., color=Color.Black.copy(alpha=0.15), blurRadius=12.dp)`
     - Overlays: Bottom sheets/modals use `20%` backdrop dim
-- [ ] Update card composables to use new shadow/elevation tokens
+- [x] Update card composables to use new shadow/elevation tokens
 
 #### 6.1.5 Component Updates
 - [ ] Update TopAppBar: profile avatar (circular, surface-variant background), app title "MileLog Lite" (headlineMedium, primary color), optional notification icon

@@ -28,12 +28,14 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +66,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
+import com.example.myapplication.ui.theme.MileLogElevation
+import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.level1Shadow
+import com.example.myapplication.ui.theme.level2Shadow
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -173,7 +179,16 @@ fun HistoryScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddEntry) {
+            FloatingActionButton(
+                onClick = onAddEntry,
+                modifier = Modifier.level2Shadow(FloatingActionButtonDefaults.shape),
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = MileLogElevation.level2,
+                    pressedElevation = MileLogElevation.level2,
+                    focusedElevation = MileLogElevation.level2,
+                    hoveredElevation = MileLogElevation.level2
+                )
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.history_fab_add_entry)
@@ -303,6 +318,7 @@ fun HistoryScreen(
         }
         AlertDialog(
             onDismissRequest = { entryPendingDelete = null },
+            shape = MileLogShapes.md,
             title = { Text(stringResource(R.string.history_delete_dialog_title)) },
             text = {
                 Text(
@@ -437,7 +453,16 @@ private fun FuelEntryCard(
     val formattedDate = remember(entry.date) { dateFormatter.format(Date(entry.date)) }
 
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .level1Shadow(MileLogShapes.md),
+        shape = MileLogShapes.md,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = MileLogElevation.level1
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

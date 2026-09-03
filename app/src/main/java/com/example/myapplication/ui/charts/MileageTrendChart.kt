@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,9 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.FillupMileage
+import com.example.myapplication.ui.theme.MileLogElevation
+import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.level1Shadow
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
@@ -70,7 +74,15 @@ fun MileageTrendChart(
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { contentDescription = trendA11y }
+            .level1Shadow(MileLogShapes.md)
+            .semantics { contentDescription = trendA11y },
+        shape = MileLogShapes.md,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = MileLogElevation.level1
+        )
     ) {
         Text(
             text = stringResource(R.string.charts_trend_card_title),
