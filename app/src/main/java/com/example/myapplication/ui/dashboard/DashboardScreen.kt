@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.components.MileLogTopAppBar
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.level2Shadow
 import java.text.NumberFormat
@@ -43,12 +44,7 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.dashboard_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+            MileLogTopAppBar()
         },
         floatingActionButton = {
             // Always available except during load/error — quick-add is the

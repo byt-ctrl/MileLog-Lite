@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MileLog Lite</string>
+    <string name="topappbar_avatar_a11y">प्रोफ़ाइल</string>
+    <string name="topappbar_notifications_a11y">सूचनाएं</string>
+</resources>
