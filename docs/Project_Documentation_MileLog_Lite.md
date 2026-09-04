@@ -130,7 +130,7 @@ The application follows **MVVM + Repository** architecture with unidirectional d
 UI (Compose Screens) → ViewModel (StateFlow) → Repository → DAO (Room) → SQLite
                           ↓
                     Domain Logic (Pure Kotlin)
-                    MileageCalculator / FuelEntryValidator
+                    MileageCalculator / FuelEntryValidator / FuelEntryCsvExporter
 ```
 
 ### 4.2 Package Structure
@@ -163,6 +163,9 @@ com.example.myapplication/
     │   ├── ChartsViewModel.kt         # Chart data computation
     │   ├── MileageTrendChart.kt       # MPAndroidChart LineChart wrapper
     │   └── MonthlySpendChart.kt       # MPAndroidChart BarChart wrapper
+    ├── components/
+    │   ├── MileLogTopAppBar.kt        # Shared top app bar
+    │   └── MileLogFab.kt              # Shared floating action button
     ├── dashboard/
     │   ├── DashboardScreen.kt         # 2x2 stat cards + nav tiles + FAB
     │   └── DashboardViewModel.kt      # Dashboard state management
@@ -173,11 +176,14 @@ com.example.myapplication/
     │   ├── HistoryScreen.kt           # Filtered list, delete, undo, CSV export
     │   └── HistoryViewModel.kt        # Category filter, delete+undo, export
     ├── navigation/
-    │   └── MileLiteNavHost.kt         # Routes + NavHost
+    │   └── MileLiteNavHost.kt         # Routes + NavHost (dashboard, history, add/edit, charts)
     └── theme/
         ├── Color.kt                   # Kinetic Logic color palette
-        ├── Theme.kt                   # Light/Dark schemes, dynamic color OFF
-        └── Type.kt                    # M3 Typography hierarchy
+        ├── Theme.kt                   # Light/Dark schemes (follows system), dynamic color OFF
+        ├── Type.kt                    # Inter typography hierarchy
+        ├── Spacing.kt                 # 8px spacing scale + 48dp touch target
+        ├── Shape.kt                   # Rounded shape tokens + M3 mapping
+        └── Elevation.kt               # Tonal elevation levels + shadow helpers
 ```
 
 ### 4.3 Layer Responsibilities
@@ -319,29 +325,39 @@ com.example.myapplication/
 | onSecondary | `#FFFFFF` | `#005235` |
 | secondaryContainer | `#82F9BE` | `#005235` |
 | onSecondaryContainer | `#00734C` | `#82F9BE` |
-| **Tertiary** | `#3A3D40` (Asphalt) | `#BFC8CB` |
-| **Background** | `#F6F8F7` | `#121414` |
-| **Surface** | `#FFFFFF` | `#1E2121` |
-| SurfaceVariant | `#E5EDEA` | `#2B3232` |
-| onSurface | `#1A1C1C` | `#E0E3E2` |
-| onSurfaceVariant | `#3F4948` | `#BFC8C8` |
-| Outline | `#6F7978` | `#899392` |
-| OutlineVariant | `#C2CCC9` | `#3F4948` |
+| **Tertiary** | `#004B51` (Teal) | `#4BD9E5` |
+| onTertiary | `#FFFFFF` | `#002022` |
+| tertiaryContainer | `#00656C` | `#004F55` |
+| onTertiaryContainer | `#5BE6F2` | `#7FF4FF` |
+| **Background** | `#F4F5F7` | `#1A2330` |
+| **Surface** | `#F9F9FF` | `#243145` |
+| surfaceContainerLowest | `#FFFFFF` | `#161E2B` |
+| surfaceContainerLow | `#F0F3FF` | `#1C2634` |
+| surfaceContainer | `#E7EEFF` | `#212C3D` |
+| surfaceContainerHigh | `#DEE8FF` | `#2A3850` |
+| surfaceContainerHighest | `#D6E3FE` | `#304159` |
+| SurfaceVariant | `#D6E3FE` | `#434654` |
+| onSurface | `#0E1C2F` | `#EBF1FF` |
+| onSurfaceVariant | `#434654` | `#C3C6D6` |
+| Outline | `#737685` | `#8D92A5` |
+| OutlineVariant | `#C3C6D6` | `#434654` |
 | Error | `#BA1A1A` | `#FFB4AB` |
 | onError | `#FFFFFF` | `#690005` |
 | ErrorContainer | `#FFDAD6` | `#93000A` |
 | onErrorContainer | `#410002` | `#FFDAD6` |
 
+Accents: `#FF8B00` (Personal Orange), `#36B37E` (Business Green), `#DE350B` (Active Status red). Inverse roles: light `inverseSurface=#243145`, `inverseOnSurface=#EBF1FF`, `inversePrimary=#B2C5FF` (flipped in dark).
+
 **Design Decision:** Dynamic color is intentionally disabled to preserve consistent brand identity.
 
 ### 8.2 Typography
 
-All styles use `FontFamily.Default`. Hierarchy is driven by weight contrast:
+All styles use the Inter family (`inter_regular`, `inter_medium`, `inter_semibold`, `inter_bold`). Hierarchy is driven by weight contrast, with tabular figures (`tnum`) on KPI display styles:
 
 | Style | Weight | Size (sp) | Line Height (sp) | Letter Spacing (sp) |
 |---|---|---|---|---|
-| displayLarge | Bold | 34 | 40 | 0 |
-| displayMedium | Bold | 28 | 34 | 0 |
+| displayLarge | Bold | 48 | 52 | -0.96 |
+| displayMedium | Bold | 36 | 44 | -0.72 |
 | displaySmall | Bold | 24 | 30 | 0 |
 | headlineLarge | SemiBold | 28 | 34 | 0 |
 | headlineMedium | SemiBold | 24 | 30 | 0 |
@@ -354,7 +370,15 @@ All styles use `FontFamily.Default`. Hierarchy is driven by weight contrast:
 | bodySmall | Normal | 12 | 16 | 0.4 |
 | labelLarge | Medium | 14 | 20 | 0.1 |
 | labelMedium | Medium | 12 | 16 | 0.5 |
-| labelSmall | Medium | 11 | 16 | 0.5 |
+| labelSmall | Medium | 11 | 16 | 0.55 |
+
+### 8.3 Spacing, Shapes & Elevation (Kinetic Logic)
+
+- **Spacing (`Spacing.kt`, 8px base):** `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48` (48dp minimum touch height via `touchTargetMinHeight()`).
+- **Shapes (`Shape.kt`):** `sm=4`, `md=8`, `lg=12`, `xl=16`, `xxl=24`, `full=9999`, `chip=xl`. M3 mapping: extraSmall/small/medium → 8px, large → 12px, extraLarge → 24px.
+- **Elevation (`Elevation.kt`, tonal layers):** Level 0 = `background` canvas; Level 1 (cards) = white `surfaceContainerLowest`, 1dp, black 10%, 4dp blur; Level 2 (FAB / bottom nav) = 4dp, black 15%, 12dp blur; overlays = 20% scrim. Helpers: `level1Shadow()`, `level2Shadow()`.
+
+> Note: `MileLogTheme` currently follows the system dark setting (`darkTheme = isSystemInDarkTheme()`). A user-selectable theme mode (Light/Dark/System) is part of the planned Settings work, not yet wired.
 
 ---
 
@@ -400,12 +424,13 @@ All styles use `FontFamily.Default`. Hierarchy is driven by weight contrast:
 
 ---
 
-## 11. Future Roadmap (Sprint 6 - Planned)
+## 11. Future Roadmap (Sprint 6 — Partly Done)
 
-The following features are planned for Sprint 6 but not yet implemented:
-- **Settings Screen:** Theme toggle (Light/Dark/System), distance unit preference (km/mi), export logs, clear data, app version info.
-- **Design System Migration:** Full adoption of Kinetic Logic design tokens (Inter font, 8px spacing scale, tonal elevation layers, rounded shapes).
-- **Bottom Navigation Bar:** 5-tab navigation (Dashboard, History, Add, Reports, Settings) with active/inactive icon states.
+Sprint 6 design tokens are already applied (Kinetic Logic colors, Inter typography, 8px spacing, shapes, elevation — see §8). Still planned / not yet implemented:
+
+- **Settings Screen:** Theme toggle (Light/Dark/System), distance unit preference (km/mi), export logs, clear data (`deleteAll`), app version info.
+- **Bottom Navigation Bar:** 5-tab navigation (Dashboard, History, Add, Reports, Settings) with active/inactive icon states. Current nav has 5 routes (dashboard, history, add_entry, edit_entry, charts) with no bottom bar — see §7.
+- **Integrations:** `themeMode` parameter on `MileLogTheme`, km→mi display conversion (data stays in km), `SettingsRepository` wiring in `MileLogApplication`/`MainActivity`.
 
 ---
 
