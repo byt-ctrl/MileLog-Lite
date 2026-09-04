@@ -23,6 +23,7 @@ import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.level1Shadow
+import com.example.myapplication.ui.theme.spacing
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
@@ -70,6 +71,7 @@ fun MileageTrendChart(
         }
     }
     val trendA11y = stringResource(R.string.charts_trend_a11y)
+    val spacing = MaterialTheme.spacing
 
     ElevatedCard(
         modifier = modifier
@@ -87,7 +89,7 @@ fun MileageTrendChart(
         Text(
             text = stringResource(R.string.charts_trend_card_title),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(start = spacing.lg, top = spacing.lg, end = spacing.lg)
         )
         Text(
             text = if (categorySeries.isEmpty()) {
@@ -97,14 +99,14 @@ fun MileageTrendChart(
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = spacing.lg, bottom = spacing.sm)
         )
 
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp)
-                .padding(start = 8.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = spacing.sm, end = spacing.lg, bottom = spacing.lg),
             factory = { context ->
                 LineChart(context).apply {
                     layoutParams = ViewGroup.LayoutParams(

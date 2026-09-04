@@ -23,6 +23,7 @@ import com.example.myapplication.domain.calculation.MonthlyFuelSpend
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.level1Shadow
+import com.example.myapplication.ui.theme.spacing
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
@@ -75,6 +76,7 @@ fun MonthlySpendChart(
         }
     }
     val spendA11y = stringResource(R.string.charts_spend_a11y)
+    val spacing = MaterialTheme.spacing
 
     ElevatedCard(
         modifier = modifier
@@ -92,7 +94,7 @@ fun MonthlySpendChart(
         Text(
             text = stringResource(R.string.charts_spend_card_title),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(start = spacing.lg, top = spacing.lg, end = spacing.lg)
         )
         Text(
             text = if (categorySpends.isEmpty()) {
@@ -102,7 +104,7 @@ fun MonthlySpendChart(
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = spacing.lg, bottom = spacing.sm)
         )
 
         if (spends.isEmpty()) {
@@ -110,14 +112,14 @@ fun MonthlySpendChart(
                 text = stringResource(R.string.charts_spend_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(spacing.lg)
             )
         } else {
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp)
-                    .padding(start = 8.dp, end = 16.dp, bottom = 16.dp),
+                    .padding(start = spacing.sm, end = spacing.lg, bottom = spacing.lg),
                 factory = { context ->
                     BarChart(context).apply {
                         layoutParams = ViewGroup.LayoutParams(

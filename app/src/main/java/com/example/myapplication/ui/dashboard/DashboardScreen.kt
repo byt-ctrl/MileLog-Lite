@@ -15,9 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.MileLogElevation
@@ -25,6 +23,7 @@ import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.components.MileLogTopAppBar
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.level2Shadow
+import com.example.myapplication.ui.theme.spacing
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -38,6 +37,7 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val spacing = MaterialTheme.spacing
 
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
     val odometerNumberFormatter = remember { NumberFormat.getNumberInstance(Locale.getDefault()) }
@@ -84,7 +84,7 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(24.dp),
+                    .padding(spacing.xl),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -97,7 +97,7 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(spacing.lg))
                     Button(onClick = viewModel::retry) {
                         Text(stringResource(R.string.action_retry))
                     }
@@ -113,21 +113,20 @@ fun DashboardScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(32.dp)
+                    modifier = Modifier.padding(spacing.xxl)
                 ) {
                     Text(
                         text = stringResource(R.string.dashboard_empty_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineSmall
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.sm))
                     Text(
                         text = stringResource(R.string.dashboard_empty_subtitle),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(spacing.xl))
                     Button(onClick = onAddEntry) {
                         Text(stringResource(R.string.dashboard_empty_cta))
                     }
@@ -139,14 +138,14 @@ fun DashboardScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(spacing.lg)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
                     StatCard(
                         modifier = Modifier
@@ -183,7 +182,7 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
                     StatCard(
                         modifier = Modifier
@@ -213,13 +212,13 @@ fun DashboardScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
                     ElevatedCard(
                         modifier = Modifier
@@ -238,7 +237,7 @@ fun DashboardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(spacing.lg),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -248,7 +247,7 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(spacing.xs))
                             Text(
                                 text = stringResource(
                                     R.string.dashboard_nav_history_subtitle,
@@ -278,7 +277,7 @@ fun DashboardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(spacing.lg),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -288,7 +287,7 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(spacing.xs))
                             Text(
                                 text = stringResource(R.string.dashboard_nav_charts_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -310,6 +309,7 @@ fun StatCard(
     modifier: Modifier = Modifier,
     subtitle: String? = null
 ) {
+    val spacing = MaterialTheme.spacing
     ElevatedCard(
         modifier = modifier.level1Shadow(MileLogShapes.md),
         shape = MileLogShapes.md,
@@ -323,7 +323,7 @@ fun StatCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -333,14 +333,14 @@ fun StatCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(spacing.sm))
             Text(
                 text = value,
                 style = MaterialTheme.typography.displayMedium,
                 textAlign = TextAlign.Center
             )
             if (subtitle != null) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelMedium,

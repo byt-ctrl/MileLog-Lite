@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -55,7 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.validation.FieldError
-import androidx.compose.ui.unit.dp
+import com.example.myapplication.ui.theme.spacing
+import com.example.myapplication.ui.theme.touchTargetMinHeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -87,6 +87,7 @@ fun AddEditEntryScreen(
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    val spacing = MaterialTheme.spacing
 
     val dateFormatter = remember {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -137,7 +138,7 @@ fun AddEditEntryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(24.dp),
+                        .padding(spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -150,7 +151,7 @@ fun AddEditEntryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(spacing.lg))
                         Button(onClick = viewModel::retryLoad) {
                             Text(stringResource(R.string.action_retry))
                         }
@@ -166,8 +167,8 @@ fun AddEditEntryScreen(
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
                         .imePadding()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
             OutlinedTextField(
                 value = dateFormatter.format(Date(uiState.dateMillis)),
@@ -266,13 +267,13 @@ fun AddEditEntryScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(spacing.sm))
 
             Button(
                 onClick = { viewModel.saveEntry() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 52.dp)
+                    .touchTargetMinHeight()
             ) {
                 Text(
                     text = stringResource(

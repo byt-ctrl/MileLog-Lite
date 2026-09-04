@@ -59,9 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
@@ -70,6 +68,7 @@ import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.level2Shadow
+import com.example.myapplication.ui.theme.spacing
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -96,6 +95,7 @@ fun HistoryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
     val context = LocalContext.current
+    val spacing = MaterialTheme.spacing
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -215,7 +215,7 @@ fun HistoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(24.dp),
+                        .padding(spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -228,7 +228,7 @@ fun HistoryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(spacing.lg))
                         Button(onClick = viewModel::retry) {
                             Text(stringResource(R.string.action_retry))
                         }
@@ -242,7 +242,7 @@ fun HistoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(24.dp),
+                        .padding(spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -255,10 +255,9 @@ fun HistoryScreen(
                             } else {
                                 stringResource(R.string.history_empty_title_all)
                             },
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.headlineSmall
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(spacing.sm))
                         Text(
                             text = if (filterCategory != null) {
                                 stringResource(R.string.history_empty_subtitle_filter, stringResource(filterCategory.labelRes))
@@ -269,7 +268,7 @@ fun HistoryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(spacing.xl))
                         if (filterCategory != null && uiState.totalEntryCount > 0) {
                             Button(onClick = { viewModel.setCategoryFilter(null) }) {
                                 Text(stringResource(R.string.history_empty_cta_clear_filter))
@@ -295,8 +294,8 @@ fun HistoryScreen(
                     )
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        contentPadding = PaddingValues(spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(spacing.lg)
                     ) {
                         items(entries, key = { it.id }) { entry ->
                             FuelEntryCard(
@@ -362,12 +361,13 @@ private fun CategoryFilterChips(
     selected: FuelCategory?,
     onSelected: (FuelCategory?) -> Unit
 ) {
+    val spacing = MaterialTheme.spacing
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(start = spacing.lg, end = spacing.lg, top = spacing.md, bottom = spacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
         val allFilterLabel = stringResource(R.string.history_filter_all)
         val allFilterA11y = stringResource(R.string.history_filter_all_a11y)
@@ -377,7 +377,7 @@ private fun CategoryFilterChips(
             label = {
                 Text(
                     allFilterLabel,
-                    modifier = Modifier.heightIn(min = 44.dp)
+                    modifier = Modifier.heightIn(min = spacing.touchTarget)
                         .wrapContentHeight(Alignment.CenterVertically)
                 )
             },
@@ -391,7 +391,7 @@ private fun CategoryFilterChips(
                 }
             } else null,
             modifier = Modifier
-                .heightIn(min = 44.dp)
+                .heightIn(min = spacing.touchTarget)
                 .semantics {
                     contentDescription = allFilterA11y
                 }
@@ -409,7 +409,7 @@ private fun CategoryFilterChips(
                 label = {
                     Text(
                         categoryLabel,
-                        modifier = Modifier.heightIn(min = 44.dp)
+                        modifier = Modifier.heightIn(min = spacing.touchTarget)
                             .wrapContentHeight(Alignment.CenterVertically)
                     )
                 },
@@ -423,7 +423,7 @@ private fun CategoryFilterChips(
                     }
                 } else null,
                 modifier = Modifier
-                    .heightIn(min = 44.dp)
+                    .heightIn(min = spacing.touchTarget)
                     .semantics {
                         contentDescription = categoryA11y
                     }
@@ -447,6 +447,7 @@ private fun FuelEntryCard(
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.spacing
     val dateFormatter = remember(entry.date) {
         SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     }
@@ -472,8 +473,8 @@ private fun FuelEntryCard(
                 modifier = Modifier
                     .weight(1f)
                     .clickable(onClick = onClick)
-                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(start = spacing.lg, top = spacing.lg, bottom = spacing.lg, end = spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(spacing.xs)
             ) {
                 Text(
                     text = formattedDate,

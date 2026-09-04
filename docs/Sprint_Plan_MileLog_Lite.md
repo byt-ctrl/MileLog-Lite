@@ -201,7 +201,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 #### 6.1.5 Component Updates
 - [x] Update TopAppBar: profile avatar (circular, surface-variant background), app title "MileLog Lite" (headlineMedium, primary color), optional notification icon
-- [ ] Update all existing screens (Dashboard, History, AddEdit, Charts) to use new color tokens, typography, and spacing
+- [x] Update all existing screens (Dashboard, History, AddEdit, Charts) to use new color tokens, typography, and spacing
 - [ ] Update FAB styling: Primary Blue (`#003D9B`), pill-shaped, Level 2 shadow
 - [ ] Update input field styling: 1px border (`outline` at 20% opacity), thickens + Primary Blue on focus, persistent labels above field
 - [ ] Update card styling: white surface (`surfaceContainerLowest`), Level 1 shadow, 8px radius

@@ -30,11 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.spacing
 
 /**
  * Charts/Insights screen hosting the mileage trend line chart and the
@@ -56,6 +56,7 @@ fun ChartsScreen(
     viewModel: ChartsViewModel = viewModel(factory = ChartsViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val spacing = MaterialTheme.spacing
 
     Scaffold(
         topBar = {
@@ -94,7 +95,7 @@ fun ChartsScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(24.dp),
+                        .padding(spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -107,7 +108,7 @@ fun ChartsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(spacing.lg))
                         Button(onClick = viewModel::retry) {
                             Text(stringResource(R.string.action_retry))
                         }
@@ -120,7 +121,7 @@ fun ChartsScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(24.dp),
+                        .padding(spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -129,17 +130,16 @@ fun ChartsScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.charts_empty_title),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.headlineSmall
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(spacing.sm))
                         Text(
                             text = stringResource(R.string.charts_empty_subtitle),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(spacing.xl))
                         Button(onClick = onAddEntry) {
                             Text(stringResource(R.string.dashboard_empty_cta))
                         }
@@ -153,8 +153,8 @@ fun ChartsScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
                     val mileagePoints = uiState.fillups.filter { it.mileageKmPerL != null }
                     val hasMileage = mileagePoints.size >= 2

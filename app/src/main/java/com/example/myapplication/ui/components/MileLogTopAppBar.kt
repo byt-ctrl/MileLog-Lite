@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,12 +27,13 @@ fun MileLogTopAppBar(
     onNotificationClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.spacing
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(spacing.xxl)
                     .clip(MaterialTheme.shapes.extraLarge)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
