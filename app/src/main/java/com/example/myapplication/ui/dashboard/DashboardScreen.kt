@@ -20,9 +20,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.components.MileLogFab
 import com.example.myapplication.ui.components.MileLogTopAppBar
 import com.example.myapplication.ui.theme.level1Shadow
-import com.example.myapplication.ui.theme.level2Shadow
 import com.example.myapplication.ui.theme.spacing
 import java.text.NumberFormat
 import java.util.Locale
@@ -50,21 +50,11 @@ fun DashboardScreen(
             // Always available except during load/error — quick-add is the
             // primary task and stays predictable even on an empty state.
             if (!uiState.isLoading && uiState.errorMessage == null) {
-                FloatingActionButton(
+                MileLogFab(
                     onClick = onAddEntry,
-                    modifier = Modifier.level2Shadow(FloatingActionButtonDefaults.shape),
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = MileLogElevation.level2,
-                        pressedElevation = MileLogElevation.level2,
-                        focusedElevation = MileLogElevation.level2,
-                        hoveredElevation = MileLogElevation.level2
-                    )
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.dashboard_fab_add_entry)
-                    )
-                }
+                    icon = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.dashboard_fab_add_entry)
+                )
             }
         }
     ) { innerPadding ->
