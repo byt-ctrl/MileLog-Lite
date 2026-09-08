@@ -24,6 +24,7 @@ import com.example.myapplication.ui.components.MileLogFab
 import com.example.myapplication.ui.components.MileLogTopAppBar
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.spacing
+import com.example.myapplication.ui.theme.touchTargetMinHeight
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -88,7 +89,10 @@ fun DashboardScreen(
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(spacing.lg))
-                    Button(onClick = viewModel::retry) {
+                    Button(
+                        onClick = viewModel::retry,
+                        modifier = Modifier.touchTargetMinHeight()
+                    ) {
                         Text(stringResource(R.string.action_retry))
                     }
                 }
@@ -117,7 +121,10 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(spacing.xl))
-                    Button(onClick = onAddEntry) {
+                    Button(
+                        onClick = onAddEntry,
+                        modifier = Modifier.touchTargetMinHeight()
+                    ) {
                         Text(stringResource(R.string.dashboard_empty_cta))
                     }
                 }
@@ -214,6 +221,7 @@ fun DashboardScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
+                            .touchTargetMinHeight()
                             .level1Shadow(MileLogShapes.md),
                         onClick = onViewHistory,
                         shape = MileLogShapes.md,
@@ -254,6 +262,7 @@ fun DashboardScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
+                            .touchTargetMinHeight()
                             .level1Shadow(MileLogShapes.md),
                         onClick = onViewCharts,
                         shape = MileLogShapes.md,

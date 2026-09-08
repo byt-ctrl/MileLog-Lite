@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.spacing
+import com.example.myapplication.ui.theme.touchTargetMinHeight
 
 /**
  * Charts/Insights screen hosting the mileage trend line chart and the
@@ -109,7 +110,10 @@ fun ChartsScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(spacing.lg))
-                        Button(onClick = viewModel::retry) {
+                        Button(
+                            onClick = viewModel::retry,
+                            modifier = Modifier.touchTargetMinHeight()
+                        ) {
                             Text(stringResource(R.string.action_retry))
                         }
                     }
@@ -140,7 +144,10 @@ fun ChartsScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(spacing.xl))
-                        Button(onClick = onAddEntry) {
+                        Button(
+                            onClick = onAddEntry,
+                            modifier = Modifier.touchTargetMinHeight()
+                        ) {
                             Text(stringResource(R.string.dashboard_empty_cta))
                         }
                     }

@@ -70,6 +70,7 @@ import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.PersonalOrange
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.spacing
+import com.example.myapplication.ui.theme.touchTargetMinHeight
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -220,7 +221,10 @@ fun HistoryScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(spacing.lg))
-                        Button(onClick = viewModel::retry) {
+                        Button(
+                            onClick = viewModel::retry,
+                            modifier = Modifier.touchTargetMinHeight()
+                        ) {
                             Text(stringResource(R.string.action_retry))
                         }
                     }
@@ -261,11 +265,17 @@ fun HistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(spacing.xl))
                         if (filterCategory != null && uiState.totalEntryCount > 0) {
-                            Button(onClick = { viewModel.setCategoryFilter(null) }) {
+                            Button(
+                                onClick = { viewModel.setCategoryFilter(null) },
+                                modifier = Modifier.touchTargetMinHeight()
+                            ) {
                                 Text(stringResource(R.string.history_empty_cta_clear_filter))
                             }
                         } else {
-                            Button(onClick = onAddEntry) {
+                            Button(
+                                onClick = onAddEntry,
+                                modifier = Modifier.touchTargetMinHeight()
+                            ) {
                                 Text(stringResource(R.string.history_empty_cta_add))
                             }
                         }
@@ -323,7 +333,8 @@ fun HistoryScreen(
                     onClick = {
                         viewModel.deleteEntry(entry)
                         entryPendingDelete = null
-                    }
+                    },
+                    modifier = Modifier.touchTargetMinHeight()
                 ) {
                     Text(
                         stringResource(R.string.action_delete),
@@ -332,7 +343,10 @@ fun HistoryScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { entryPendingDelete = null }) {
+                TextButton(
+                    onClick = { entryPendingDelete = null },
+                    modifier = Modifier.touchTargetMinHeight()
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
@@ -494,6 +508,7 @@ private fun FuelEntryCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .touchTargetMinHeight()
                     .clickable(onClick = onClick)
                     .padding(start = spacing.lg, top = spacing.lg, bottom = spacing.lg, end = spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(spacing.xs)

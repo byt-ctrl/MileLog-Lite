@@ -155,7 +155,10 @@ fun AddEditEntryScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(spacing.lg))
-                        Button(onClick = viewModel::retryLoad) {
+                        Button(
+                            onClick = viewModel::retryLoad,
+                            modifier = Modifier.touchTargetMinHeight()
+                        ) {
                             Text(stringResource(R.string.action_retry))
                         }
                     }
@@ -325,13 +328,17 @@ fun AddEditEntryScreen(
                             viewModel.onDateChanged(it)
                         }
                         showDatePicker = false
-                    }
+                    },
+                    modifier = Modifier.touchTargetMinHeight()
                 ) {
                     Text(stringResource(R.string.entry_field_date_dialog_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(
+                    onClick = { showDatePicker = false },
+                    modifier = Modifier.touchTargetMinHeight()
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
