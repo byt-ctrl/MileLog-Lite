@@ -30,9 +30,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
@@ -54,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.validation.FieldError
+import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.spacing
 import com.example.myapplication.ui.theme.touchTargetMinHeight
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -170,102 +173,122 @@ fun AddEditEntryScreen(
                         .padding(spacing.lg),
                     verticalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
-            OutlinedTextField(
-                value = dateFormatter.format(Date(uiState.dateMillis)),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.entry_field_date_label)) },
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = stringResource(R.string.entry_field_date_a11y)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        EntryFieldLabel(text = stringResource(R.string.entry_field_date_label))
+                        OutlinedTextField(
+                            value = dateFormatter.format(Date(uiState.dateMillis)),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = null,
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = stringResource(R.string.entry_field_date_a11y)
+                                    )
+                                }
+                            },
+                            shape = MileLogShapes.md,
+                            colors = entryFieldColors(),
+                            isError = uiState.dateError != null,
+                            supportingText = uiState.dateError?.let { {
+                                Text(stringResource(it.messageRes))
+                            } },
+                            // The field itself is the picker entry: tapping anywhere opens
+                            // the date picker, and TalkBack reads it as a single Button so
+                            // keyboard / screen-reader users get one focus, one action.
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = { showDatePicker = true })
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = datePickerA11y
+                                }
                         )
                     }
-                },
-                isError = uiState.dateError != null,
-                supportingText = uiState.dateError?.let { {
-                    Text(stringResource(it.messageRes))
-                } },
-                // The field itself is the picker entry: tapping anywhere opens
-                // the date picker, and TalkBack reads it as a single Button so
-                // keyboard / screen-reader users get one focus, one action.
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = { showDatePicker = true })
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = datePickerA11y
+
+                    val odometerHelper: String? = when {
+                        uiState.odometerError != null -> {
+                            val res = uiState.odometerError!!
+                            val ctx = uiState.odometerMonotonicContext
+                            if (res == FieldError.ODOMETER_NOT_MONOTONIC && ctx != null) {
+                                stringResource(res.messageRes, ctx)
+                            } else {
+                                stringResource(res.messageRes)
+                            }
+                        }
+                        uiState.previousOdometer != null && !uiState.isEditMode -> {
+                            stringResource(R.string.entry_field_odometer_helper, uiState.previousOdometer!!)
+                        }
+                        else -> null
                     }
-            )
 
-            val odometerHelper: String? = when {
-                uiState.odometerError != null -> {
-                    val res = uiState.odometerError!!
-                    val ctx = uiState.odometerMonotonicContext
-                    if (res == FieldError.ODOMETER_NOT_MONOTONIC && ctx != null) {
-                        stringResource(res.messageRes, ctx)
-                    } else {
-                        stringResource(res.messageRes)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        EntryFieldLabel(text = stringResource(R.string.entry_field_odometer_label))
+                        OutlinedTextField(
+                            value = uiState.odometer,
+                            onValueChange = { viewModel.onOdometerChanged(it) },
+                            label = null,
+                            suffix = { Text(stringResource(R.string.entry_field_odometer_suffix)) },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            singleLine = true,
+                            shape = MileLogShapes.md,
+                            colors = entryFieldColors(),
+                            isError = uiState.odometerError != null,
+                            supportingText = odometerHelper?.let { { Text(it) } },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
-                }
-                uiState.previousOdometer != null && !uiState.isEditMode -> {
-                    stringResource(R.string.entry_field_odometer_helper, uiState.previousOdometer!!)
-                }
-                else -> null
-            }
 
-            OutlinedTextField(
-                value = uiState.odometer,
-                onValueChange = { viewModel.onOdometerChanged(it) },
-                label = { Text(stringResource(R.string.entry_field_odometer_label)) },
-                suffix = { Text(stringResource(R.string.entry_field_odometer_suffix)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
-                singleLine = true,
-                isError = uiState.odometerError != null,
-                supportingText = odometerHelper?.let { { Text(it) } },
-                modifier = Modifier.fillMaxWidth()
-            )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        EntryFieldLabel(text = stringResource(R.string.entry_field_liters_label))
+                        OutlinedTextField(
+                            value = uiState.liters,
+                            onValueChange = { viewModel.onLitersChanged(it) },
+                            label = null,
+                            suffix = { Text(stringResource(R.string.entry_field_liters_suffix)) },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = ImeAction.Next
+                            ),
+                            singleLine = true,
+                            shape = MileLogShapes.md,
+                            colors = entryFieldColors(),
+                            isError = uiState.litersError != null,
+                            supportingText = uiState.litersError?.let { { Text(stringResource(it.messageRes)) } },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
-            OutlinedTextField(
-                value = uiState.liters,
-                onValueChange = { viewModel.onLitersChanged(it) },
-                label = { Text(stringResource(R.string.entry_field_liters_label)) },
-                suffix = { Text(stringResource(R.string.entry_field_liters_suffix)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Next
-                ),
-                singleLine = true,
-                isError = uiState.litersError != null,
-                supportingText = uiState.litersError?.let { { Text(stringResource(it.messageRes)) } },
-                modifier = Modifier.fillMaxWidth()
-            )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        EntryFieldLabel(text = stringResource(R.string.entry_field_cost_label))
+                        OutlinedTextField(
+                            value = uiState.cost,
+                            onValueChange = { viewModel.onCostChanged(it) },
+                            label = null,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = { viewModel.saveEntry() }
+                            ),
+                            singleLine = true,
+                            shape = MileLogShapes.md,
+                            colors = entryFieldColors(),
+                            isError = uiState.costError != null,
+                            supportingText = uiState.costError?.let { { Text(stringResource(it.messageRes)) } },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
-            OutlinedTextField(
-                value = uiState.cost,
-                onValueChange = { viewModel.onCostChanged(it) },
-                label = { Text(stringResource(R.string.entry_field_cost_label)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { viewModel.saveEntry() }
-                ),
-                singleLine = true,
-                isError = uiState.costError != null,
-                supportingText = uiState.costError?.let { { Text(stringResource(it.messageRes)) } },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            FuelCategoryDropdown(
-                selected = uiState.fuelCategory,
-                onCategorySelected = viewModel::onFuelCategoryChanged,
-                modifier = Modifier.fillMaxWidth()
-            )
+                    FuelCategoryDropdown(
+                        selected = uiState.fuelCategory,
+                        onCategorySelected = viewModel::onFuelCategoryChanged,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
             Spacer(modifier = Modifier.height(spacing.sm))
 
@@ -319,6 +342,33 @@ fun AddEditEntryScreen(
 }
 
 /**
+ * Shared input styling for Add/Edit entry fields: 1.dp unfocused border using
+ * outline at 20% opacity, primary border on focus (M3 defaults thicken
+ * 1.dp -> 2.dp), 8.dp shape, error uses default error color.
+ *
+ * Note: OutlinedTextField in this BOM (composeBom 2026.02.01) does not expose
+ * focusedBorderThickness / unfocusedBorderThickness params directly; thickness
+ * customization lives on OutlinedTextFieldDefaults.Container / decorator for
+ * custom BasicTextField builds. We keep the standard OutlinedTextField so the
+ * default 1.dp unfocused / 2.dp focused thickness applies.
+ */
+@Composable
+private fun entryFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+    focusedBorderColor = MaterialTheme.colorScheme.primary
+)
+
+@Composable
+private fun EntryFieldLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = MaterialTheme.spacing.xs)
+    )
+}
+
+/**
  * Material 3 exposed dropdown for selecting a [FuelCategory].
  *
  * Uses [ExposedDropdownMenuBox] with a read-only [OutlinedTextField] as the
@@ -334,39 +384,43 @@ private fun FuelCategoryDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = stringResource(selected.labelRes),
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text(stringResource(R.string.entry_field_category_label)) },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
-        )
-
-        ExposedDropdownMenu(
+    Column(modifier = modifier) {
+        EntryFieldLabel(text = stringResource(R.string.entry_field_category_label))
+        ExposedDropdownMenuBox(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            FuelCategory.entries.forEach { category ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(category.labelRes)) },
-                    onClick = {
-                        onCategorySelected(category)
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                )
+            OutlinedTextField(
+                value = stringResource(selected.labelRes),
+                onValueChange = {},
+                readOnly = true,
+                singleLine = true,
+                label = null,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                shape = MileLogShapes.md,
+                colors = entryFieldColors(),
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth()
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                FuelCategory.entries.forEach { category ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(category.labelRes)) },
+                        onClick = {
+                            onCategorySelected(category)
+                            expanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    )
+                }
             }
         }
     }
