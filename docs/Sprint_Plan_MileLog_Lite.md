@@ -205,7 +205,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Update FAB styling: Primary Blue (`#003D9B`), pill-shaped, Level 2 shadow
 - [x] Update input field styling: 1px border (`outline` at 20% opacity), thickens + Primary Blue on focus, persistent labels above field
 - [x] Update card styling: white surface (`surfaceContainerLowest`), Level 1 shadow, 8px radius
-- [ ] Update chip styling: 16px radius for category tags (Petrol/Diesel/CNG), active Business Green / Personal Orange backgrounds
+- [x] Update chip styling: 16px radius for category tags (Petrol/Diesel/CNG), active Business Green / Personal Orange backgrounds
 - [ ] Ensure all interactive elements meet 48dp minimum touch target
 
 ---

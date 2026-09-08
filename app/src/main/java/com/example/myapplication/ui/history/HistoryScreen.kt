@@ -53,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,8 +64,10 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.ui.components.MileLogFab
+import com.example.myapplication.ui.theme.BusinessGreen
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.PersonalOrange
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.spacing
 import java.text.NumberFormat
@@ -342,6 +345,13 @@ fun HistoryScreen(
  * [FuelCategory]. Tapping the active chip clears the filter; tapping another
  * chip switches the filter. Selected chips show a leading check icon per
  * Material 3 idiom.
+ *
+ * Selected container mapping (Sprint Plan: 16dp category tags, active
+ * Business Green / Personal Orange backgrounds):
+ * - All selected -> [androidx.compose.material3.ColorScheme.primaryContainer] (neutral, not a fuel type)
+ * - PETROL selected -> [PersonalOrange]
+ * - DIESEL selected -> [BusinessGreen]
+ * - CNG selected -> [androidx.compose.material3.ColorScheme.tertiaryContainer] (distinct third fuel)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -350,6 +360,9 @@ private fun CategoryFilterChips(
     onSelected: (FuelCategory?) -> Unit
 ) {
     val spacing = MaterialTheme.spacing
+    // Mid-luminance accents (PersonalOrange/BusinessGreen) fail white-text contrast,
+    // so selected label/icon content on them uses dark ink instead.
+    val darkOnAccent = Color(0xFF0E1C2F)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -378,6 +391,12 @@ private fun CategoryFilterChips(
                     )
                 }
             } else null,
+            shape = MileLogShapes.xl,
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
             modifier = Modifier
                 .heightIn(min = spacing.touchTarget)
                 .semantics {
@@ -391,6 +410,15 @@ private fun CategoryFilterChips(
                 R.string.history_filter_category_a11y,
                 categoryLabel
             )
+            val selectedContainerColor = when (category) {
+                FuelCategory.PETROL -> PersonalOrange
+                FuelCategory.DIESEL -> BusinessGreen
+                FuelCategory.CNG -> MaterialTheme.colorScheme.tertiaryContainer
+            }
+            val selectedContentColor = when (category) {
+                FuelCategory.PETROL, FuelCategory.DIESEL -> darkOnAccent
+                FuelCategory.CNG -> MaterialTheme.colorScheme.onTertiaryContainer
+            }
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelected(if (isSelected) null else category) },
@@ -410,6 +438,12 @@ private fun CategoryFilterChips(
                         )
                     }
                 } else null,
+                shape = MileLogShapes.xl,
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = selectedContainerColor,
+                    selectedLabelColor = selectedContentColor,
+                    selectedLeadingIconColor = selectedContentColor
+                ),
                 modifier = Modifier
                     .heightIn(min = spacing.touchTarget)
                     .semantics {
