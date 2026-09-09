@@ -40,7 +40,8 @@ fun DashboardScreen(
     val scrollState = rememberScrollState()
     val spacing = MaterialTheme.spacing
 
-    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
+    // Product default: costs always display in INR (₹), independent of device locale.
+    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
     val odometerNumberFormatter = remember { NumberFormat.getNumberInstance(Locale.getDefault()) }
 
     Scaffold(

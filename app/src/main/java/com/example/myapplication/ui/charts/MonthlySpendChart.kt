@@ -42,9 +42,7 @@ import java.util.Locale
  * When [categorySpends] is non-empty, one bar is drawn per fuel category per
  * month (grouped, side-by-side) so the spend mix across categories is visible.
  *
- * Currency formatting follows the device locale — `NumberFormat.getCurrencyInstance`
- * picks the symbol and grouping rules, so a German device shows €, an Indian
- * device shows ₹, and a US device shows $.
+ * Product default: costs always display in INR (₹), independent of device locale.
  *
  * @param spends List of [MonthlyFuelSpend] sorted chronologically.
  * @param categorySpends Per-category spend aligned to [spends] by index.
@@ -64,9 +62,10 @@ fun MonthlySpendChart(
 
     val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
 
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    // Product default: INR (₹) — see note above.
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"))
     val currencySymbol = runCatching {
-        Currency.getInstance(Locale.getDefault()).symbol
+        Currency.getInstance(Locale.forLanguageTag("en-IN")).symbol
     }.getOrDefault("¤")
 
     val totalLabel = stringResource(R.string.charts_spend_total_label)

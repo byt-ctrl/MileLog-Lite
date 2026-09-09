@@ -95,7 +95,8 @@ fun HistoryScreen(
     val entries = uiState.entries
     var entryPendingDelete by remember { mutableStateOf<FuelEntry?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
+    // Product default: costs always display in INR (₹), independent of device locale.
+    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
     val context = LocalContext.current
     val spacing = MaterialTheme.spacing
 
