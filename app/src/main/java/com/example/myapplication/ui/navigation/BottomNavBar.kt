@@ -3,7 +3,9 @@ package com.example.myapplication.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -68,15 +70,24 @@ private data class BottomNavTab(
 )
 
 /**
- * Tab inventory rendered by [BottomNavBar]. Dashboard is the first of the
- * five planned tabs (Sprint 6 §6.2.1); the remaining tabs are appended here
- * as they are implemented.
+ * Tab inventory rendered by [BottomNavBar]. Dashboard and History are the
+ * first of the five planned tabs (Sprint 6 §6.2.1); Add, Reports and
+ * Settings are appended here as they are implemented. Labels use the
+ * dedicated bottom_nav_* strings: tab labels are shorter than screen
+ * titles (e.g. history_title is "Fuel History") and are localizable
+ * independently.
  */
 private val bottomNavTabs = listOf(
     BottomNavTab(
         route = MileLogRoutes.DASHBOARD,
-        labelRes = R.string.dashboard_title,
+        labelRes = R.string.bottom_nav_dashboard_label,
         selectedIcon = Icons.Rounded.Dashboard,
         unselectedIcon = Icons.Outlined.Dashboard
+    ),
+    BottomNavTab(
+        route = MileLogRoutes.HISTORY,
+        labelRes = R.string.bottom_nav_history_label,
+        selectedIcon = Icons.Rounded.History,
+        unselectedIcon = Icons.Outlined.History
     )
 )

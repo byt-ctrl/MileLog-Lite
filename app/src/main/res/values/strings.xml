@@ -114,6 +114,10 @@
     <string name="topappbar_avatar_a11y">Profile</string>
     <string name="topappbar_notifications_a11y">Notifications</string>
 
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_dashboard_label">Dashboard</string>
+    <string name="bottom_nav_history_label">History</string>
+
     <!-- Export snackbar outcomes -->
     <string name="export_success">Exported %1$d entries to CSV</string>
     <string name="export_failure">Export failed: %1$s</string>

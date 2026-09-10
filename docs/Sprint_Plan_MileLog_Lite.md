@@ -218,8 +218,8 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Add new routes: `SETTINGS`, `REPORTS` (alias for Charts)
 - [x] Update `MileLogRoutes` object with new route constants
 - [ ] Create `BottomNavBar.kt` composable with 5 items:
-    - Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
-    - History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
+    - [x] Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
+    - [x] History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
     - Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
     - Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
     - Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
