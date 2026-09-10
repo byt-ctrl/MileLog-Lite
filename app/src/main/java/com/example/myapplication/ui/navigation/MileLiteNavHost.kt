@@ -19,6 +19,16 @@ object MileLogRoutes {
     const val ADD_ENTRY = "add_entry"
     const val EDIT_ENTRY = "edit_entry/{entryId}"
     const val CHARTS = "charts"
+    const val SETTINGS = "settings"
+
+    /**
+     * The bottom-navigation "Reports" tab renders the Charts destination.
+     * A Navigation route uniquely identifies a destination, so the tab must
+     * reference the canonical [CHARTS] route rather than register a second
+     * destination; this alias keeps the tab layer decoupled from the route
+     * name without duplicating graph entries.
+     */
+    const val REPORTS = CHARTS
 
     fun editEntry(entryId: Long): String = "edit_entry/$entryId"
 }

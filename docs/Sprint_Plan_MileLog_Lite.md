@@ -215,8 +215,8 @@ This document provides an interactive execution checklist for the mini-scope Mil
 **Objective:** Add a fixed 5-tab bottom navigation bar and restructure navigation flow.
 
 #### 6.2.1 Navigation Restructure (`MileLiteNavHost.kt`)
-- [ ] Add new routes: `SETTINGS`, `REPORTS` (alias for Charts)
-- [ ] Update `MileLogRoutes` object with new route constants
+- [x] Add new routes: `SETTINGS`, `REPORTS` (alias for Charts)
+- [x] Update `MileLogRoutes` object with new route constants
 - [ ] Create `BottomNavBar.kt` composable with 5 items:
     - Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
     - History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
