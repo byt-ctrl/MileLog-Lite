@@ -118,6 +118,7 @@
     <!-- Bottom Navigation -->
     <string name="bottom_nav_dashboard_label">Dashboard</string>
     <string name="bottom_nav_history_label">History</string>
+    <string name="bottom_nav_reports_label">Reports</string>
 
     <!-- Export snackbar outcomes -->
     <string name="export_success">Exported %1$d entries to CSV</string>

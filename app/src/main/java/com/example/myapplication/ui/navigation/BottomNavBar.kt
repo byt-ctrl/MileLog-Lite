@@ -2,8 +2,10 @@ package com.example.myapplication.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.Icon
@@ -89,5 +91,11 @@ private val bottomNavTabs = listOf(
         labelRes = R.string.bottom_nav_history_label,
         selectedIcon = Icons.Rounded.History,
         unselectedIcon = Icons.Outlined.History
+    ),
+    BottomNavTab(
+        route = MileLogRoutes.REPORTS,
+        labelRes = R.string.bottom_nav_reports_label,
+        selectedIcon = Icons.Rounded.Assessment,
+        unselectedIcon = Icons.Outlined.Assessment
     )
 )

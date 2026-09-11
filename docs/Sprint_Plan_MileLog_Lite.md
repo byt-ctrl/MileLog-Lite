@@ -220,9 +220,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] Create `BottomNavBar.kt` composable with 5 items:
     - [x] Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
     - [x] History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
-    - Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
-    - Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
-    - Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
+    - [ ] Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp` — status: `MileLogFab` Extended pill (`AddCircle` + "Add", primary/onPrimary, Level 2) done per-screen (`FabPosition.Center` in Dashboard/History); bottom-nav "Add" tab + removal of standalone FABs (§6.2.2) still pending
+    - [x] Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports") — done: tab defined in `BottomNavBar.kt:95-100`, label in `strings.xml:121`, reuses `MileLogRoutes.REPORTS = CHARTS`; bottom-nav→NavHost wiring (§6.2.1) still pending
+    - [ ] Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
 - [ ] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
 - [ ] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
 - [ ] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
