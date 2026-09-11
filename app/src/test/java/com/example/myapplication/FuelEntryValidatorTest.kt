@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import com.example.myapplication.domain.validation.FieldError
 import com.example.myapplication.domain.validation.FuelEntryValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,7 +52,10 @@ class FuelEntryValidatorTest {
             previousOdometer = 12000
         )
         assertFalse(result.isValid)
-        assertEquals("Odometer must be greater than previous reading (12000 km)", result.odometerError)
+        // Domain returns stable error keys (UI resolves via stringResource);
+        // the monotonic context carries the previous reading for the message arg.
+        assertEquals(FieldError.ODOMETER_NOT_MONOTONIC, result.odometerError)
+        assertEquals(12000, result.odometerMonotonicContext)
     }
 
     @Test
