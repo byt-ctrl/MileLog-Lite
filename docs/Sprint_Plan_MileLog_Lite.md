@@ -220,10 +220,10 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] Create `BottomNavBar.kt` composable with 5 items:
     - [x] Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
     - [x] History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
-    - [ ] Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
+    - [x] Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
     - [x] Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
     - [x] Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
-- [ ] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
+- [x] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
 - [ ] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
 - [x] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
 - [ ] Bottom nav bar: `h=64dp`, `bg=surface`, `shadow(elevation=4.dp, blurRadius=12.dp, alpha=0.15)`, `roundedTopStart=16.dp`, `roundedTopEnd=16.dp`
