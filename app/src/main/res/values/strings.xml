@@ -119,6 +119,12 @@
     <string name="bottom_nav_dashboard_label">Dashboard</string>
     <string name="bottom_nav_history_label">History</string>
     <string name="bottom_nav_reports_label">Reports</string>
+    <string name="bottom_nav_settings_label">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_basic_heading">Settings</string>
+    <string name="settings_basic_subtitle">App preferences like theme, distance units, export, and data controls will live here.</string>
 
     <!-- Export snackbar outcomes -->
     <string name="export_success">Exported %1$d entries to CSV</string>

@@ -222,7 +222,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
     - [x] History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
     - [ ] Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
     - [x] Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
-    - [ ] Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
+    - [x] Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
 - [ ] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
 - [ ] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
 - [x] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
@@ -302,7 +302,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 #### 6.4.3 Navigation Flow
 - [ ] Bottom nav persists across all screens
-- [ ] Settings screen accessible from any tab via bottom nav
+- [x] Settings screen accessible from any tab via bottom nav
 - [x] "Add" tab opens AddEditEntryScreen as full-screen overlay or standard route
 
 ---

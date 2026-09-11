@@ -5,9 +5,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -97,5 +99,11 @@ private val bottomNavTabs = listOf(
         labelRes = R.string.bottom_nav_reports_label,
         selectedIcon = Icons.Rounded.Assessment,
         unselectedIcon = Icons.Outlined.Assessment
+    ),
+    BottomNavTab(
+        route = MileLogRoutes.SETTINGS,
+        labelRes = R.string.bottom_nav_settings_label,
+        selectedIcon = Icons.Rounded.Settings,
+        unselectedIcon = Icons.Outlined.Settings
     )
 )

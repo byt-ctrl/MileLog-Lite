@@ -16,6 +16,7 @@ import com.example.myapplication.ui.components.MileLogFab
 import com.example.myapplication.ui.dashboard.DashboardScreen
 import com.example.myapplication.ui.entry.AddEditEntryScreen
 import com.example.myapplication.ui.history.HistoryScreen
+import com.example.myapplication.ui.settings.SettingsScreen
 
 /**
  * Route constants for the MileLog Lite navigation graph.
@@ -64,7 +65,8 @@ fun MileLiteNavHost(
         currentRoute != MileLogRoutes.ADD_ENTRY &&
         (currentRoute == MileLogRoutes.DASHBOARD ||
         currentRoute == MileLogRoutes.HISTORY ||
-        currentRoute == MileLogRoutes.CHARTS)
+        currentRoute == MileLogRoutes.CHARTS ||
+        currentRoute == MileLogRoutes.SETTINGS)
 
     // Charts has no local FAB, so the global one gives it an Add path.
     // Dashboard/History keep their existing per-screen FABs (single-primary-
@@ -119,6 +121,9 @@ fun MileLiteNavHost(
                     onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) },
                     onNavigateUp = { navController.navigateUp() }
                 )
+            }
+            composable(MileLogRoutes.SETTINGS) {
+                SettingsScreen()
             }
             composable(MileLogRoutes.ADD_ENTRY) {
                 AddEditEntryScreen(
