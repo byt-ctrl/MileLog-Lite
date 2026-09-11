@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -32,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -181,12 +181,9 @@ fun HistoryScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            MileLogFab(
-                onClick = onAddEntry,
-                icon = Icons.Default.Add,
-                contentDescription = stringResource(R.string.history_fab_add_entry)
-            )
+            MileLogFab(onClick = onAddEntry)
         }
     ) { innerPadding ->
         when {

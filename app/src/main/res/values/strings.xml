@@ -11,6 +11,7 @@
     <string name="action_navigate_back">Navigate back</string>
     <string name="action_add_fuel_entry">Add Fuel Entry</string>
     <string name="loading_generic">Loading</string>
+    <string name="fab_add_label">Add</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>

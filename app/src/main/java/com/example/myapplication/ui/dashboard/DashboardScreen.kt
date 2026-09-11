@@ -3,8 +3,6 @@ package com.example.myapplication.ui.dashboard
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,15 +46,12 @@ fun DashboardScreen(
         topBar = {
             MileLogTopAppBar()
         },
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             // Always available except during load/error — quick-add is the
             // primary task and stays predictable even on an empty state.
             if (!uiState.isLoading && uiState.errorMessage == null) {
-                MileLogFab(
-                    onClick = onAddEntry,
-                    icon = Icons.Filled.Add,
-                    contentDescription = stringResource(R.string.dashboard_fab_add_entry)
-                )
+                MileLogFab(onClick = onAddEntry)
             }
         }
     ) { innerPadding ->
