@@ -226,7 +226,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
 - [x] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
 - [x] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
-- [ ] Bottom nav bar: `h=64dp`, `bg=surface`, `shadow(elevation=4.dp, blurRadius=12.dp, alpha=0.15)`, `roundedTopStart=16.dp`, `roundedTopEnd=16.dp`
+- [x] Bottom nav bar: `h=64dp`, `bg=surface`, `shadow(elevation=4.dp, blurRadius=12.dp, alpha=0.15)`, `roundedTopStart=16.dp`, `roundedTopEnd=16.dp`
 
 #### 6.2.2 Screen Navigation Updates
 - [ ] Remove standalone FABs from Dashboard and History screens (replaced by bottom nav "Add" tab)

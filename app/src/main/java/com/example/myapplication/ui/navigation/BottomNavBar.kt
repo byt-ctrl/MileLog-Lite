@@ -1,6 +1,8 @@
 package com.example.myapplication.ui.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Dashboard
@@ -18,9 +20,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.level2Shadow
 
 /**
  * Bottom navigation bar for the app's primary destinations (Sprint 6
@@ -36,13 +41,18 @@ import com.example.myapplication.R
  * surface color, Level 2 shadow, top-corner rounding) and the active and
  * inactive item colors follow in the remaining §6.2.1 bullets.
  */
+private val topShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+
 @Composable
 fun BottomNavBar(
     currentRoute: String?,
     onTabSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    NavigationBar(modifier = modifier) {
+    NavigationBar(
+        modifier = modifier.height(64.dp).level2Shadow(topShape).clip(topShape),
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
         bottomNavTabs.forEach { tab ->
             val selected = currentRoute == tab.route
             NavigationBarItem(
