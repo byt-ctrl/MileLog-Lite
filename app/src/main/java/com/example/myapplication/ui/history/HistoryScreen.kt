@@ -2,10 +2,11 @@ package com.example.myapplication.ui.history
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,35 +16,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,51 +47,51 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
-import com.example.myapplication.ui.components.MileLogFab
-import com.example.myapplication.ui.theme.BusinessGreen
-import com.example.myapplication.ui.theme.MileLogElevation
+import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.components.LedgerHeaderRow
+import com.example.myapplication.ui.components.LedgerRow
+import com.example.myapplication.ui.components.formatOne
 import com.example.myapplication.ui.theme.MileLogShapes
-import com.example.myapplication.ui.theme.PersonalOrange
-import com.example.myapplication.ui.theme.level1Shadow
+import com.example.myapplication.ui.theme.MileLogWindow
+import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
-import com.example.myapplication.ui.theme.touchTargetMinHeight
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private val LEDGER_COLUMN_WEIGHTS = listOf(1.3f, 1.1f, 0.8f, 1f, 1.15f)
+
 /**
- * History screen listing all fuel entries, most recent first.
+ * Fuel history.
  *
- * Tapping an entry opens it in edit mode; the FAB opens a new entry form.
- * The top-bar download icon exports all entries to a CSV file via the
- * system document-creation picker.
+ * A ruled ledger rather than a stack of cards: one row per fill-up, figures
+ * right-aligned so the columns compare straight down the page, and the delete
+ * action as an independent control beside the edit target rather than nested
+ * inside it.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
     onEditEntry: (Long) -> Unit,
     onAddEntry: () -> Unit,
-    onNavigateUp: () -> Unit,
     viewModel: HistoryViewModel = viewModel(factory = HistoryViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val entries = uiState.entries
     var entryPendingDelete by remember { mutableStateOf<FuelEntry?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    // Product default: costs always display in INR (₹), independent of device locale.
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
-    val context = LocalContext.current
+    val integerFormatter = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
+    val dateFormatter = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
     val spacing = MaterialTheme.spacing
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -110,198 +104,149 @@ fun HistoryScreen(
         }
     }
 
-    // When the ViewModel has prepared the CSV, launch the picker so the user
-    // chooses where to save it.
     LaunchedEffect(uiState.exportReady) {
         val csv = uiState.exportReady ?: return@LaunchedEffect
         exportLauncher.launch("milelog_fuel_entries.csv")
         viewModel.clearExportReady()
     }
 
-    // Surface export outcomes (success/failure) via a snackbar.
-    LaunchedEffect(uiState.exportMessage) {
-        val key = uiState.exportMessage ?: return@LaunchedEffect
-        val text = when (key) {
-            HistoryMessage.EXPORT_SUCCESS ->
-                context.getString(key.messageRes, uiState.exportMessageCount)
-            HistoryMessage.EXPORT_WRITE_FAILED -> {
-                val detail = uiState.exportMessageDetail.orEmpty()
-                context.getString(key.messageRes, detail)
-            }
-            else -> context.getString(key.messageRes)
+    // Resolve copy in the composition so a locale change recomposes it, then
+    // act on it from the effect. Reaching for LocalContext inside a
+    // LaunchedEffect would freeze the string at its first value.
+    val exportMessageText: String? = uiState.exportMessage?.let { key ->
+        when (key) {
+            HistoryMessage.EXPORT_SUCCESS -> stringResource(key.messageRes, uiState.exportMessageCount)
+            HistoryMessage.EXPORT_WRITE_FAILED ->
+                stringResource(key.messageRes, uiState.exportMessageDetail.orEmpty())
+            else -> stringResource(key.messageRes)
         }
+    }
+    val entryDeletedText = stringResource(R.string.history_entry_deleted)
+    val undoLabel = stringResource(R.string.action_undo)
+
+    LaunchedEffect(exportMessageText) {
+        val text = exportMessageText ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(text)
         viewModel.consumeExportMessage()
     }
 
-    // Undo affordance for the most recent delete. The snackbar carries a
-    // localized label and an Undo action that re-inserts the entry.
     LaunchedEffect(uiState.lastDeleted) {
-        val deleted = uiState.lastDeleted ?: return@LaunchedEffect
-        val undoLabel = context.getString(R.string.action_undo)
+        if (uiState.lastDeleted == null) return@LaunchedEffect
         val result = snackbarHostState.showSnackbar(
-            message = context.getString(R.string.history_entry_deleted),
+            message = entryDeletedText,
             actionLabel = undoLabel,
             withDismissAction = true,
-            duration = androidx.compose.material3.SnackbarDuration.Short
+            duration = SnackbarDuration.Short
         )
         when (result) {
-            androidx.compose.material3.SnackbarResult.ActionPerformed ->
-                viewModel.undoDelete()
-            androidx.compose.material3.SnackbarResult.Dismissed ->
-                viewModel.consumeDeleted()
+            SnackbarResult.ActionPerformed -> viewModel.undoDelete()
+            SnackbarResult.Dismissed -> viewModel.consumeDeleted()
         }
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.history_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_navigate_back)
-                        )
-                    }
-                },
+            InstrumentBar(
+                title = stringResource(R.string.history_title),
                 actions = {
                     if (!uiState.isLoading && uiState.errorMessage == null) {
                         IconButton(onClick = viewModel::exportEntries) {
                             Icon(
                                 imageVector = Icons.Filled.Download,
-                                contentDescription = stringResource(R.string.history_export_action)
+                                contentDescription = stringResource(R.string.history_export_action),
+                                tint = MaterialTheme.ledger.chromeText
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButtonPosition = FabPosition.Center,
-        floatingActionButton = {
-            MileLogFab(onClick = onAddEntry)
         }
     ) { innerPadding ->
-        when {
-            uiState.isLoading -> {
-                val loadingLabel = stringResource(R.string.loading_generic)
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .semantics(mergeDescendants = true) { contentDescription = loadingLabel },
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            val wide = maxWidth >= MileLogWindow.medium
 
-            uiState.errorMessage != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(spacing.xl),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.history_error_load),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(spacing.lg))
-                        Button(
-                            onClick = viewModel::retry,
-                            modifier = Modifier.touchTargetMinHeight()
-                        ) {
-                            Text(stringResource(R.string.action_retry))
-                        }
-                    }
-                }
-            }
+            when {
+                uiState.isLoading -> LoadingBlock()
 
-            entries.isEmpty() -> {
-                val filterCategory = uiState.selectedCategory
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(spacing.xl),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = if (filterCategory != null) {
-                                stringResource(R.string.history_empty_title_filter, stringResource(filterCategory.labelRes))
-                            } else {
-                                stringResource(R.string.history_empty_title_all)
-                            },
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                        Spacer(modifier = Modifier.height(spacing.sm))
-                        Text(
-                            text = if (filterCategory != null) {
-                                stringResource(R.string.history_empty_subtitle_filter, stringResource(filterCategory.labelRes))
-                            } else {
-                                stringResource(R.string.history_empty_subtitle_all)
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(spacing.xl))
-                        if (filterCategory != null && uiState.totalEntryCount > 0) {
-                            Button(
-                                onClick = { viewModel.setCategoryFilter(null) },
-                                modifier = Modifier.touchTargetMinHeight()
-                            ) {
-                                Text(stringResource(R.string.history_empty_cta_clear_filter))
-                            }
-                        } else {
-                            Button(
-                                onClick = onAddEntry,
-                                modifier = Modifier.touchTargetMinHeight()
-                            ) {
-                                Text(stringResource(R.string.history_empty_cta_add))
-                            }
-                        }
-                    }
-                }
-            }
+                uiState.errorMessage != null -> ErrorBlock(onRetry = viewModel::retry)
 
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    CategoryFilterChips(
+                entries.isEmpty() -> EmptyBlock(
+                    filteredCategory = uiState.selectedCategory,
+                    hasAnyEntries = uiState.totalEntryCount > 0,
+                    onAddEntry = onAddEntry,
+                    onClearFilter = { viewModel.setCategoryFilter(null) }
+                )
+
+                else -> Column(modifier = Modifier.fillMaxSize()) {
+                    CategoryFilters(
                         selected = uiState.selectedCategory,
                         onSelected = viewModel::setCategoryFilter
                     )
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(spacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(spacing.lg)
+                        contentPadding = PaddingValues(
+                            start = spacing.lg,
+                            end = spacing.lg,
+                            top = spacing.md,
+                            bottom = spacing.xxxl
+                        )
                     ) {
-                        items(entries, key = { it.id }) { entry ->
-                            FuelEntryCard(
-                                entry = entry,
-                                currencyFormatter = currencyFormatter,
+                        if (wide) {
+                            item {
+                                LedgerHeaderRow(
+                                    labels = listOf("Date", "Odometer", "Litres", "Mileage", "Cost"),
+                                    weights = LEDGER_COLUMN_WEIGHTS
+                                )
+                            }
+                        }
+                        itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
+                            if (index > 0) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.ledger.rule,
+                                    thickness = 1.dp
+                                )
+                            }
+                            val formattedDate = dateFormatter.format(Date(entry.date))
+                            LedgerRow(
+                                date = formattedDate,
+                                odometer = stringResource(
+                                    R.string.dashboard_ledger_odometer_value,
+                                    integerFormatter.format(entry.odometer)
+                                ),
+                                liters = if (wide) {
+                                    stringResource(R.string.dashboard_ledger_liters_value, entry.liters)
+                                } else {
+                                    stringResource(R.string.dashboard_ledger_liters_value, entry.liters) +
+                                        "  ·  " + stringResource(
+                                            FuelCategory.fromDisplayName(entry.fuelCategory).labelRes
+                                        )
+                                },
+                                mileage = uiState.mileageById[entry.id]?.let { value ->
+                                    stringResource(R.string.dashboard_ledger_mileage_value, formatOne(value))
+                                },
+                                cost = currencyFormatter.format(entry.cost),
+                                compact = !wide,
                                 onClick = { onEditEntry(entry.id) },
-                                onDeleteClick = { entryPendingDelete = entry }
+                                trailing = {
+                                    IconButton(onClick = { entryPendingDelete = entry }) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = stringResource(
+                                                R.string.history_card_delete,
+                                                formattedDate
+                                            ),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             )
                         }
                     }
@@ -311,20 +256,15 @@ fun HistoryScreen(
     }
 
     entryPendingDelete?.let { entry ->
-        val deleteDateFormatter = remember(entry.date) {
-            SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        val deleteDate = remember(entry.date) {
+            SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(entry.date))
         }
         AlertDialog(
             onDismissRequest = { entryPendingDelete = null },
             shape = MileLogShapes.md,
             title = { Text(stringResource(R.string.history_delete_dialog_title)) },
             text = {
-                Text(
-                    stringResource(
-                        R.string.history_delete_dialog_body,
-                        deleteDateFormatter.format(Date(entry.date))
-                    )
-                )
+                Text(stringResource(R.string.history_delete_dialog_body, deleteDate))
             },
             confirmButton = {
                 TextButton(
@@ -332,10 +272,10 @@ fun HistoryScreen(
                         viewModel.deleteEntry(entry)
                         entryPendingDelete = null
                     },
-                    modifier = Modifier.touchTargetMinHeight()
+                    modifier = Modifier.heightIn(min = spacing.touchTarget)
                 ) {
                     Text(
-                        stringResource(R.string.action_delete),
+                        text = stringResource(R.string.action_delete),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -343,7 +283,7 @@ fun HistoryScreen(
             dismissButton = {
                 TextButton(
                     onClick = { entryPendingDelete = null },
-                    modifier = Modifier.touchTargetMinHeight()
+                    modifier = Modifier.heightIn(min = spacing.touchTarget)
                 ) {
                     Text(stringResource(R.string.action_cancel))
                 }
@@ -352,191 +292,144 @@ fun HistoryScreen(
     }
 }
 
-/**
- * Horizontally-scrolling row of [FilterChip]s: an "All" chip plus one per
- * [FuelCategory]. Tapping the active chip clears the filter; tapping another
- * chip switches the filter. Selected chips show a leading check icon per
- * Material 3 idiom.
- *
- * Selected container mapping (Sprint Plan: 16dp category tags, active
- * Business Green / Personal Orange backgrounds):
- * - All selected -> [androidx.compose.material3.ColorScheme.primaryContainer] (neutral, not a fuel type)
- * - PETROL selected -> [PersonalOrange]
- * - DIESEL selected -> [BusinessGreen]
- * - CNG selected -> [androidx.compose.material3.ColorScheme.tertiaryContainer] (distinct third fuel)
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategoryFilterChips(
+private fun CategoryFilters(
     selected: FuelCategory?,
     onSelected: (FuelCategory?) -> Unit
 ) {
     val spacing = MaterialTheme.spacing
-    // Mid-luminance accents (PersonalOrange/BusinessGreen) fail white-text contrast,
-    // so selected label/icon content on them uses dark ink instead.
-    val darkOnAccent = Color(0xFF0E1C2F)
+    val allFilterA11y = stringResource(R.string.history_filter_all_a11y)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(start = spacing.lg, end = spacing.lg, top = spacing.md, bottom = spacing.xs),
+            .padding(horizontal = spacing.lg, vertical = spacing.md),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
-        val allFilterLabel = stringResource(R.string.history_filter_all)
-        val allFilterA11y = stringResource(R.string.history_filter_all_a11y)
         FilterChip(
             selected = selected == null,
             onClick = { onSelected(null) },
-            label = {
-                Text(
-                    allFilterLabel,
-                    modifier = Modifier.heightIn(min = spacing.touchTarget)
-                        .wrapContentHeight(Alignment.CenterVertically)
-                )
-            },
-            leadingIcon = if (selected == null) {
-                {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                    )
-                }
-            } else null,
-            shape = MileLogShapes.xl,
-            colors = FilterChipDefaults.filterChipColors(
-                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ),
+            label = { Text(stringResource(R.string.history_filter_all)) },
+            shape = MileLogShapes.sm,
+            colors = filterChipColors(),
             modifier = Modifier
-                .heightIn(min = spacing.touchTarget)
-                .semantics {
-                    contentDescription = allFilterA11y
-                }
+                .heightIn(min = 44.dp)
+                .semantics { contentDescription = allFilterA11y }
         )
         FuelCategory.entries.forEach { category ->
             val isSelected = selected == category
-            val categoryLabel = stringResource(category.labelRes)
-            val categoryA11y = stringResource(
-                R.string.history_filter_category_a11y,
-                categoryLabel
-            )
-            val selectedContainerColor = when (category) {
-                FuelCategory.PETROL -> PersonalOrange
-                FuelCategory.DIESEL -> BusinessGreen
-                FuelCategory.CNG -> MaterialTheme.colorScheme.tertiaryContainer
-            }
-            val selectedContentColor = when (category) {
-                FuelCategory.PETROL, FuelCategory.DIESEL -> darkOnAccent
-                FuelCategory.CNG -> MaterialTheme.colorScheme.onTertiaryContainer
-            }
+            val label = stringResource(category.labelRes)
+            val categoryA11y = stringResource(R.string.history_filter_category_a11y, label)
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelected(if (isSelected) null else category) },
-                label = {
-                    Text(
-                        categoryLabel,
-                        modifier = Modifier.heightIn(min = spacing.touchTarget)
-                            .wrapContentHeight(Alignment.CenterVertically)
-                    )
-                },
-                leadingIcon = if (isSelected) {
-                    {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                        )
-                    }
-                } else null,
-                shape = MileLogShapes.xl,
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = selectedContainerColor,
-                    selectedLabelColor = selectedContentColor,
-                    selectedLeadingIconColor = selectedContentColor
-                ),
+                label = { Text(label) },
+                shape = MileLogShapes.sm,
+                colors = filterChipColors(),
                 modifier = Modifier
-                    .heightIn(min = spacing.touchTarget)
-                    .semantics {
-                        contentDescription = categoryA11y
-                    }
+                    .heightIn(min = 44.dp)
+                    .semantics { contentDescription = categoryA11y }
             )
         }
     }
 }
 
-/**
- * Card rendering a single fuel entry with its details.
- *
- * The card body (date/odometer/fuel/cost) is the clickable target for edit;
- * the delete IconButton sits beside it as an independent control. The two
- * never share a clickable parent, which keeps TalkBack's double-tap model
- * honest — one focus, one action.
- */
 @Composable
-private fun FuelEntryCard(
-    entry: FuelEntry,
-    currencyFormatter: NumberFormat,
-    onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+private fun filterChipColors() = FilterChipDefaults.filterChipColors(
+    containerColor = MaterialTheme.colorScheme.surface,
+    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    selectedContainerColor = MaterialTheme.colorScheme.primary,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+)
+
+@Composable
+private fun LoadingBlock() {
+    val label = stringResource(R.string.loading_generic)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics(mergeDescendants = true) { contentDescription = label },
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorBlock(onRetry: () -> Unit) {
+    val spacing = MaterialTheme.spacing
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(spacing.xl),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(R.string.history_error_load),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(spacing.lg))
+            Button(onClick = onRetry, shape = MileLogShapes.sm) {
+                Text(stringResource(R.string.action_retry))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyBlock(
+    filteredCategory: FuelCategory?,
+    hasAnyEntries: Boolean,
+    onAddEntry: () -> Unit,
+    onClearFilter: () -> Unit
 ) {
     val spacing = MaterialTheme.spacing
-    val dateFormatter = remember(entry.date) {
-        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    }
-    val formattedDate = remember(entry.date) { dateFormatter.format(Date(entry.date)) }
-
-    ElevatedCard(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .level1Shadow(MileLogShapes.md),
-        shape = MileLogShapes.md,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-        ),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = MileLogElevation.level1
-        )
+            .fillMaxSize()
+            .padding(spacing.xl),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .touchTargetMinHeight()
-                    .clickable(onClick = onClick)
-                    .padding(start = spacing.lg, top = spacing.lg, bottom = spacing.lg, end = spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(spacing.xs)
-            ) {
-                Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = stringResource(R.string.history_row_odometer, entry.odometer),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = stringResource(
-                        R.string.history_row_fuel_cost,
-                        entry.liters,
-                        currencyFormatter.format(entry.cost)
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(
-                        R.string.history_card_delete,
-                        formattedDate
-                    )
-                )
+            val categoryName = filteredCategory?.let { stringResource(it.labelRes) }
+            Text(
+                text = if (categoryName != null) {
+                    stringResource(R.string.history_empty_title_filter, categoryName)
+                } else {
+                    stringResource(R.string.history_empty_title_all)
+                },
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(spacing.sm))
+            Text(
+                text = if (categoryName != null) {
+                    stringResource(R.string.history_empty_subtitle_filter, categoryName)
+                } else {
+                    stringResource(R.string.history_empty_subtitle_all)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(spacing.xl))
+            if (categoryName != null && hasAnyEntries) {
+                Button(onClick = onClearFilter, shape = MileLogShapes.sm) {
+                    Text(stringResource(R.string.history_empty_cta_clear_filter))
+                }
+            } else {
+                Button(onClick = onAddEntry, shape = MileLogShapes.sm) {
+                    Text(stringResource(R.string.history_empty_cta_add))
+                }
             }
         }
     }

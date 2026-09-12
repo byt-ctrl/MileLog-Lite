@@ -129,4 +129,75 @@
     <!-- Export snackbar outcomes -->
     <string name="export_success">Exported %1$d entries to CSV</string>
     <string name="export_failure">Export failed: %1$s</string>
+
+    <!-- Instrument shell -->
+    <string name="rail_offline_note">Works offline. Every fill-up stays on this device.</string>
+
+    <!-- Dashboard (Instrument Ledger) -->
+    <string name="dashboard_binnacle_title">Fuel log</string>
+    <string name="dashboard_binnacle_subtitle">Single vehicle  ·  %1$s</string>
+    <string name="dashboard_binnacle_subtitle_empty">Single vehicle</string>
+    <string name="dashboard_gauge_label">Average mileage</string>
+    <string name="dashboard_gauge_unit">km/L</string>
+    <string name="dashboard_gauge_scale_note">tank to tank</string>
+    <string name="dashboard_gauge_note_no_average">Mileage starts at the second fill-up, once there is a previous reading to measure against.</string>
+    <string name="dashboard_gauge_note_plain">Average across every measured fill-up.</string>
+    <string name="dashboard_gauge_note_above">Latest fill-up %1$s km/L, %2$s above this average.</string>
+    <string name="dashboard_gauge_note_below">Latest fill-up %1$s km/L, %2$s below this average.</string>
+    <string name="dashboard_gauge_note_level">Latest fill-up matches this average.</string>
+    <string name="dashboard_gauge_a11y">Average mileage %1$s kilometres per litre, latest fill-up %2$s, on a scale from 0 to %3$d</string>
+    <string name="dashboard_gauge_a11y_empty">Mileage gauge with no reading yet, on a scale from 0 to %1$d</string>
+    <string name="dashboard_ledger_title">Fill-up ledger</string>
+    <string name="dashboard_ledger_note">%1$d entries, newest first</string>
+    <string name="dashboard_ledger_action">View all</string>
+    <string name="dashboard_ledger_odometer_value">%1$s km</string>
+    <string name="dashboard_ledger_liters_value">%1$.2f L</string>
+    <string name="dashboard_ledger_mileage_value">%1$s km/L</string>
+    <string name="dashboard_trend_title">Mileage by fill-up</string>
+    <string name="dashboard_trend_note">Dashed line at the %1$s km/L average</string>
+    <string name="dashboard_trend_action">Open charts</string>
+
+    <!-- Entry instrument -->
+    <string name="entry_instrument_label">Mileage this fill-up</string>
+    <string name="entry_instrument_unit">km per litre</string>
+    <string name="entry_instrument_note_no_previous">Mileage is measured from the previous fill-up.</string>
+    <string name="entry_instrument_note_idle">Needs an odometer reading above %1$s km.</string>
+    <string name="entry_instrument_note_ready">Measured against the previous reading of %1$s km.</string>
+    <string name="entry_instrument_a11y">Mileage %1$s kilometres per litre, on a scale from 0 to %2$d</string>
+    <string name="entry_instrument_a11y_empty">Mileage readout with no value yet, on a scale from 0 to %1$d</string>
+    <string name="entry_readout_distance">Distance</string>
+    <string name="entry_readout_distance_note">since the last fill-up</string>
+    <string name="entry_readout_cost_per_km_note">on this fill-up</string>
+    <string name="entry_readout_price_per_litre">Price per litre</string>
+    <string name="entry_readout_price_per_litre_note">what you paid</string>
+
+    <!-- Settings (full screen) -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_appearance_row">Theme</string>
+    <string name="settings_appearance_value">Follows device</string>
+    <string name="settings_appearance_note">The instrument panel stays dark in every mode. Only the logbook follows your device setting.</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_export_row">Export fill-ups as CSV</string>
+    <string name="settings_export_row_note">Save every entry to a file you choose</string>
+    <string name="settings_delete_row">Delete all fill-ups</string>
+    <string name="settings_delete_row_note">Removes every entry from this device</string>
+    <string name="settings_delete_dialog_title">Delete all fill-ups?</string>
+    <string name="settings_delete_dialog_body">This removes all %1$d entries from this device. You can undo straight after.</string>
+    <string name="settings_delete_confirm">Delete all</string>
+    <string name="settings_delete_cancel">Keep fill-ups</string>
+    <string name="settings_cleared">All fill-ups deleted</string>
+    <string name="settings_restored">Fill-ups restored</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_about_version_value">Version 1.0</string>
+    <string name="settings_about_storage">Storage</string>
+    <string name="settings_about_storage_value">This device</string>
+    <string name="settings_about_network">Network</string>
+    <string name="settings_about_network_value">Not required</string>
+    <string name="settings_binnacle_subtitle">Every entry stays on this device</string>
+    <string name="settings_readout_entries">Fill-ups logged</string>
+    <string name="settings_readout_entries_note">in this log</string>
+    <string name="settings_readout_distance">Distance tracked</string>
+    <string name="settings_readout_distance_note">first to last reading</string>
+    <string name="settings_readout_storage">Storage</string>
+    <string name="settings_readout_storage_note">offline</string>
 </resources>

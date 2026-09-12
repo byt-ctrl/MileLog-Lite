@@ -9,6 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/**
+ * Instrument Ledger spacing scale. Every step is a multiple of the base unit:
+ * 4 (micro), 8/12 (within a group), 16/24 (between groups), 32/48 (section
+ * breaks). The gap between groups is always at least twice the gap within one.
+ */
 object Spacing {
     val xs: Dp = 4.dp
     val sm: Dp = 8.dp
@@ -16,7 +21,9 @@ object Spacing {
     val lg: Dp = 16.dp
     val xl: Dp = 24.dp
     val xxl: Dp = 32.dp
+    val xxxl: Dp = 48.dp
     val touchTarget: Dp = 48.dp
+    val touchTargetMin: Dp = 44.dp
 }
 
 val LocalSpacing = staticCompositionLocalOf { Spacing }
@@ -27,3 +34,15 @@ val MaterialTheme.spacing: Spacing
     get() = LocalSpacing.current
 
 fun Modifier.touchTargetMinHeight(): Modifier = heightIn(min = Spacing.touchTarget)
+
+fun Modifier.minTouchTargetHeight(): Modifier = heightIn(min = Spacing.touchTargetMin)
+
+/**
+ * Width breakpoints. The ledger recomposes rather than stretches: the readout
+ * strip is a ruled list under [medium], the navigation is a bottom bar under
+ * [expanded], and the ledger table shows its full column set at and above it.
+ */
+object MileLogWindow {
+    val medium: Dp = 600.dp
+    val expanded: Dp = 840.dp
+}

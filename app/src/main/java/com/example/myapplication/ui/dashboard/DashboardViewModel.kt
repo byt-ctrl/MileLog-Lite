@@ -9,7 +9,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
+import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.domain.calculation.MileageCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,9 +40,25 @@ data class DashboardUiState(
     val averageMileage: Double? = null,
     val costPerKm: Double? = null,
     val entryCount: Int = 0,
+    /**
+     * The most recent fill-ups with their computed mileage, newest first, for
+     * the ledger preview. Capped at [RECENT_LIMIT].
+     */
+    val recentFillups: List<FillupMileage> = emptyList(),
+    /**
+     * Measured fill-ups in odometer order, excluding the baseline entry that
+     * has no previous reading to measure against.
+     */
+    val trendFillups: List<FillupMileage> = emptyList(),
+    /** Mileage returned by the most recent fill-up, for the gauge comparison. */
+    val latestMileage: Double? = null,
     val isLoading: Boolean = true,
     val errorMessage: DashboardMessage? = null
-)
+) {
+    companion object {
+        const val RECENT_LIMIT = 5
+    }
+}
 
 class DashboardViewModel(
     private val repository: FuelEntryRepository
@@ -53,6 +71,8 @@ class DashboardViewModel(
         .flatMapLatest { repository.getAllEntriesFlow() }
         .map { entries ->
             val stats = MileageCalculator.calculateDashboardStats(entries)
+            val fillups = MileageCalculator.calculatePerFillupMileage(entries)
+            val measured = fillups.filter { it.mileageKmPerL != null }
             DashboardUiState(
                 latestOdometer = stats.latestOdometer,
                 latestFuelCategory = entries.firstOrNull()
@@ -63,6 +83,11 @@ class DashboardViewModel(
                 averageMileage = stats.averageMileage,
                 costPerKm = stats.costPerKm,
                 entryCount = entries.size,
+                recentFillups = fillups
+                    .takeLast(DashboardUiState.RECENT_LIMIT)
+                    .reversed(),
+                trendFillups = measured.takeLast(TREND_LIMIT),
+                latestMileage = measured.lastOrNull()?.mileageKmPerL,
                 isLoading = false
             )
         }
@@ -85,6 +110,9 @@ class DashboardViewModel(
     }
 
     companion object {
+        /** Most recent measured fill-ups drawn on the trend chart. */
+        private const val TREND_LIMIT = 8
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)

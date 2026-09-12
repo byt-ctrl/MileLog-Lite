@@ -16,134 +16,159 @@ val Inter = FontFamily(
 )
 
 /**
- * MileLog Lite type system (Kinetic Logic).
+ * Data face. Every number the driver compares (odometer, litres, km/L, cost,
+ * gauge readouts, chart labels) is set in the platform monospace with tabular
+ * figures, so digits take a fixed advance and columns line up down the ledger.
  *
- * Hierarchy:
- *   Display  — dashboard KPI values (odometer, cost, mileage)
- *   Title    — screen headers, card titles, section labels
- *   Body     — form text, history rows, descriptions, validation
- *   Label    — chart captions, axis text, metadata, timestamps
+ * This is a functional choice, not a technical costume: those numbers are the
+ * product, and a proportional face leaves them ragged.
+ */
+val DataMono = FontFamily.Monospace
+
+private const val TABULAR = "tnum"
+
+/**
+ * Instrument Ledger type scale.
  *
- * Single family (Inter) in four weights keeps the surface fast and
- * consistent. Weight contrast does the hierarchy work, not competing
- * typefaces. displayLarge/Medium use tabular figures (tnum) so KPI
- * numbers align vertically.
+ * Two faces, one job each. [DataMono] carries readings and anything that gets
+ * compared down a column. [Inter] carries prose, labels, and controls. Weight
+ * and size carry the hierarchy; the scale steps at roughly 1.3x.
  */
 val Typography = Typography(
-    // ── Display: KPI hero values ──────────────────────────
+    // Readings and hero metrics.
     displayLarge = TextStyle(
-        fontFamily = Inter,
-        fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
-        lineHeight = 52.sp,
-        letterSpacing = (-0.96).sp,
-        fontFeatureSettings = "tnum"
+        fontFamily = DataMono,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 40.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-0.5).sp,
+        fontFeatureSettings = TABULAR
     ),
     displayMedium = TextStyle(
-        fontFamily = Inter,
-        fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
-        letterSpacing = (-0.72).sp,
-        fontFeatureSettings = "tnum"
+        fontFamily = DataMono,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 32.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.4).sp,
+        fontFeatureSettings = TABULAR
     ),
     displaySmall = TextStyle(
-        fontFamily = Inter,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-        letterSpacing = 0.sp
+        fontFamily = DataMono,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 21.sp,
+        lineHeight = 26.sp,
+        letterSpacing = (-0.2).sp,
+        fontFeatureSettings = TABULAR
     ),
 
-    // ── Headline: major section breaks ────────────────────
+    // Screen titles and section breaks.
     headlineLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.4).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-        letterSpacing = 0.sp
+        fontSize = 21.sp,
+        lineHeight = 28.sp,
+        letterSpacing = (-0.2).sp
     ),
     headlineSmall = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
-        letterSpacing = 0.sp
+        fontSize = 18.sp,
+        lineHeight = 24.sp
     ),
 
-    // ── Title: screen headers, card titles ────────────────
+    // Row and card titles.
     titleLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
-        letterSpacing = 0.sp
+        fontSize = 17.sp,
+        lineHeight = 24.sp
     ),
     titleMedium = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.15.sp
+        fontSize = 15.sp,
+        lineHeight = 22.sp
     ),
     titleSmall = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
+        lineHeight = 20.sp
     ),
 
-    // ── Body: forms, history rows, descriptions ───────────
+    // Prose, form values, descriptions.
     bodyLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        lineHeight = 24.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+        fontSize = 15.sp,
+        lineHeight = 22.sp
     ),
     bodySmall = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
 
-    // ── Label: chart captions, axis text, metadata ────────
+    // Metadata, captions, secondary actions.
     labelLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
     labelMedium = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.05.sp
     ),
     labelSmall = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.55.sp
+        lineHeight = 14.sp,
+        letterSpacing = 0.08.sp
     )
+)
+
+/** Ledger row data: mono, tabular, aligned. */
+val DataTextStyle = TextStyle(
+    fontFamily = DataMono,
+    fontWeight = FontWeight.Normal,
+    fontSize = 15.sp,
+    lineHeight = 22.sp,
+    fontFeatureSettings = TABULAR
+)
+
+/** Compact data: chart caps, secondary readings. */
+val DataTextStyleSmall = TextStyle(
+    fontFamily = DataMono,
+    fontWeight = FontWeight.Medium,
+    fontSize = 13.sp,
+    lineHeight = 18.sp,
+    fontFeatureSettings = TABULAR
+)
+
+/** Uppercase micro-label: readout labels, table headers, section notes. */
+val MicroLabelStyle = TextStyle(
+    fontFamily = Inter,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 11.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 0.08.sp
 )

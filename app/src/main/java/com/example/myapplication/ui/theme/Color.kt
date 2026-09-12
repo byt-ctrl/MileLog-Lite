@@ -1,113 +1,166 @@
 package com.example.myapplication.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// --- MileLog Lite brand palette (dependable blue + business green + teal tertiary) ---
-// Kinetic Logic design system. Light values come from the DESIGN.md tokens; dark values
-// are derived from the inverse counterparts (inverseSurface #243145, inverseOnSurface
-// #EBF1FF, inversePrimary #B2C5FF) per Sprint 6 §6.1.1.
+// Instrument Ledger palette.
+//
+// Two materials, one object. The instrument (chrome) is always dark and never
+// follows the theme: it is the backlit cluster of a car, where readings live.
+// The logbook is the paper below it, and only the logbook flips between light
+// and dark. Depth comes from that material change, not from shadow.
 
-// Primary: dependable blue
-val BluePrimaryLight = Color(0xFF003D9B)
-val BluePrimaryDark = Color(0xFFB2C5FF)
-val OnBluePrimaryLight = Color(0xFFFFFFFF)
-val OnBluePrimaryDark = Color(0xFF00215F)
-val BlueContainerLight = Color(0xFF0052CC)
-val BlueContainerDark = Color(0xFF0052CC)
-val OnBlueContainerLight = Color(0xFFC4D2FF)
-val OnBlueContainerDark = Color(0xFFC4D2FF)
+// --- Logbook, light -------------------------------------------------------
 
-// Primary fixed (identical across light and dark)
-val PrimaryFixed = Color(0xFFDAE2FF)
-val PrimaryFixedDim = Color(0xFFB2C5FF)
-val OnPrimaryFixed = Color(0xFF001848)
-val OnPrimaryFixedVariant = Color(0xFF0040A2)
+val PaperLight = Color(0xFFEDF0EF)
+val PanelLight = Color(0xFFFBFCFB)
+val PanelSunkenLight = Color(0xFFF4F7F6)
+val PanelHighLight = Color(0xFFE6EAE8)
+val SurfaceHighestLight = Color(0xFFDFE4E2)
+val SurfaceDimLight = Color(0xFFE3E7E5)
+val SurfaceBrightLight = Color(0xFFFFFFFF)
+val SurfaceLowestLight = Color(0xFFFFFFFF)
 
-// Secondary: business/success green
-val GreenSecondaryLight = Color(0xFF006C47)
-val GreenSecondaryDark = Color(0xFF65DCA4)
-val OnGreenSecondaryLight = Color(0xFFFFFFFF)
-val OnGreenSecondaryDark = Color(0xFF005235)
-val GreenContainerLight = Color(0xFF82F9BE)
-val GreenContainerDark = Color(0xFF005235)
-val OnGreenContainerLight = Color(0xFF00734C)
-val OnGreenContainerDark = Color(0xFF82F9BE)
+val InkLight = Color(0xFF0E1413)
+val Ink2Light = Color(0xFF414A47)
+val Ink3Light = Color(0xFF5A635F)
 
-// Secondary fixed (identical across light and dark)
-val SecondaryFixed = Color(0xFF82F9BE)
-val SecondaryFixedDim = Color(0xFF65DCA4)
-val OnSecondaryFixed = Color(0xFF002113)
-val OnSecondaryFixedVariant = Color(0xFF005235)
+val RuleLight = Color(0xFFD5DBD9)
+val RuleStrongLight = Color(0xFFB9C2BF)
 
-// Tertiary: interactive teal (secondary highlights, data-viz trends)
-val TertiaryLight = Color(0xFF004B51)
-val TertiaryDark = Color(0xFF4BD9E5)
-val OnTertiaryLight = Color(0xFFFFFFFF)
-val OnTertiaryDark = Color(0xFF002022)
-val TertiaryContainerLight = Color(0xFF00656C)
-val TertiaryContainerDark = Color(0xFF004F55)
-val OnTertiaryContainerLight = Color(0xFF5BE6F2)
-val OnTertiaryContainerDark = Color(0xFF7FF4FF)
+val PetrolLight = Color(0xFF0B4A46)
+val PetrolStrongLight = Color(0xFF073B38)
+val OnPetrolLight = Color(0xFFFFFFFF)
+val PetrolTintLight = Color(0xFFDBE8E6)
 
-// Tertiary fixed (identical across light and dark)
-val TertiaryFixed = Color(0xFF7FF4FF)
-val TertiaryFixedDim = Color(0xFF4BD9E5)
-val OnTertiaryFixed = Color(0xFF002022)
-val OnTertiaryFixedVariant = Color(0xFF004F55)
+val FuelLight = Color(0xFF8A5200)
+val FuelTintLight = Color(0xFFF3E6CF)
 
-// Accents: trip classification & active status (Kinetic Logic)
-val PersonalOrange = Color(0xFFFF8B00)
-val BusinessGreen = Color(0xFF36B37E)
-val ActiveStatusRed = Color(0xFFDE350B)
+val DangerLight = Color(0xFF9C2419)
+val OnDangerLight = Color(0xFFFFFFFF)
+val DangerTintLight = Color(0xFFF4DEDB)
+val OnDangerTintLight = Color(0xFF5C150E)
 
-// Neutrals: blue-tinted surface ramp (never pure gray)
-val SurfaceLight = Color(0xFFF9F9FF)
-val SurfaceDark = Color(0xFF243145)
-val SurfaceDimLight = Color(0xFFCDDBF5)
-val SurfaceDimDark = Color(0xFF121824)
-val SurfaceBrightLight = Color(0xFFF9F9FF)
-val SurfaceBrightDark = Color(0xFF2C3B52)
-val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
-val SurfaceContainerLowestDark = Color(0xFF161E2B)
-val SurfaceContainerLowLight = Color(0xFFF0F3FF)
-val SurfaceContainerLowDark = Color(0xFF1C2634)
-val SurfaceContainerLight = Color(0xFFE7EEFF)
-val SurfaceContainerDark = Color(0xFF212C3D)
-val SurfaceContainerHighLight = Color(0xFFDEE8FF)
-val SurfaceContainerHighDark = Color(0xFF2A3850)
-val SurfaceContainerHighestLight = Color(0xFFD6E3FE)
-val SurfaceContainerHighestDark = Color(0xFF304159)
-val OnSurfaceLight = Color(0xFF0E1C2F)
-val OnSurfaceDark = Color(0xFFEBF1FF)
-val SurfaceVariantLight = Color(0xFFD6E3FE)
-val SurfaceVariantDark = Color(0xFF434654)
-val OnSurfaceVariantLight = Color(0xFF434654)
-val OnSurfaceVariantDark = Color(0xFFC3C6D6)
-val OutlineLight = Color(0xFF737685)
-val OutlineDark = Color(0xFF8D92A5)
-val OutlineVariantLight = Color(0xFFC3C6D6)
-val OutlineVariantDark = Color(0xFF434654)
-val SurfaceTintLight = Color(0xFF0C56D0)
-val SurfaceTintDark = Color(0xFFB2C5FF)
+val GoodLight = Color(0xFF1D6340)
+val GoodTintLight = Color(0xFFDCEBE1)
 
-// Background: application canvas (surface-bg token, elevation Level 0)
-val BackgroundLight = Color(0xFFF4F5F7)
-val BackgroundDark = Color(0xFF1A2330)
+val SlateLight = Color(0xFF4E5478)
+val OnSlateLight = Color(0xFFFFFFFF)
+val SlateTintLight = Color(0xFFE2E4F0)
+val OnSlateTintLight = Color(0xFF2C3155)
 
-// Inverse roles (snackbars/toasts and flipped-surface content)
-val InverseSurfaceLight = Color(0xFF243145)
-val InverseSurfaceDark = Color(0xFFEBF1FF)
-val InverseOnSurfaceLight = Color(0xFFEBF1FF)
-val InverseOnSurfaceDark = Color(0xFF243145)
-val InversePrimaryLight = Color(0xFFB2C5FF)
-val InversePrimaryDark = Color(0xFF003D9B)
+// --- Logbook, dark --------------------------------------------------------
 
-// Error
-val ErrorLight = Color(0xFFBA1A1A)
-val ErrorDark = Color(0xFFFFB4AB)
-val OnErrorLight = Color(0xFFFFFFFF)
-val OnErrorDark = Color(0xFF690005)
-val ErrorContainerLight = Color(0xFFFFDAD6)
-val ErrorContainerDark = Color(0xFF93000A)
-val OnErrorContainerLight = Color(0xFF410002)
-val OnErrorContainerDark = Color(0xFFFFDAD6)
+val PaperDark = Color(0xFF0C1112)
+val PanelDark = Color(0xFF141A1C)
+val PanelSunkenDark = Color(0xFF101618)
+val PanelHighDark = Color(0xFF1E2628)
+val SurfaceHighestDark = Color(0xFF283032)
+val SurfaceDimDark = Color(0xFF080C0D)
+val SurfaceBrightDark = Color(0xFF2A3436)
+val SurfaceLowestDark = Color(0xFF0A0F10)
+
+val InkDark = Color(0xFFE7EDEB)
+val Ink2Dark = Color(0xFFB2BDBA)
+val Ink3Dark = Color(0xFF8D9A96)
+
+val RuleDark = Color(0xFF222C2E)
+val RuleStrongDark = Color(0xFF33403F)
+
+val PetrolDark = Color(0xFF6FC8BB)
+val PetrolStrongDark = Color(0xFF8AD6CA)
+val OnPetrolDark = Color(0xFF06201E)
+val PetrolTintDark = Color(0xFF122E2B)
+
+val FuelDark = Color(0xFFEDB25A)
+val FuelTintDark = Color(0xFF2E2413)
+
+val DangerDark = Color(0xFFEF9086)
+val OnDangerDark = Color(0xFF4A0F0A)
+val DangerTintDark = Color(0xFF331A17)
+val OnDangerTintDark = Color(0xFFF4DEDB)
+
+val GoodDark = Color(0xFF7CC79C)
+val GoodTintDark = Color(0xFF142E20)
+
+val SlateDark = Color(0xFFA9AFD6)
+val OnSlateDark = Color(0xFF1E2240)
+val SlateTintDark = Color(0xFF343A5E)
+val OnSlateTintDark = Color(0xFFE2E4F0)
+
+// --- Instrument (identical in both appearances) ---------------------------
+
+val InstrumentSurface = Color(0xFF101618)
+val InstrumentRaised = Color(0xFF182023)
+val InstrumentRaisedHigh = Color(0xFF212B2E)
+val InstrumentRule = Color(0xFF2B3639)
+val InstrumentText = Color(0xFFE6EDEC)
+val InstrumentTextMuted = Color(0xFF9BA8A6)
+val InstrumentReadout = Color(0xFF57C0B2)
+val InstrumentMarker = Color(0xFFF0A83C)
+val InstrumentOnMarker = Color(0xFF1A1204)
+
+/**
+ * Semantic colors that Material 3 has no role for. Provided by
+ * [MileLogTheme] so screens never hard-code a hex value.
+ */
+@Immutable
+data class LedgerColors(
+    val chrome: Color,
+    val chromeRaised: Color,
+    val chromeRaisedHigh: Color,
+    val chromeRule: Color,
+    val chromeText: Color,
+    val chromeTextMuted: Color,
+    val chromeReadout: Color,
+    val chromeMarker: Color,
+    val chromeOnMarker: Color,
+    val fuel: Color,
+    val fuelTint: Color,
+    val good: Color,
+    val goodTint: Color,
+    val rule: Color,
+    val ruleStrong: Color
+)
+
+val LightLedgerColors = LedgerColors(
+    chrome = InstrumentSurface,
+    chromeRaised = InstrumentRaised,
+    chromeRaisedHigh = InstrumentRaisedHigh,
+    chromeRule = InstrumentRule,
+    chromeText = InstrumentText,
+    chromeTextMuted = InstrumentTextMuted,
+    chromeReadout = InstrumentReadout,
+    chromeMarker = InstrumentMarker,
+    chromeOnMarker = InstrumentOnMarker,
+    fuel = FuelLight,
+    fuelTint = FuelTintLight,
+    good = GoodLight,
+    goodTint = GoodTintLight,
+    rule = RuleLight,
+    ruleStrong = RuleStrongLight
+)
+
+val DarkLedgerColors = LightLedgerColors.copy(
+    fuel = FuelDark,
+    fuelTint = FuelTintDark,
+    good = GoodDark,
+    goodTint = GoodTintDark,
+    rule = RuleDark,
+    ruleStrong = RuleStrongDark
+)
+
+val LocalLedgerColors = staticCompositionLocalOf { LightLedgerColors }
+
+/**
+ * Semantic colors outside the Material scheme: the instrument roles (constant),
+ * plus fuel, good, and the hairline rule tokens.
+ */
+val MaterialTheme.ledger: LedgerColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalLedgerColors.current

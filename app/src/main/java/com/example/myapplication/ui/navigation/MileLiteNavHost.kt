@@ -1,7 +1,12 @@
 package com.example.myapplication.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +22,7 @@ import com.example.myapplication.ui.dashboard.DashboardScreen
 import com.example.myapplication.ui.entry.AddEditEntryScreen
 import com.example.myapplication.ui.history.HistoryScreen
 import com.example.myapplication.ui.settings.SettingsScreen
+import com.example.myapplication.ui.theme.MileLogWindow
 
 /**
  * Route constants for the MileLog Lite navigation graph.
@@ -42,12 +48,13 @@ object MileLogRoutes {
 }
 
 /**
- * Root navigation host wiring the MileLog Lite screens together.
+ * Root navigation host.
  *
- * Wiring-only global chrome (approved Add plan): a single Scaffold owns the
- * bottom bar + centered FAB overlay. M3 Scaffold has no true docked/cutout
- * slot, so FabPosition.Center is the docked-center concept — no manual y
- * offset is applied. Per-screen FABs on Dashboard/History are left intact.
+ * The app shell is one instrument: a dark rail on expanded widths, a dark
+ * bottom bar below them. Both carry the same destinations, so widening the
+ * window never removes a way to move. The primary action (log a fill-up) is a
+ * single petrol FAB owned by the shell, so no screen competes with another for
+ * the same job.
  */
 @Composable
 fun MileLiteNavHost(
@@ -56,46 +63,92 @@ fun MileLiteNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Bottom bar is top-level only; entry/edit are full-screen flows.
-    // EDIT_ENTRY carries an argument, so match the "edit_entry/" prefix in
-    // addition to the templated route string.
+    // Entry and edit are full-screen flows; everything else is a destination
+    // the shell keeps navigation for.
     val isEditDestination = currentRoute == MileLogRoutes.EDIT_ENTRY ||
         currentRoute?.startsWith("edit_entry/") == true
-    val showBottomBar = !isEditDestination &&
+    val isTopLevel = !isEditDestination &&
         currentRoute != MileLogRoutes.ADD_ENTRY &&
         (currentRoute == MileLogRoutes.DASHBOARD ||
-        currentRoute == MileLogRoutes.HISTORY ||
-        currentRoute == MileLogRoutes.CHARTS ||
-        currentRoute == MileLogRoutes.SETTINGS)
+            currentRoute == MileLogRoutes.HISTORY ||
+            currentRoute == MileLogRoutes.CHARTS ||
+            currentRoute == MileLogRoutes.SETTINGS)
 
-    // Charts has no local FAB, so the global one gives it an Add path.
-    // Dashboard/History keep their existing per-screen FABs (single-primary-
-    // action rule: no duplicate global FAB there).
-    val showFab = currentRoute == MileLogRoutes.CHARTS
+    val onTabSelected: (String) -> Unit = { route ->
+        navController.navigate(route) {
+            popUpTo(MileLogRoutes.DASHBOARD) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+    val onAddEntry: () -> Unit = { navController.navigate(MileLogRoutes.ADD_ENTRY) }
+
+    BoxWithConstraints {
+        val expanded = maxWidth >= MileLogWindow.expanded
+
+        if (expanded) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                MileLogRail(
+                    currentRoute = currentRoute,
+                    onTabSelected = onTabSelected,
+                    onAddEntry = onAddEntry
+                )
+                ShellScaffold(
+                    showBottomBar = false,
+                    currentRoute = currentRoute,
+                    onTabSelected = onTabSelected,
+                    onAddEntry = onAddEntry,
+                    navController = navController,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        } else {
+            ShellScaffold(
+                showBottomBar = isTopLevel,
+                currentRoute = currentRoute,
+                onTabSelected = onTabSelected,
+                onAddEntry = onAddEntry,
+                navController = navController,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShellScaffold(
+    showBottomBar: Boolean,
+    currentRoute: String?,
+    onTabSelected: (String) -> Unit,
+    onAddEntry: () -> Unit,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    // The log screens have something to add; Settings does not, so the
+    // primary action stays where it means something.
+    val showFab = showBottomBar && currentRoute != MileLogRoutes.SETTINGS
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
-                BottomNavBar(
+                MileLogBottomBar(
                     currentRoute = currentRoute,
-                    onTabSelected = { route ->
-                        navController.navigate(route) {
-                            popUpTo(MileLogRoutes.DASHBOARD) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    onTabSelected = onTabSelected
                 )
             }
         },
         floatingActionButton = {
             if (showFab) {
-                MileLogFab(
-                    onClick = { navController.navigate(MileLogRoutes.ADD_ENTRY) }
-                )
+                MileLogFab(onClick = onAddEntry)
             }
         },
-        floatingActionButtonPosition = FabPosition.Center
+        floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -104,22 +157,20 @@ fun MileLiteNavHost(
         ) {
             composable(MileLogRoutes.DASHBOARD) {
                 DashboardScreen(
-                    onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) },
-                    onViewHistory = { navController.navigate(MileLogRoutes.HISTORY) },
-                    onViewCharts = { navController.navigate(MileLogRoutes.CHARTS) }
+                    onAddEntry = onAddEntry,
+                    onViewHistory = { onTabSelected(MileLogRoutes.HISTORY) },
+                    onViewCharts = { onTabSelected(MileLogRoutes.CHARTS) }
                 )
             }
             composable(MileLogRoutes.CHARTS) {
-                ChartsScreen(
-                    onNavigateUp = { navController.navigateUp() },
-                    onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) }
-                )
+                ChartsScreen(onAddEntry = onAddEntry)
             }
             composable(MileLogRoutes.HISTORY) {
                 HistoryScreen(
-                    onEditEntry = { entryId -> navController.navigate(MileLogRoutes.editEntry(entryId)) },
-                    onAddEntry = { navController.navigate(MileLogRoutes.ADD_ENTRY) },
-                    onNavigateUp = { navController.navigateUp() }
+                    onEditEntry = { entryId ->
+                        navController.navigate(MileLogRoutes.editEntry(entryId))
+                    },
+                    onAddEntry = onAddEntry
                 )
             }
             composable(MileLogRoutes.SETTINGS) {

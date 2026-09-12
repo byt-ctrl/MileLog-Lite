@@ -205,14 +205,14 @@ fun MonthlySpendChart(
                         }
                         val groupCount = spends.size
                         val seriesCount = dataSets.size
+                        val groupSpace = 0.18f
+                        val barSpace = 0.02f
                         val barData = BarData(*dataSets.toTypedArray()).apply {
-                            val groupSpace = 0.18f
-                            val barSpace = 0.02f
-                            val barWidth = 0.80f / seriesCount.coerceAtLeast(1)
-                            this.barWidth = barWidth
-                            chart.groupBars(0f, groupSpace, barSpace)
+                            this.barWidth = 0.80f / seriesCount.coerceAtLeast(1)
                         }
+                        // MPAndroidChart requires data set before grouping bars.
                         chart.data = barData
+                        chart.groupBars(0f, groupSpace, barSpace)
                         chart.setVisibleXRangeMaximum(
                             (groupCount.toFloat() + 0.5f).coerceAtLeast(1f)
                         )

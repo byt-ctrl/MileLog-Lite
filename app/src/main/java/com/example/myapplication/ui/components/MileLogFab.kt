@@ -1,10 +1,8 @@
-// Extended floating action button with custom elevation and shape.
-
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AddCircle
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -12,46 +10,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
-import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
-import com.example.myapplication.ui.theme.level2Shadow
 
+/**
+ * Primary action for logging a fill-up. Squared rather than pill-shaped to
+ * match the ledger's edge language, flat rather than elevated because the
+ * redesign removes shadow as a hierarchy device, and petrol rather than amber
+ * so the logbook keeps one calm primary action.
+ */
 @Composable
 fun MileLogFab(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String? = null,
-    icon: ImageVector = Icons.Rounded.AddCircle
+    modifier: Modifier = Modifier
 ) {
-    // contentDescription is retained for backward compatibility with existing
-    // callers but intentionally not applied to the icon: the extended FAB's
-    // visible text label already provides the accessibility label per M3
-    // guidance, so the icon's content description stays null to avoid a
-    // redundant announcement.
     ExtendedFloatingActionButton(
         text = { Text(stringResource(R.string.fab_add_label)) },
         icon = {
             Icon(
-                imageVector = icon,
+                imageVector = Icons.Rounded.Add,
                 contentDescription = null
             )
         },
         onClick = onClick,
-        modifier = modifier
-            .level2Shadow(MileLogShapes.full)
-            .heightIn(min = 48.dp),
-        shape = MileLogShapes.full,
+        modifier = modifier.heightIn(min = 48.dp),
+        shape = MileLogShapes.sm,
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = MileLogElevation.level2,
-            pressedElevation = MileLogElevation.level2,
-            focusedElevation = MileLogElevation.level2,
-            hoveredElevation = MileLogElevation.level2
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp
         )
     )
 }

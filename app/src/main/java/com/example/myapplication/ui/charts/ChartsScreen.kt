@@ -11,17 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.spacing
 import com.example.myapplication.ui.theme.touchTargetMinHeight
 
@@ -52,7 +49,6 @@ import com.example.myapplication.ui.theme.touchTargetMinHeight
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChartsScreen(
-    onNavigateUp: () -> Unit,
     onAddEntry: () -> Unit = {},
     viewModel: ChartsViewModel = viewModel(factory = ChartsViewModel.Factory)
 ) {
@@ -60,21 +56,9 @@ fun ChartsScreen(
     val spacing = MaterialTheme.spacing
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.charts_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_navigate_back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+            InstrumentBar(title = stringResource(R.string.charts_title))
         }
     ) { innerPadding ->
         when {
@@ -112,6 +96,7 @@ fun ChartsScreen(
                         Spacer(modifier = Modifier.height(spacing.lg))
                         Button(
                             onClick = viewModel::retry,
+                            shape = MileLogShapes.sm,
                             modifier = Modifier.touchTargetMinHeight()
                         ) {
                             Text(stringResource(R.string.action_retry))
@@ -146,6 +131,7 @@ fun ChartsScreen(
                         Spacer(modifier = Modifier.height(spacing.xl))
                         Button(
                             onClick = onAddEntry,
+                            shape = MileLogShapes.sm,
                             modifier = Modifier.touchTargetMinHeight()
                         ) {
                             Text(stringResource(R.string.dashboard_empty_cta))

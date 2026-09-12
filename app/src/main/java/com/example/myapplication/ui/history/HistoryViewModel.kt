@@ -13,6 +13,7 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.domain.calculation.MileageCalculator
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +55,12 @@ data class HistoryUiState(
     val exportMessageCount: Int = 0,
     val exportMessageDetail: String? = null,
     val totalEntryCount: Int = 0,
+    /**
+     * Per-fill-up mileage keyed by entry id, computed across the whole log so
+     * filtering the list never changes a row's reading. The baseline entry has
+     * no previous reading and is absent.
+     */
+    val mileageById: Map<Long, Double> = emptyMap(),
     /**
      * The entry most recently deleted, exposed so the UI can offer an
      * undo affordance via a transient snackbar. Null once consumed.
@@ -114,6 +121,11 @@ class HistoryViewModel(
                     exportMessageCount = export.exportMessageCount,
                     exportMessageDetail = export.exportMessageDetail,
                     totalEntryCount = all.size,
+                    mileageById = MileageCalculator.calculatePerFillupMileage(all)
+                        .mapNotNull { fillup ->
+                            fillup.mileageKmPerL?.let { fillup.entry.id to it }
+                        }
+                        .toMap(),
                     lastDeleted = _undoState.value.lastDeleted
                 )
             }

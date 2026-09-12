@@ -8,22 +8,27 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.dp
 
+/**
+ * Instrument Ledger edge language: small radii, machined rather than soft.
+ * Panels are 6.dp, controls 4.dp, chips 4.dp. There is no pill shape outside
+ * the circular tab action.
+ */
 object MileLogShapes {
     val sm = RoundedCornerShape(4.dp)
-    val md = RoundedCornerShape(8.dp)
-    val lg = RoundedCornerShape(12.dp)
-    val xl = RoundedCornerShape(16.dp)
-    val xxl = RoundedCornerShape(24.dp)
-    val full = RoundedCornerShape(9999.dp)
-    val chip = xl
+    val md = RoundedCornerShape(6.dp)
+    val lg = RoundedCornerShape(8.dp)
+    val xl = RoundedCornerShape(12.dp)
+    val xxl = RoundedCornerShape(16.dp)
+    val full = RoundedCornerShape(percent = 50)
+    val chip = sm
 }
 
 val MileLogM3Shapes = Shapes(
-    extraSmall = MileLogShapes.md,
-    small = MileLogShapes.md,
+    extraSmall = MileLogShapes.sm,
+    small = MileLogShapes.sm,
     medium = MileLogShapes.md,
     large = MileLogShapes.lg,
-    extraLarge = MileLogShapes.xxl
+    extraLarge = MileLogShapes.xl
 )
 
 val LocalMileLogShapes = staticCompositionLocalOf { MileLogShapes }

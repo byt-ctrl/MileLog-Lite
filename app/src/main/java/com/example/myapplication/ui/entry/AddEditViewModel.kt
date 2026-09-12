@@ -79,6 +79,14 @@ class AddEditViewModel(
             result
                 .onSuccess { entry ->
                     if (entry != null) {
+                        // The live instrument needs the reading this entry is
+                        // measured against, which is the nearest lower
+                        // odometer rather than the newest entry in the log.
+                        val previous = runCatching { repository.getAllEntries() }
+                            .getOrNull()
+                            ?.filter { it.id != entry.id && it.odometer < entry.odometer }
+                            ?.maxByOrNull { it.odometer }
+                            ?.odometer
                         _uiState.update {
                             it.copy(
                                 entryId = entry.id,
@@ -87,6 +95,7 @@ class AddEditViewModel(
                                 liters = entry.liters.toString(),
                                 cost = entry.cost.toString(),
                                 fuelCategory = FuelCategory.fromDisplayName(entry.fuelCategory),
+                                previousOdometer = previous,
                                 isLoading = false
                             )
                         }

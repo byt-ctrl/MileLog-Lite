@@ -8,114 +8,89 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
 /**
- * MileLog Lite color schemes built from the Kinetic Logic palette in [Color.kt].
- * Dynamic color is intentionally OFF so the brand identity stays consistent
- * across devices (per DESIGN.md §7.1).
+ * Instrument Ledger color schemes.
+ *
+ * The logbook roles are built from the paper and ink tokens in [Color.kt]. The
+ * instrument roles are not part of the Material scheme at all: they are
+ * constant across appearances and travel through [LocalLedgerColors].
+ *
+ * Dynamic color stays OFF so the two-material identity is identical on every
+ * device.
  */
 private val LightColorScheme = lightColorScheme(
-    primary = BluePrimaryLight,
-    onPrimary = OnBluePrimaryLight,
-    primaryContainer = BlueContainerLight,
-    onPrimaryContainer = OnBlueContainerLight,
-    primaryFixed = PrimaryFixed,
-    primaryFixedDim = PrimaryFixedDim,
-    onPrimaryFixed = OnPrimaryFixed,
-    onPrimaryFixedVariant = OnPrimaryFixedVariant,
-    secondary = GreenSecondaryLight,
-    onSecondary = OnGreenSecondaryLight,
-    secondaryContainer = GreenContainerLight,
-    onSecondaryContainer = OnGreenContainerLight,
-    secondaryFixed = SecondaryFixed,
-    secondaryFixedDim = SecondaryFixedDim,
-    onSecondaryFixed = OnSecondaryFixed,
-    onSecondaryFixedVariant = OnSecondaryFixedVariant,
-    tertiary = TertiaryLight,
-    onTertiary = OnTertiaryLight,
-    tertiaryContainer = TertiaryContainerLight,
-    onTertiaryContainer = OnTertiaryContainerLight,
-    tertiaryFixed = TertiaryFixed,
-    tertiaryFixedDim = TertiaryFixedDim,
-    onTertiaryFixed = OnTertiaryFixed,
-    onTertiaryFixedVariant = OnTertiaryFixedVariant,
-    error = ErrorLight,
-    onError = OnErrorLight,
-    errorContainer = ErrorContainerLight,
-    onErrorContainer = OnErrorContainerLight,
-    background = BackgroundLight,
-    onBackground = OnSurfaceLight,
-    surface = SurfaceLight,
-    onSurface = OnSurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    onSurfaceVariant = OnSurfaceVariantLight,
+    primary = PetrolLight,
+    onPrimary = OnPetrolLight,
+    primaryContainer = PetrolTintLight,
+    onPrimaryContainer = PetrolLight,
+    secondary = FuelLight,
+    onSecondary = SurfaceLowestLight,
+    secondaryContainer = FuelTintLight,
+    onSecondaryContainer = InkLight,
+    tertiary = SlateLight,
+    onTertiary = OnSlateLight,
+    tertiaryContainer = SlateTintLight,
+    onTertiaryContainer = OnSlateTintLight,
+    error = DangerLight,
+    onError = OnDangerLight,
+    errorContainer = DangerTintLight,
+    onErrorContainer = OnDangerTintLight,
+    background = PaperLight,
+    onBackground = InkLight,
+    surface = PanelLight,
+    onSurface = InkLight,
+    surfaceVariant = PanelHighLight,
+    onSurfaceVariant = Ink2Light,
     surfaceDim = SurfaceDimLight,
     surfaceBright = SurfaceBrightLight,
-    surfaceContainerLowest = SurfaceContainerLowestLight,
-    surfaceContainerLow = SurfaceContainerLowLight,
-    surfaceContainer = SurfaceContainerLight,
-    surfaceContainerHigh = SurfaceContainerHighLight,
-    surfaceContainerHighest = SurfaceContainerHighestLight,
-    surfaceTint = SurfaceTintLight,
-    inverseSurface = InverseSurfaceLight,
-    inverseOnSurface = InverseOnSurfaceLight,
-    inversePrimary = InversePrimaryLight,
-    outline = OutlineLight,
-    outlineVariant = OutlineVariantLight
+    surfaceContainerLowest = SurfaceLowestLight,
+    surfaceContainerLow = PanelSunkenLight,
+    surfaceContainer = PaperLight,
+    surfaceContainerHigh = PanelHighLight,
+    surfaceContainerHighest = SurfaceHighestLight,
+    surfaceTint = PetrolLight,
+    inverseSurface = InstrumentSurface,
+    inverseOnSurface = InstrumentText,
+    inversePrimary = PetrolDark,
+    outline = Ink3Light,
+    outlineVariant = RuleLight
 )
 
-/**
- * Authored dark scheme derived from the light one's inverse counterparts: surface takes
- * inverseSurface (#243145), onSurface takes inverseOnSurface (#EBF1FF), primary takes
- * inversePrimary (#B2C5FF). Container tones step lighter than the canvas so elevation
- * still reads, and on/outline roles mirror the light scheme at opposite tonal ends.
- */
 private val DarkColorScheme = darkColorScheme(
-    primary = BluePrimaryDark,
-    onPrimary = OnBluePrimaryDark,
-    primaryContainer = BlueContainerDark,
-    onPrimaryContainer = OnBlueContainerDark,
-    primaryFixed = PrimaryFixed,
-    primaryFixedDim = PrimaryFixedDim,
-    onPrimaryFixed = OnPrimaryFixed,
-    onPrimaryFixedVariant = OnPrimaryFixedVariant,
-    secondary = GreenSecondaryDark,
-    onSecondary = OnGreenSecondaryDark,
-    secondaryContainer = GreenContainerDark,
-    onSecondaryContainer = OnGreenContainerDark,
-    secondaryFixed = SecondaryFixed,
-    secondaryFixedDim = SecondaryFixedDim,
-    onSecondaryFixed = OnSecondaryFixed,
-    onSecondaryFixedVariant = OnSecondaryFixedVariant,
-    tertiary = TertiaryDark,
-    onTertiary = OnTertiaryDark,
-    tertiaryContainer = TertiaryContainerDark,
-    onTertiaryContainer = OnTertiaryContainerDark,
-    tertiaryFixed = TertiaryFixed,
-    tertiaryFixedDim = TertiaryFixedDim,
-    onTertiaryFixed = OnTertiaryFixed,
-    onTertiaryFixedVariant = OnTertiaryFixedVariant,
-    error = ErrorDark,
-    onError = OnErrorDark,
-    errorContainer = ErrorContainerDark,
-    onErrorContainer = OnErrorContainerDark,
-    background = BackgroundDark,
-    onBackground = OnSurfaceDark,
-    surface = SurfaceDark,
-    onSurface = OnSurfaceDark,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = OnSurfaceVariantDark,
+    primary = PetrolDark,
+    onPrimary = OnPetrolDark,
+    primaryContainer = PetrolTintDark,
+    onPrimaryContainer = PetrolDark,
+    secondary = FuelDark,
+    onSecondary = OnPetrolDark,
+    secondaryContainer = FuelTintDark,
+    onSecondaryContainer = FuelDark,
+    tertiary = SlateDark,
+    onTertiary = OnSlateDark,
+    tertiaryContainer = SlateTintDark,
+    onTertiaryContainer = OnSlateTintDark,
+    error = DangerDark,
+    onError = OnDangerDark,
+    errorContainer = DangerTintDark,
+    onErrorContainer = OnDangerTintDark,
+    background = PaperDark,
+    onBackground = InkDark,
+    surface = PanelDark,
+    onSurface = InkDark,
+    surfaceVariant = PanelHighDark,
+    onSurfaceVariant = Ink2Dark,
     surfaceDim = SurfaceDimDark,
     surfaceBright = SurfaceBrightDark,
-    surfaceContainerLowest = SurfaceContainerLowestDark,
-    surfaceContainerLow = SurfaceContainerLowDark,
-    surfaceContainer = SurfaceContainerDark,
-    surfaceContainerHigh = SurfaceContainerHighDark,
-    surfaceContainerHighest = SurfaceContainerHighestDark,
-    surfaceTint = SurfaceTintDark,
-    inverseSurface = InverseSurfaceDark,
-    inverseOnSurface = InverseOnSurfaceDark,
-    inversePrimary = InversePrimaryDark,
-    outline = OutlineDark,
-    outlineVariant = OutlineVariantDark
+    surfaceContainerLowest = SurfaceLowestDark,
+    surfaceContainerLow = PanelSunkenDark,
+    surfaceContainer = PanelDark,
+    surfaceContainerHigh = PanelHighDark,
+    surfaceContainerHighest = SurfaceHighestDark,
+    surfaceTint = PetrolDark,
+    inverseSurface = InkDark,
+    inverseOnSurface = PanelDark,
+    inversePrimary = PetrolLight,
+    outline = Ink3Dark,
+    outlineVariant = RuleDark
 )
 
 @Composable
@@ -124,11 +99,13 @@ fun MileLogTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val ledgerColors = if (darkTheme) DarkLedgerColors else LightLedgerColors
 
     CompositionLocalProvider(
         LocalSpacing provides Spacing,
         LocalMileLogShapes provides MileLogShapes,
-        LocalMileLogElevation provides MileLogElevation
+        LocalMileLogElevation provides MileLogElevation,
+        LocalLedgerColors provides ledgerColors
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
