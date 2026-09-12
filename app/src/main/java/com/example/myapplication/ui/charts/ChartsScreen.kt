@@ -2,12 +2,15 @@ package com.example.myapplication.ui.charts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,13 +29,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.spacing
 import com.example.myapplication.ui.theme.touchTargetMinHeight
+
+/**
+ * Content width at which the two plots fit side by side without cramping.
+ * Lower than the shell's expanded breakpoint on purpose: once the navigation
+ * rail is on screen it has already taken 228dp out of the content width, so
+ * waiting for the shell's own threshold would never trigger on a 10in tablet.
+ */
+private val SideBySideMinWidth: Dp = 720.dp
 
 /**
  * Charts/Insights screen hosting the mileage trend line chart and the
@@ -141,17 +156,82 @@ fun ChartsScreen(
             }
 
             else -> {
+                ChartsContent(
+                    uiState = uiState,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The two plots, side by side once the window can hold two readable plots and
+ * stacked below that. Width is capped for the same reason the ledger is: a
+ * five-point line stretched across a tablet reads worse, not better.
+ */
+@Composable
+private fun ChartsContent(
+    uiState: ChartsUiState,
+    modifier: Modifier = Modifier
+) {
+    val spacing = MaterialTheme.spacing
+    val hasMileage = uiState.fillups.count { it.mileageKmPerL != null } >= 2
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val sideBySide = maxWidth >= SideBySideMinWidth
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            uiState.vehicle?.let { vehicle ->
+                Text(
+                    text = stringResource(
+                        R.string.vehicle_active_note,
+                        vehicle.name,
+                        stringResource(FuelCategory.fromDisplayName(vehicle.fuelType).labelRes)
+                    ),
+                    style = MicroLabelStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .widthIn(max = MileLogWindow.contentMaxWidth)
+                        .fillMaxWidth()
+                        .padding(start = spacing.lg, end = spacing.lg, top = spacing.lg)
+                )
+            }
+
+            if (sideBySide) {
+                Row(
+                    modifier = Modifier
+                        .widthIn(max = MileLogWindow.contentMaxWidth)
+                        .fillMaxWidth()
+                        .padding(spacing.lg),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.lg)
+                ) {
+                    if (hasMileage) {
+                        MileageTrendChart(
+                            fillups = uiState.fillups,
+                            categorySeries = uiState.categoryMileageSeries,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    MonthlySpendChart(
+                        spends = uiState.monthlySpends,
+                        categorySpends = uiState.categoryMonthlySpends,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            } else {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .verticalScroll(rememberScrollState())
+                        .widthIn(max = MileLogWindow.contentMaxWidth)
+                        .fillMaxWidth()
                         .padding(spacing.lg),
                     verticalArrangement = Arrangement.spacedBy(spacing.lg)
                 ) {
-                    val mileagePoints = uiState.fillups.filter { it.mileageKmPerL != null }
-                    val hasMileage = mileagePoints.size >= 2
-
                     if (hasMileage) {
                         MileageTrendChart(
                             fillups = uiState.fillups,
@@ -159,7 +239,6 @@ fun ChartsScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-
                     MonthlySpendChart(
                         spends = uiState.monthlySpends,
                         categorySpends = uiState.categoryMonthlySpends,

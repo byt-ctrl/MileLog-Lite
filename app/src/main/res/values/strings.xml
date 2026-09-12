@@ -13,6 +13,13 @@
     <string name="loading_generic">Loading</string>
     <string name="fab_add_label">Add</string>
 
+    <!-- Ledger column headers -->
+    <string name="ledger_column_date">Date</string>
+    <string name="ledger_column_odometer">Odometer</string>
+    <string name="ledger_column_litres">Litres</string>
+    <string name="ledger_column_mileage">Mileage</string>
+    <string name="ledger_column_cost">Cost</string>
+
     <!-- Dashboard -->
     <string name="dashboard_empty_title">No entries yet</string>
     <string name="dashboard_empty_subtitle">Add your first fuel entry to start tracking your mileage and expenses.</string>
@@ -28,8 +35,9 @@
 
     <!-- Dashboard (Instrument Ledger) -->
     <string name="dashboard_binnacle_title">Fuel log</string>
-    <string name="dashboard_binnacle_subtitle">Single vehicle  ·  %1$s</string>
-    <string name="dashboard_binnacle_subtitle_empty">Single vehicle</string>
+    <string name="dashboard_binnacle_subtitle">%1$s  ·  %2$s</string>
+    <string name="dashboard_binnacle_subtitle_empty">No vehicle yet</string>
+    <string name="dashboard_empty_vehicle_cta">Add your first vehicle</string>
     <string name="dashboard_gauge_label">Average mileage</string>
     <string name="dashboard_gauge_unit">km/L</string>
     <string name="dashboard_gauge_scale_note">tank to tank</string>
@@ -102,6 +110,7 @@
     <string name="entry_field_category_label">Fuel Category</string>
     <string name="entry_error_load_missing">This entry no longer exists. It may have been deleted.</string>
     <string name="entry_error_load_failed">Couldn\'t load this entry. Please try again.</string>
+    <string name="entry_error_no_vehicle">Add a vehicle before logging a fill-up.</string>
     <string name="entry_loading">Loading entry</string>
 
     <!-- Entry instrument -->
@@ -140,8 +149,39 @@
     <string name="bottom_nav_settings_label">Settings</string>
     <string name="rail_offline_note">Works offline. Every fill-up stays on this device.</string>
 
+    <!-- Vehicles -->
+    <string name="vehicle_title_add">Add Vehicle</string>
+    <string name="vehicle_title_edit">Edit Vehicle</string>
+    <string name="vehicle_loading">Loading vehicle</string>
+    <string name="vehicle_preview_label">Vehicle</string>
+    <string name="vehicle_preview_placeholder">New vehicle</string>
+    <string name="vehicle_field_name_label">Vehicle Name</string>
+    <string name="vehicle_field_make_label">Make</string>
+    <string name="vehicle_field_model_label">Model</string>
+    <string name="vehicle_field_registration_label">Registration Number</string>
+    <string name="vehicle_field_registration_note">Optional</string>
+    <string name="vehicle_field_fuel_label">Default Fuel Type</string>
+    <string name="vehicle_active_note">%1$s  ·  %2$s</string>
+    <string name="vehicle_deleted">Vehicle deleted</string>
+    <string name="error_vehicle_name_required">Vehicle name is required</string>
+    <string name="error_vehicle_name_duplicate">A vehicle with this name already exists</string>
+    <string name="vehicle_error_load_missing">This vehicle no longer exists. It may have been deleted.</string>
+    <string name="vehicle_error_load_failed">Couldn\'t load this vehicle. Please try again.</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_action_failed">Couldn\'t update the vehicle. Please try again.</string>
+    <string name="settings_section_vehicle">Vehicle</string>
+    <string name="settings_vehicle_active_note">Fill-ups are logged against the selected vehicle</string>
+    <string name="settings_vehicle_add_row">Add vehicle</string>
+    <string name="settings_vehicle_add_note">Create a vehicle to log fill-ups against</string>
+    <string name="settings_vehicle_edit_a11y">Edit %1$s</string>
+    <string name="settings_vehicle_delete_a11y">Delete %1$s</string>
+    <string name="settings_vehicle_delete_dialog_title">Delete vehicle?</string>
+    <string name="settings_vehicle_delete_dialog_body">This permanently deletes %1$s and every fill-up logged against it. This action cannot be undone.</string>
+    <string name="settings_vehicle_delete_confirm">Delete vehicle</string>
+    <string name="settings_vehicle_delete_cancel">Keep vehicle</string>
+    <string name="settings_vehicle_empty">No vehicles yet. Add one to start logging fill-ups.</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_row">Theme</string>
     <string name="settings_appearance_value">Follows device</string>
@@ -150,17 +190,17 @@
     <string name="settings_seed_row">Add demo fill-ups</string>
     <string name="settings_seed_row_note">Fills the log with sample entries so the charts have something to show</string>
     <string name="settings_seed_dialog_title">Add demo fill-ups?</string>
-    <string name="settings_seed_dialog_body">Adds %1$d sample entries after your latest reading, so the dashboard, history and charts have something to show. Delete all fill-ups removes them again.</string>
+    <string name="settings_seed_dialog_body">Creates %1$d demo vehicles (Creta, Seltos and Harrier, each in Diesel and CNG) and adds %2$d sample fill-ups to each, so the dashboard, history and charts have something to show. Delete all fill-ups removes them again.</string>
     <string name="settings_seed_confirm">Add demo fill-ups</string>
     <string name="settings_seed_cancel">Cancel</string>
-    <string name="settings_seeded">Added %1$d demo fill-ups</string>
+    <string name="settings_seeded">Added %1$d demo fill-ups across %2$d demo vehicles</string>
     <string name="settings_seed_failed">Couldn\'t add the demo fill-ups. Please try again.</string>
     <string name="settings_export_row">Export fill-ups as CSV</string>
-    <string name="settings_export_row_note">Save every entry to a file you choose</string>
+    <string name="settings_export_row_note">Save this vehicle\'s entries to a file you choose</string>
     <string name="settings_delete_row">Delete all fill-ups</string>
-    <string name="settings_delete_row_note">Removes every entry from this device</string>
+    <string name="settings_delete_row_note">Removes every entry for the active vehicle</string>
     <string name="settings_delete_dialog_title">Delete all fill-ups?</string>
-    <string name="settings_delete_dialog_body">This removes all %1$d entries from this device. You can undo straight after.</string>
+    <string name="settings_delete_dialog_body">This removes all %1$d entries for the active vehicle. You can undo straight after.</string>
     <string name="settings_delete_confirm">Delete all</string>
     <string name="settings_delete_cancel">Keep fill-ups</string>
     <string name="settings_cleared">All fill-ups deleted</string>

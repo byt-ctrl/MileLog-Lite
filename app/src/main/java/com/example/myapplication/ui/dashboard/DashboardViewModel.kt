@@ -10,7 +10,9 @@ import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
+import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.domain.calculation.MileageCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -32,6 +35,7 @@ enum class DashboardMessage(@StringRes val messageRes: Int) {
 }
 
 data class DashboardUiState(
+    val vehicle: Vehicle? = null,
     val latestOdometer: Int? = null,
     val latestFuelCategory: FuelCategory? = null,
     val totalDistance: Int = 0,
@@ -61,19 +65,29 @@ data class DashboardUiState(
 }
 
 class DashboardViewModel(
-    private val repository: FuelEntryRepository
+    private val repository: FuelEntryRepository,
+    private val vehicleRepository: VehicleRepository
 ) : ViewModel() {
 
     private val _retryTrigger = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<DashboardUiState> = _retryTrigger
-        .flatMapLatest { repository.getAllEntriesFlow() }
-        .map { entries ->
+        .flatMapLatest { vehicleRepository.getActiveVehicleFlow() }
+        .flatMapLatest { vehicle ->
+            val entriesFlow = if (vehicle == null) {
+                flowOf(emptyList())
+            } else {
+                repository.getAllEntriesFlowForVehicle(vehicle.id)
+            }
+            entriesFlow.map { entries -> vehicle to entries }
+        }
+        .map { (vehicle, entries) ->
             val stats = MileageCalculator.calculateDashboardStats(entries)
             val fillups = MileageCalculator.calculatePerFillupMileage(entries)
             val measured = fillups.filter { it.mileageKmPerL != null }
             DashboardUiState(
+                vehicle = vehicle,
                 latestOdometer = stats.latestOdometer,
                 latestFuelCategory = entries.firstOrNull()
                     ?.let { FuelCategory.fromDisplayName(it.fuelCategory) },
@@ -120,7 +134,7 @@ class DashboardViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                DashboardViewModel(application.repository)
+                DashboardViewModel(application.repository, application.vehicleRepository)
             }
         }
     }

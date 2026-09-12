@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.DataTextStyle
 import com.example.myapplication.ui.theme.DataTextStyleSmall
 import com.example.myapplication.ui.theme.MicroLabelStyle
@@ -123,6 +124,18 @@ fun SectionHeader(
         HorizontalDivider(color = ledger.ruleStrong, thickness = 1.dp)
     }
 }
+
+/** Column captions for the wide ledger, in display order. */
+val LedgerColumnLabels = listOf(
+    R.string.ledger_column_date,
+    R.string.ledger_column_odometer,
+    R.string.ledger_column_litres,
+    R.string.ledger_column_mileage,
+    R.string.ledger_column_cost
+)
+
+/** Relative column widths, positionally matched to [LedgerColumnLabels]. */
+val LedgerColumnWeights = listOf(1.3f, 1.1f, 0.8f, 1f, 1.15f)
 
 /** Column captions for the wide ledger. */
 @Composable

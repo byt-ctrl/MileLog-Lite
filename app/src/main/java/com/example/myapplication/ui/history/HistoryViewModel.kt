@@ -12,7 +12,9 @@ import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
+import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -46,6 +49,7 @@ enum class HistoryMessage(@StringRes val messageRes: Int) {
  * (`Exported %d entries to CSV`).
  */
 data class HistoryUiState(
+    val vehicle: Vehicle? = null,
     val entries: List<FuelEntry> = emptyList(),
     val selectedCategory: FuelCategory? = null,
     val isLoading: Boolean = true,
@@ -83,7 +87,8 @@ private data class ExportState(
  */
 class HistoryViewModel(
     application: Application,
-    private val repository: FuelEntryRepository
+    private val repository: FuelEntryRepository,
+    private val vehicleRepository: VehicleRepository
 ) : AndroidViewModel(application) {
 
     private val _retryTrigger = MutableStateFlow(0)
@@ -105,29 +110,47 @@ class HistoryViewModel(
         _selectedCategory,
         _exportState
     ) { _, category, export ->
-        Triple(category, export, Unit)
+        category to export
     }
-        .flatMapLatest { (category, export, _) ->
-            combine(
-                repository.getAllEntriesFlow(category),
-                repository.getAllEntriesFlow()
-            ) { filtered, all ->
-                HistoryUiState(
-                    entries = filtered,
-                    selectedCategory = category,
-                    isLoading = false,
-                    exportReady = export.exportReady,
-                    exportMessage = export.exportMessage,
-                    exportMessageCount = export.exportMessageCount,
-                    exportMessageDetail = export.exportMessageDetail,
-                    totalEntryCount = all.size,
-                    mileageById = MileageCalculator.calculatePerFillupMileage(all)
-                        .mapNotNull { fillup ->
-                            fillup.mileageKmPerL?.let { fillup.entry.id to it }
-                        }
-                        .toMap(),
-                    lastDeleted = _undoState.value.lastDeleted
-                )
+        .flatMapLatest { (category, export) ->
+            vehicleRepository.getActiveVehicleFlow().flatMapLatest { vehicle ->
+                if (vehicle == null) {
+                    flowOf(
+                        HistoryUiState(
+                            vehicle = null,
+                            selectedCategory = category,
+                            isLoading = false,
+                            exportReady = export.exportReady,
+                            exportMessage = export.exportMessage,
+                            exportMessageCount = export.exportMessageCount,
+                            exportMessageDetail = export.exportMessageDetail,
+                            lastDeleted = _undoState.value.lastDeleted
+                        )
+                    )
+                } else {
+                    combine(
+                        repository.getAllEntriesFlowForVehicle(vehicle.id, category),
+                        repository.getAllEntriesFlowForVehicle(vehicle.id)
+                    ) { filtered, all ->
+                        HistoryUiState(
+                            vehicle = vehicle,
+                            entries = filtered,
+                            selectedCategory = category,
+                            isLoading = false,
+                            exportReady = export.exportReady,
+                            exportMessage = export.exportMessage,
+                            exportMessageCount = export.exportMessageCount,
+                            exportMessageDetail = export.exportMessageDetail,
+                            totalEntryCount = all.size,
+                            mileageById = MileageCalculator.calculatePerFillupMileage(all)
+                                .mapNotNull { fillup ->
+                                    fillup.mileageKmPerL?.let { fillup.entry.id to it }
+                                }
+                                .toMap(),
+                            lastDeleted = _undoState.value.lastDeleted
+                        )
+                    }
+                }
             }
         }
         .catch { _ ->
@@ -188,16 +211,23 @@ class HistoryViewModel(
     }
 
     /**
-     * Builds the CSV text for all entries and exposes it as [HistoryUiState.exportReady],
-     * which the UI consumes by launching the system document-creation picker.
+     * Builds the CSV text for the active vehicle's entries and exposes it as
+     * [HistoryUiState.exportReady], which the UI consumes by launching the
+     * system document-creation picker.
      */
     fun exportEntries() {
         viewModelScope.launch {
-            runCatching { repository.getAllEntries() }
-                .onSuccess { entries ->
-                    _exportState.update {
-                        it.copy(exportReady = FuelEntryCsvExporter.buildCsv(entries))
-                    }
+            runCatching {
+                val vehicle = vehicleRepository.getActiveVehicle()
+                val entries = vehicle?.let { repository.getAllEntriesForVehicle(it.id) }
+                    ?: emptyList()
+                FuelEntryCsvExporter.buildCsv(
+                    entries = entries,
+                    vehicleName = vehicle?.name.orEmpty()
+                )
+            }
+                .onSuccess { csv ->
+                    _exportState.update { it.copy(exportReady = csv) }
                 }
                 .onFailure {
                     _exportState.update {
@@ -217,7 +247,7 @@ class HistoryViewModel(
             val count = csv.lineSequence().count { it.isNotBlank() } - 1 // minus header row
             runCatching {
                 getApplication<Application>().contentResolver.openOutputStream(uri)?.use { stream ->
-                    stream.write(csv.toByteArray(Charsets.UTF_8))
+                    stream.write(FuelEntryCsvExporter.encode(csv))
                 } ?: error("OutputStream was null")
             }
                 .onSuccess {
@@ -260,7 +290,7 @@ class HistoryViewModel(
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                HistoryViewModel(application, application.repository)
+                HistoryViewModel(application, application.repository, application.vehicleRepository)
             }
         }
     }

@@ -9,6 +9,7 @@ Built with Kotlin, Jetpack Compose, Material 3, Room (local database), and MPAnd
 ## What you can do
 
 - **Log fuel entries:** Add, edit, and delete fill-ups with date, odometer reading, fuel amount (liters), total cost, and fuel type.
+- **Manage vehicles:** Add, edit, switch, and delete vehicles from Settings. Every fill-up belongs to a vehicle, and the dashboard, history, and charts follow the active selection.
 - **Track by fuel type:** Choose Petrol, Diesel, or CNG for each entry, and filter your history by type.
 - **See totals automatically:** Dashboard shows latest odometer, total spend, average mileage (km/L), and cost per km. Values update as soon as you change an entry.
 - **Catch mistakes:** The form blocks missing fields, negative values, and odometer readings that don't go up, with clear messages next to each field.
@@ -63,7 +64,7 @@ Built with Kotlin, Jetpack Compose, Material 3, Room (local database), and MPAnd
 
 ## Limitations
 
-- Tracks one vehicle per install.
+- Vehicles are managed on-device only - there is no shared or cloud garage.
 - Data lives only on the device - no cloud backup or sync.
 - Export to CSV only - no import.
 - Mileage assumes full-tank fill-ups between logs.

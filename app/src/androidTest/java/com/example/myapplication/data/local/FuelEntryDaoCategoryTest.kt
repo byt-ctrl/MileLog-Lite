@@ -290,7 +290,8 @@ class FuelEntryDaoCategoryTest {
         // Insert a row with distinctive, non-default values in every column,
         // then read it back through the category filter to confirm Room
         // mapping is byte-equal (no truncation, no coercion).
-        val original = entry(
+        val original = FuelEntry(
+            vehicleId = 99L,
             date = 1_700_000_000_000L,
             odometer = 123_456,
             liters = 42.75,
@@ -303,6 +304,7 @@ class FuelEntryDaoCategoryTest {
         val read = dao.getAll(FuelCategory.DIESEL).single { it.id == insertedId }
 
         assertEquals(insertedId, read.id)
+        assertEquals(99L, read.vehicleId)
         assertEquals(original.date, read.date)
         assertEquals(original.odometer, read.odometer)
         assertEquals(original.liters, read.liters, 0.0)

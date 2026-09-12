@@ -8,7 +8,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
+import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
 import com.example.myapplication.domain.calculation.FillupMileage
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,6 +36,7 @@ enum class ChartsMessage(@StringRes val messageRes: Int) {
 }
 
 data class ChartsUiState(
+    val vehicle: Vehicle? = null,
     val fillups: List<FillupMileage> = emptyList(),
     val monthlySpends: List<MonthlyFuelSpend> = emptyList(),
     val categoryMileageSeries: List<CategoryMileageSeries> = emptyList(),
@@ -43,16 +47,26 @@ data class ChartsUiState(
 )
 
 class ChartsViewModel(
-    private val repository: FuelEntryRepository
+    private val repository: FuelEntryRepository,
+    private val vehicleRepository: VehicleRepository
 ) : ViewModel() {
 
     private val _retryTrigger = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<ChartsUiState> = _retryTrigger
-        .flatMapLatest { repository.getAllEntriesFlow() }
-        .map { entries ->
+        .flatMapLatest { vehicleRepository.getActiveVehicleFlow() }
+        .flatMapLatest { vehicle ->
+            val entriesFlow = if (vehicle == null) {
+                flowOf(emptyList())
+            } else {
+                repository.getAllEntriesFlowForVehicle(vehicle.id)
+            }
+            entriesFlow.map { entries -> vehicle to entries }
+        }
+        .map { (vehicle, entries) ->
             ChartsUiState(
+                vehicle = vehicle,
                 fillups = MileageCalculator.calculatePerFillupMileage(entries),
                 monthlySpends = MileageCalculator.calculateMonthlySpend(entries),
                 categoryMileageSeries = MileageCalculator.calculatePerCategoryMileageSeries(entries),
@@ -87,7 +101,7 @@ class ChartsViewModel(
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                ChartsViewModel(application.repository)
+                ChartsViewModel(application.repository, application.vehicleRepository)
             }
         }
     }

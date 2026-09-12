@@ -25,6 +25,7 @@ import com.example.myapplication.ui.entry.AddEditEntryScreen
 import com.example.myapplication.ui.history.HistoryScreen
 import com.example.myapplication.ui.settings.SettingsScreen
 import com.example.myapplication.ui.theme.MileLogWindow
+import com.example.myapplication.ui.vehicle.AddEditVehicleScreen
 
 /**
  * Route constants for the MileLog Lite navigation graph.
@@ -36,6 +37,8 @@ object MileLogRoutes {
     const val EDIT_ENTRY = "edit_entry/{entryId}"
     const val CHARTS = "charts"
     const val SETTINGS = "settings"
+    const val VEHICLE_ADD = "vehicle_add"
+    const val VEHICLE_EDIT = "vehicle_edit/{vehicleId}"
 
     /**
      * The bottom-navigation "Reports" tab renders the Charts destination.
@@ -47,6 +50,8 @@ object MileLogRoutes {
     const val REPORTS = CHARTS
 
     fun editEntry(entryId: Long): String = "edit_entry/$entryId"
+
+    fun editVehicle(vehicleId: Long): String = "vehicle_edit/$vehicleId"
 }
 
 /** How the app shell is laid out at the current window width. */
@@ -176,7 +181,8 @@ private fun ShellScaffold(
                 DashboardScreen(
                     onAddEntry = onAddEntry,
                     onViewHistory = { onTabSelected(MileLogRoutes.HISTORY) },
-                    onViewCharts = { onTabSelected(MileLogRoutes.CHARTS) }
+                    onViewCharts = { onTabSelected(MileLogRoutes.CHARTS) },
+                    onAddVehicle = { navController.navigate(MileLogRoutes.VEHICLE_ADD) }
                 )
             }
             composable(MileLogRoutes.CHARTS) {
@@ -191,7 +197,12 @@ private fun ShellScaffold(
                 )
             }
             composable(MileLogRoutes.SETTINGS) {
-                SettingsScreen()
+                SettingsScreen(
+                    onAddVehicle = { navController.navigate(MileLogRoutes.VEHICLE_ADD) },
+                    onEditVehicle = { vehicleId ->
+                        navController.navigate(MileLogRoutes.editVehicle(vehicleId))
+                    }
+                )
             }
             composable(MileLogRoutes.ADD_ENTRY) {
                 AddEditEntryScreen(
@@ -206,6 +217,22 @@ private fun ShellScaffold(
                     ?: 0L
                 AddEditEntryScreen(
                     entryId = entryId,
+                    onNavigateUp = { navController.navigateUp() }
+                )
+            }
+            composable(MileLogRoutes.VEHICLE_ADD) {
+                AddEditVehicleScreen(
+                    vehicleId = 0L,
+                    onNavigateUp = { navController.navigateUp() }
+                )
+            }
+            composable(MileLogRoutes.VEHICLE_EDIT) { vehicleBackStackEntry ->
+                val vehicleId = vehicleBackStackEntry.arguments
+                    ?.getString("vehicleId")
+                    ?.toLongOrNull()
+                    ?: 0L
+                AddEditVehicleScreen(
+                    vehicleId = vehicleId,
                     onNavigateUp = { navController.navigateUp() }
                 )
             }

@@ -51,15 +51,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.components.LedgerColumnLabels
+import com.example.myapplication.ui.components.LedgerColumnWeights
 import com.example.myapplication.ui.components.LedgerHeaderRow
 import com.example.myapplication.ui.components.LedgerRow
 import com.example.myapplication.ui.components.formatOne
+import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
@@ -68,8 +72,6 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-private val LEDGER_COLUMN_WEIGHTS = listOf(1.3f, 1.1f, 0.8f, 1f, 1.15f)
 
 /**
  * Fuel history.
@@ -104,10 +106,12 @@ fun HistoryScreen(
         }
     }
 
+    // Hold on to the prepared CSV until the picker returns: the write reads it
+    // back from the ViewModel, so clearing here would leave nothing to save.
+    // It is cleared by writeExportedCsv() once written, or on cancel below.
     LaunchedEffect(uiState.exportReady) {
-        val csv = uiState.exportReady ?: return@LaunchedEffect
+        if (uiState.exportReady == null) return@LaunchedEffect
         exportLauncher.launch("milelog_fuel_entries.csv")
-        viewModel.clearExportReady()
     }
 
     // Resolve copy in the composition so a locale change recomposes it, then
@@ -170,7 +174,10 @@ fun HistoryScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            val wide = maxWidth >= MileLogWindow.medium
+            // Captured once: inside the nested Column scope below, maxWidth is
+            // no longer reachable as an implicit receiver.
+            val availableWidth = maxWidth
+            val wide = availableWidth >= MileLogWindow.medium
 
             when {
                 uiState.isLoading -> LoadingBlock()
@@ -185,16 +192,45 @@ fun HistoryScreen(
                 )
 
                 else -> Column(modifier = Modifier.fillMaxSize()) {
+                    // Centre the ledger once the window is wider than a
+                    // comfortable reading measure, rather than stretching the
+                    // columns out to the screen edges.
+                    val sidePadding = if (availableWidth > MileLogWindow.contentMaxWidth) {
+                        (availableWidth - MileLogWindow.contentMaxWidth) / 2 + spacing.lg
+                    } else {
+                        spacing.lg
+                    }
+
+                    uiState.vehicle?.let { vehicle ->
+                        Text(
+                            text = stringResource(
+                                R.string.vehicle_active_note,
+                                vehicle.name,
+                                stringResource(
+                                    FuelCategory.fromDisplayName(vehicle.fuelType).labelRes
+                                )
+                            ),
+                            style = MicroLabelStyle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(
+                                start = sidePadding,
+                                end = sidePadding,
+                                top = spacing.md
+                            )
+                        )
+                    }
+
                     CategoryFilters(
                         selected = uiState.selectedCategory,
-                        onSelected = viewModel::setCategoryFilter
+                        onSelected = viewModel::setCategoryFilter,
+                        sidePadding = sidePadding
                     )
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            start = spacing.lg,
-                            end = spacing.lg,
+                            start = sidePadding,
+                            end = sidePadding,
                             top = spacing.md,
                             bottom = spacing.xxxl
                         )
@@ -202,8 +238,8 @@ fun HistoryScreen(
                         if (wide) {
                             item {
                                 LedgerHeaderRow(
-                                    labels = listOf("Date", "Odometer", "Litres", "Mileage", "Cost"),
-                                    weights = LEDGER_COLUMN_WEIGHTS
+                                    labels = LedgerColumnLabels.map { stringResource(it) },
+                                    weights = LedgerColumnWeights
                                 )
                             }
                         }
@@ -295,7 +331,8 @@ fun HistoryScreen(
 @Composable
 private fun CategoryFilters(
     selected: FuelCategory?,
-    onSelected: (FuelCategory?) -> Unit
+    onSelected: (FuelCategory?) -> Unit,
+    sidePadding: Dp
 ) {
     val spacing = MaterialTheme.spacing
     val allFilterA11y = stringResource(R.string.history_filter_all_a11y)
@@ -303,7 +340,7 @@ private fun CategoryFilters(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = spacing.lg, vertical = spacing.md),
+            .padding(horizontal = sidePadding, vertical = spacing.md),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
         FilterChip(

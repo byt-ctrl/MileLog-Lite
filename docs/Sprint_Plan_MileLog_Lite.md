@@ -11,6 +11,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 > - [Sprint 4: Polish, Testing & Release Readiness](#sprint-4-polish-testing--release-readiness)
 > - [Sprint 5: Fuel Category Selection](#sprint-5-fuel-category-selection)
 > - [Sprint 6: Settings, Design System Migration & Bottom Navigation](#sprint-6-settings-design-system-migration--bottom-navigation)
+> - [Sprint 7: Vehicle Management & Seed Data Expansion](#sprint-7-vehicle-management--seed-data-expansion)
 
 ---
 
@@ -118,8 +119,8 @@ This document provides an interactive execution checklist for the mini-scope Mil
     - [x] Feature list
     - [x] Architecture overview (MVVM diagram or description)
     - [x] Screenshots of core screens
-    - [x] Known limitations (e.g., single vehicle only, no export)
-- [x] **If the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete. **Implemented: simple CSV export** (History screen top-bar action → system document picker → `milelog_fuel_entries.csv`; export-only, no import).
+    - [x] Known limitations (e.g., offline-only storage, no cloud sync, export without import)
+- [x] **If the above is done with time remaining**, consider one optional stretch item (see PRD §7): dark mode, simple CSV export, or a single basic reminder. Do not start a stretch item if core polish/testing is incomplete. **Implemented: simple CSV export** (History screen top-bar action → system document picker → `milelog_fuel_entries.csv`; export-only, no import). **Fixed in Sprint 7:** the prepared CSV was cleared as soon as the file picker opened, so selecting a location wrote nothing — it is now held until the write finishes (or the picker is cancelled); the same flow backs the Settings export row and now exports the active vehicle's entries. **CSV correctness fixed in Sprint 7:** the date is exported as ISO-8601 instead of raw epoch millis, per-fill-up mileage (the app's headline statistic) is now included, numbers use fixed decimals with a dot separator regardless of device locale, the vehicle name is a column, text fields are RFC 4180 quoted, rows are chronological, and the file is written as UTF-8 with a BOM.
 
 ### 4.2 Sprint 4 Milestone
 - [x] MileLog Lite is stable, demo-ready, documented, and satisfies all success criteria in the PRD (§8).
@@ -338,6 +339,47 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [ ] Font scaling: Settings screen handles large font sizes without clipping
 - [ ] Accessibility: All interactive elements have content descriptions
 - [ ] Full regression: add → edit → delete → dashboard updates → charts update with new design
+
+---
+
+## Sprint 7: Vehicle Management & Seed Data Expansion
+
+**Timeline:** Week 7
+
+**Primary Goal:** Move the app from single-vehicle to multi-vehicle: users add and switch vehicles, every fill-up belongs to a vehicle, and the active vehicle drives Dashboard, History, Charts and Settings. Expand the in-app demo seeder to six distinct profiles so the feature is demonstrable without manual entry.
+
+**Scope note:** This intentionally extends the original mini scope, which listed multi-vehicle profiles as out of scope (`PRD_MileLog_Lite.md` §1.5). The entry model stays compatible: `FuelEntry.vehicleId` defaults to `0`, and the migration attaches pre-existing rows to a default vehicle.
+
+### 7.1 Key Deliverables
+- [x] Add `Vehicle` Room entity: name (unique), make, model, registration number, default fuel type, active flag.
+- [x] Add `VehicleDao` with observed list, active-vehicle lookup, single-active `@Transaction` switch, and CRUD.
+- [x] Link every fill-up to a vehicle: `FuelEntry.vehicleId` (default `0`) plus `vehicleId` indices.
+- [x] Bump the database to version 3 with a lossless `Migration(2, 3)` that creates `vehicles`, adds `vehicleId`, and files existing rows under a default "My vehicle".
+- [x] Add `VehicleRepository` (interface + offline implementation) and expose it from `MileLogApplication`.
+- [x] Add vehicle-scoped fuel-entry queries (`getAllFlowForVehicle`, `getAllForVehicle`, `getLatestForVehicle`, `deleteByVehicle`) and mirror them in `FuelEntryRepository`.
+- [x] Build the Add/Edit Vehicle screen (`AddEditVehicleScreen` + `AddEditVehicleViewModel`).
+- [x] Add `VehicleValidator` for required and case-insensitive duplicate names.
+- [x] Build the Settings > Vehicle section: vehicle list, active-vehicle switching, add row, edit and delete with a confirmation dialog.
+- [x] Filter Dashboard, History and Charts to the active vehicle using `flatMapLatest` over the active-vehicle flow.
+- [x] Show the active vehicle on Dashboard (binnacle subtitle), History, Charts and Add/Edit Entry; block logging when no vehicle exists.
+- [x] Expand `DemoDataGenerator` to six profiles: Creta, Seltos and Harrier, each with a Diesel and a CNG history with distinct odometer, mileage and fuel-price bands.
+- [x] Rework the Settings "Add demo fill-ups" action to create the demo vehicles and append each profile's history.
+- [x] Route the vehicle form through Navigation (`vehicle_add`, `vehicle_edit/{vehicleId}`) and pass the vehicle actions from Settings.
+- [x] Update the Demo Data script note and settings copy to describe the six demo vehicles.
+
+### 7.2 Sprint 7 Milestone
+- [x] Users can add, edit, switch and delete vehicles; Dashboard, History, Charts and Add/Edit all reflect the active vehicle; the demo seeder produces six distinct Diesel/CNG profiles.
+
+### 7.3 Sprint 7 Testing
+- [x] Unit tests for the six demo profiles: model/variant coverage, per-profile fuel category, mileage and price bands, determinism, vehicle tagging.
+- [x] Unit tests for `VehicleValidator`: required name, case-insensitive duplicates, whitespace handling, self-exclusion on edit.
+- [x] Instrumented tests for `VehicleDao`: CRUD, unique-name replacement, single active vehicle, per-vehicle entry delete.
+- [x] Instrumented tests for the vehicle repositories: switch isolation, delete cascade with active promotion, demo seeding per vehicle.
+- [x] Extend the fuel-entry column round-trip test to cover `vehicleId`.
+- [x] `testDebugUnitTest` passes (68 unit tests) and `assembleDebug` builds.
+- [x] Instrumented test sources compile (`assembleDebugAndroidTest`).
+- [ ] Manual test on a device/emulator: add a vehicle, log an entry, switch vehicles, and confirm the dashboard, history and charts follow the selection.
+- [ ] Run `connectedDebugAndroidTest` on a booted emulator to execute the new vehicle DAO/repository tests.
 
 ---
 

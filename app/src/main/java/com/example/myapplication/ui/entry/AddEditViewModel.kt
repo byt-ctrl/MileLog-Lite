@@ -9,6 +9,7 @@ import com.example.myapplication.MileLogApplication
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.validation.FieldError
 import com.example.myapplication.domain.validation.FuelEntryValidator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,8 @@ import kotlinx.coroutines.launch
  */
 data class AddEditUiState(
     val entryId: Long = 0L,
+    val vehicleId: Long? = null,
+    val vehicleName: String? = null,
     val dateMillis: Long = System.currentTimeMillis(),
     val odometer: String = "",
     val liters: String = "",
@@ -35,6 +38,7 @@ data class AddEditUiState(
     val odometerMonotonicContext: Int? = null,
     val litersError: FieldError? = null,
     val costError: FieldError? = null,
+    val vehicleError: FieldError? = null,
     val previousOdometer: Int? = null,
     val isLoading: Boolean = false,
     val loadError: FieldError? = null,
@@ -48,23 +52,47 @@ data class AddEditUiState(
  * ViewModel managing state and validation for the Add/Edit Fuel Entry screen.
  */
 class AddEditViewModel(
-    private val repository: FuelEntryRepository
+    private val repository: FuelEntryRepository,
+    private val vehicleRepository: VehicleRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditUiState())
     val uiState: StateFlow<AddEditUiState> = _uiState.asStateFlow()
 
     init {
-        loadLatestOdometer()
+        loadActiveVehicle()
     }
 
     private var pendingLoadId: Long = 0L
 
-    private fun loadLatestOdometer() {
+    /**
+     * Resolves the active vehicle and the odometer reading a new fill-up must
+     * beat. Without a vehicle there is nothing to log against, so the form
+     * reports [FieldError.NO_VEHICLE] on save.
+     */
+    private fun loadActiveVehicle() {
         viewModelScope.launch {
-            runCatching { repository.getLatestEntry() }
-                .onSuccess { latest ->
-                    _uiState.update { it.copy(previousOdometer = latest?.odometer) }
+            runCatching { vehicleRepository.getActiveVehicle() }
+                .onSuccess { vehicle ->
+                    val previous = vehicle?.let {
+                        runCatching { repository.getLatestEntryForVehicle(it.id) }
+                            .getOrNull()
+                            ?.odometer
+                    }
+                    _uiState.update { state ->
+                        // An entry being edited owns its own vehicle; never
+                        // overwrite it with whichever vehicle is active.
+                        if (state.isEditMode) {
+                            state
+                        } else {
+                            state.copy(
+                                vehicleId = vehicle?.id,
+                                vehicleName = vehicle?.name,
+                                previousOdometer = previous,
+                                vehicleError = null
+                            )
+                        }
+                    }
                 }
         }
     }
@@ -79,10 +107,19 @@ class AddEditViewModel(
             result
                 .onSuccess { entry ->
                     if (entry != null) {
+                        val vehicle = if (entry.vehicleId > 0L) {
+                            runCatching { vehicleRepository.getVehicleById(entry.vehicleId) }
+                                .getOrNull()
+                        } else {
+                            null
+                        }
                         // The live instrument needs the reading this entry is
                         // measured against, which is the nearest lower
-                        // odometer rather than the newest entry in the log.
-                        val previous = runCatching { repository.getAllEntries() }
+                        // odometer within the same vehicle rather than the
+                        // newest entry in the log.
+                        val previous = runCatching {
+                            repository.getAllEntriesForVehicle(entry.vehicleId)
+                        }
                             .getOrNull()
                             ?.filter { it.id != entry.id && it.odometer < entry.odometer }
                             ?.maxByOrNull { it.odometer }
@@ -90,6 +127,8 @@ class AddEditViewModel(
                         _uiState.update {
                             it.copy(
                                 entryId = entry.id,
+                                vehicleId = entry.vehicleId,
+                                vehicleName = vehicle?.name,
                                 dateMillis = entry.date,
                                 odometer = entry.odometer.toString(),
                                 liters = entry.liters.toString(),
@@ -166,6 +205,12 @@ class AddEditViewModel(
 
     fun saveEntry(): Boolean {
         val currentState = _uiState.value
+
+        if (!currentState.isEditMode && currentState.vehicleId == null) {
+            _uiState.update { it.copy(vehicleError = FieldError.NO_VEHICLE) }
+            return false
+        }
+
         val validationResult = FuelEntryValidator.validate(
             dateMillis = currentState.dateMillis,
             odometerStr = currentState.odometer,
@@ -181,7 +226,8 @@ class AddEditViewModel(
                     odometerError = validationResult.odometerError,
                     odometerMonotonicContext = validationResult.odometerMonotonicContext,
                     litersError = validationResult.litersError,
-                    costError = validationResult.costError
+                    costError = validationResult.costError,
+                    vehicleError = null
                 )
             }
             return false
@@ -190,6 +236,7 @@ class AddEditViewModel(
         viewModelScope.launch {
             val entry = FuelEntry(
                 id = currentState.entryId,
+                vehicleId = currentState.vehicleId ?: 0L,
                 date = currentState.dateMillis,
                 odometer = currentState.odometer.trim().toInt(),
                 liters = currentState.liters.trim().toDouble(),
@@ -217,7 +264,7 @@ class AddEditViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                AddEditViewModel(application.repository)
+                AddEditViewModel(application.repository, application.vehicleRepository)
             }
         }
     }

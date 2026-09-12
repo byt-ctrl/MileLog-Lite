@@ -35,6 +35,10 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 
+/** Gap between month groups, and between bars inside a group. */
+private const val GROUP_SPACE = 0.18f
+private const val BAR_SPACE = 0.02f
+
 /**
  * A reusable Composable that displays a monthly fuel spend bar chart
  * grouped by calendar month using MPAndroidChart.
@@ -203,20 +207,26 @@ fun MonthlySpendChart(
                                 setDrawValues(false)
                             }
                         }
-                        val groupCount = spends.size
                         val seriesCount = dataSets.size
-                        val groupSpace = 0.18f
-                        val barSpace = 0.02f
-                        val barData = BarData(*dataSets.toTypedArray()).apply {
-                            this.barWidth = 0.80f / seriesCount.coerceAtLeast(1)
-                        }
-                        // MPAndroidChart requires data set before grouping bars.
+                        val barData = BarData(*dataSets.toTypedArray())
                         chart.data = barData
-                        chart.groupBars(0f, groupSpace, barSpace)
-                        chart.setVisibleXRangeMaximum(
-                            (groupCount.toFloat() + 0.5f).coerceAtLeast(1f)
-                        )
+
+                        if (seriesCount >= 2) {
+                            // BarData.groupBars() throws unless it holds at
+                            // least two data sets, so a log with a single fuel
+                            // category must not call it at all. It also has to
+                            // run after the data is attached, because it reads
+                            // the sets back off the chart.
+                            barData.barWidth = 0.80f / seriesCount
+                            chart.groupBars(0f, GROUP_SPACE, BAR_SPACE)
+                        } else {
+                            barData.barWidth = if (spends.size == 1) 0.35f else 0.5f
+                        }
                     }
+                    // Settle the viewport after the bar widths are decided.
+                    // A setVisibleXRangeMaximum() call used to sit here too,
+                    // but fitScreen() overrode it on the same pass, so the
+                    // chart always showed every month regardless.
                     chart.fitScreen()
                     chart.invalidate()
                 }

@@ -119,6 +119,25 @@ class FuelCategoryTest {
             all.filter { it.fuelCategory == category.displayName }
                 .maxByOrNull { it.odometer }
 
+        override fun getAllEntriesFlowForVehicle(vehicleId: Long): Flow<List<FuelEntry>> =
+            flowOf(all.filter { it.vehicleId == vehicleId })
+
+        override fun getAllEntriesFlowForVehicle(
+            vehicleId: Long,
+            category: FuelCategory?
+        ): Flow<List<FuelEntry>> = flowOf(
+            all.filter {
+                it.vehicleId == vehicleId &&
+                    (category == null || it.fuelCategory == category.displayName)
+            }
+        )
+
+        override suspend fun getAllEntriesForVehicle(vehicleId: Long): List<FuelEntry> =
+            all.filter { it.vehicleId == vehicleId }
+
+        override suspend fun getLatestEntryForVehicle(vehicleId: Long): FuelEntry? =
+            all.filter { it.vehicleId == vehicleId }.maxByOrNull { it.odometer }
+
         override suspend fun insertEntry(entry: FuelEntry): Long = error("not used in tests")
         override suspend fun insertEntries(entries: List<FuelEntry>): List<Long> = error("not used")
         override suspend fun updateEntry(entry: FuelEntry) = error("not used")

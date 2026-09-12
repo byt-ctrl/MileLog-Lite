@@ -74,7 +74,8 @@ cd MileLog-Lite/MileLog-Lite
 - **Offline Persistence:**
   - Backed by Room SQLite with database indices on `date`, `odometer`, composite `(date, odometer)`, and `fuelCategory` for sub-millisecond query performance.
 - **CSV Export:**
-  - One-tap export of the full fuel history to a CSV file (`id,date,odometer,liters,cost,fuelCategory`) via the system document picker (SAF). Export-only — no import or backup/restore.
+  - One-tap export of the active vehicle's fuel history to a CSV file (`id,date,vehicle,odometer,liters,cost,mileage,fuel_category`) via the system document picker (SAF). Export-only — no import or backup/restore.
+  - Dates are ISO-8601 (`yyyy-MM-dd`), numbers use fixed decimals with a dot separator, mileage is recomputed with the same calculator the dashboard uses (blank for the baseline fill-up), rows are chronological, and the file is UTF-8 with a BOM for spreadsheet compatibility.
 - **Accessibility & Font Scaling:**
   - Fully dynamic layout capable of scaling up to 200% system font size without truncation, overlap, or scroll clipping.
 

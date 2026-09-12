@@ -46,6 +46,26 @@ interface FuelEntryRepository {
     suspend fun getLatestEntryByCategory(category: FuelCategory): FuelEntry?
 
     /**
+     * Observes every fuel entry belonging to [vehicleId], most-recent first.
+     */
+    fun getAllEntriesFlowForVehicle(vehicleId: Long): Flow<List<FuelEntry>>
+
+    /**
+     * Observes fuel entries for [vehicleId], optionally filtered by [category].
+     */
+    fun getAllEntriesFlowForVehicle(vehicleId: Long, category: FuelCategory?): Flow<List<FuelEntry>>
+
+    /**
+     * Retrieves every fuel entry belonging to [vehicleId].
+     */
+    suspend fun getAllEntriesForVehicle(vehicleId: Long): List<FuelEntry>
+
+    /**
+     * Retrieves the highest-odometer entry for [vehicleId].
+     */
+    suspend fun getLatestEntryForVehicle(vehicleId: Long): FuelEntry?
+
+    /**
      * Inserts a new fuel entry into the database.
      */
     suspend fun insertEntry(entry: FuelEntry): Long
@@ -89,6 +109,20 @@ class OfflineFuelEntryRepository(
 
     override suspend fun getLatestEntryByCategory(category: FuelCategory): FuelEntry? =
         fuelEntryDao.getLatestByCategory(category)
+
+    override fun getAllEntriesFlowForVehicle(vehicleId: Long): Flow<List<FuelEntry>> =
+        fuelEntryDao.getAllFlowForVehicle(vehicleId)
+
+    override fun getAllEntriesFlowForVehicle(
+        vehicleId: Long,
+        category: FuelCategory?
+    ): Flow<List<FuelEntry>> = fuelEntryDao.getAllFlowForVehicle(vehicleId, category)
+
+    override suspend fun getAllEntriesForVehicle(vehicleId: Long): List<FuelEntry> =
+        fuelEntryDao.getAllForVehicle(vehicleId)
+
+    override suspend fun getLatestEntryForVehicle(vehicleId: Long): FuelEntry? =
+        fuelEntryDao.getLatestForVehicle(vehicleId)
 
     override suspend fun insertEntry(entry: FuelEntry): Long = fuelEntryDao.insert(entry)
 

@@ -237,6 +237,19 @@ private fun EntryInstrument(
             )
         }
 
+        uiState.vehicleName?.let { name ->
+            Spacer(Modifier.height(spacing.xs))
+            Text(
+                text = stringResource(
+                    R.string.vehicle_active_note,
+                    name,
+                    stringResource(uiState.fuelCategory.labelRes)
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = ledger.chromeReadout
+            )
+        }
+
         Spacer(Modifier.height(spacing.sm))
 
         Row(verticalAlignment = Alignment.Bottom) {
@@ -451,6 +464,15 @@ private fun EntryForm(
             FuelCategorySegment(
                 selected = uiState.fuelCategory,
                 onSelected = viewModel::onFuelCategoryChanged
+            )
+        }
+
+        uiState.vehicleError?.let { error ->
+            Text(
+                text = stringResource(error.messageRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 

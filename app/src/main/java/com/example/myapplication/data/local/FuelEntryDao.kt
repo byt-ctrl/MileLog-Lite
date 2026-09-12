@@ -70,6 +70,47 @@ interface FuelEntryDao {
     suspend fun getLatestByCategory(category: FuelCategory): FuelEntry?
 
     /**
+     * Observes every fuel entry belonging to [vehicleId], most-recent first.
+     */
+    @Query(
+        "SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId " +
+            "ORDER BY date DESC, odometer DESC, id DESC"
+    )
+    fun getAllFlowForVehicle(vehicleId: Long): Flow<List<FuelEntry>>
+
+    /**
+     * Observes fuel entries for [vehicleId], optionally filtered by [category].
+     * Pass `null` to observe every category for the vehicle.
+     */
+    @Query(
+        "SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId " +
+            "AND (:category IS NULL OR fuelCategory = :category) " +
+            "ORDER BY date DESC, odometer DESC, id DESC"
+    )
+    fun getAllFlowForVehicle(vehicleId: Long, category: FuelCategory?): Flow<List<FuelEntry>>
+
+    /**
+     * Retrieves every fuel entry belonging to [vehicleId], most-recent first.
+     */
+    @Query(
+        "SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId " +
+            "ORDER BY date DESC, odometer DESC, id DESC"
+    )
+    suspend fun getAllForVehicle(vehicleId: Long): List<FuelEntry>
+
+    /**
+     * Retrieves the highest-odometer entry for [vehicleId], the monotonic baseline.
+     */
+    @Query("SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId ORDER BY odometer DESC LIMIT 1")
+    suspend fun getLatestForVehicle(vehicleId: Long): FuelEntry?
+
+    /**
+     * Deletes every fuel entry belonging to [vehicleId].
+     */
+    @Query("DELETE FROM fuel_entries WHERE vehicleId = :vehicleId")
+    suspend fun deleteByVehicle(vehicleId: Long)
+
+    /**
      * Inserts a new fuel entry, returning the auto-generated ID.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

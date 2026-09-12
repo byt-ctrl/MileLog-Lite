@@ -21,11 +21,11 @@ Build a lightweight, offline-first Android app that:
 - Visualizes mileage and spending trends with charts (combined and per-category)
 
 ### 1.4 Scope
-This is a **mini academic project** scoped to 5–6 weeks. It intentionally covers a single vehicle only, with fuel category selection and visual analytics (charts) added on top of basic CRUD. It is designed to be fully finishable and demo-ready, rather than broad.
+This is a **mini academic project** scoped to 5–6 weeks. It covers multiple vehicles (added in Sprint 7), with fuel category selection and visual analytics (charts) added on top of basic CRUD. It is designed to be fully finishable and demo-ready, rather than broad.
 
 ### 1.5 Explicitly Out of Scope
 
-- Multi-vehicle profiles
+- Multi-vehicle profiles — **moved into scope in Sprint 7** (add/switch vehicles, active vehicle drives every screen)
 - Cloud synchronization or account login
 - Camera, maps, or location services
 - DataStore, WorkManager, Hilt dependency injection
@@ -120,8 +120,8 @@ This is a **mini academic project** scoped to 5–6 weeks. It intentionally cove
 - FR28: Database includes indices on `date`, `odometer`, composite `(date, odometer)`, and `fuelCategory` for query performance.
 
 ### 4.8 CSV Export
-- FR29: User can export the full fuel history to a CSV file via the system document picker (SAF).
-- FR30: CSV includes columns: `id, date, odometer, liters, cost, fuelCategory`.
+- FR29: User can export the active vehicle's fuel history to a CSV file via the system document picker (SAF).
+- FR30: CSV columns are `id, date, vehicle, odometer, liters, cost, mileage, fuel_category`. Dates are ISO-8601 (`yyyy-MM-dd`), numeric values use fixed decimals with a dot separator (locale-independent), mileage is recomputed from the same calculator the dashboard uses (blank on the baseline fill-up), and rows are ordered chronologically. The file is UTF-8 with a BOM so it opens cleanly in a spreadsheet.
 - FR31: Export is one-way (no import or backup/restore).
 
 ---

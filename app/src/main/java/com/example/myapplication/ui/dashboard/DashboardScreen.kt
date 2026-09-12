@@ -33,10 +33,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.ui.components.GaugeScaleLabels
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.components.LedgerColumnLabels
+import com.example.myapplication.ui.components.LedgerColumnWeights
+import com.example.myapplication.ui.components.LedgerHeaderRow
 import com.example.myapplication.ui.components.LedgerPanel
 import com.example.myapplication.ui.components.LedgerRow
 import com.example.myapplication.ui.components.MileageGauge
@@ -78,6 +82,7 @@ fun DashboardScreen(
     onAddEntry: () -> Unit,
     onViewHistory: () -> Unit,
     onViewCharts: () -> Unit,
+    onAddVehicle: () -> Unit,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -124,6 +129,7 @@ fun DashboardScreen(
                     dateFormat = dateFormat,
                     trendDateFormat = trendDateFormat,
                     onAddEntry = onAddEntry,
+                    onAddVehicle = onAddVehicle,
                     onViewHistory = onViewHistory,
                     onViewCharts = onViewCharts,
                     wideLedger = roomyReadouts
@@ -153,10 +159,11 @@ private fun Binnacle(
         )
         Spacer(Modifier.height(spacing.xs))
         Text(
-            text = uiState.latestFuelCategory?.let { category ->
+            text = uiState.vehicle?.let { vehicle ->
                 stringResource(
                     R.string.dashboard_binnacle_subtitle,
-                    stringResource(category.labelRes)
+                    vehicle.name,
+                    stringResource(FuelCategory.fromDisplayName(vehicle.fuelType).labelRes)
                 )
             } ?: stringResource(R.string.dashboard_binnacle_subtitle_empty),
             style = MaterialTheme.typography.bodySmall,
@@ -298,6 +305,7 @@ private fun Content(
     dateFormat: SimpleDateFormat,
     trendDateFormat: SimpleDateFormat,
     onAddEntry: () -> Unit,
+    onAddVehicle: () -> Unit,
     onViewHistory: () -> Unit,
     onViewCharts: () -> Unit,
     wideLedger: Boolean
@@ -324,9 +332,25 @@ private fun Content(
             Spacer(Modifier.height(spacing.md))
 
             if (uiState.recentFillups.isEmpty()) {
-                EmptyLedger(onAddEntry = onAddEntry)
+                EmptyLedger(
+                    hasVehicle = uiState.vehicle != null,
+                    onAddEntry = onAddEntry,
+                    onAddVehicle = onAddVehicle
+                )
             } else {
                 LedgerPanel {
+                    // Row captions once the ledger is showing its full column
+                    // set; the compact layout labels every figure inline.
+                    if (wideLedger) {
+                        LedgerHeaderRow(
+                            labels = LedgerColumnLabels.map { stringResource(it) },
+                            weights = LedgerColumnWeights,
+                            modifier = Modifier.padding(
+                                horizontal = spacing.md,
+                                vertical = spacing.md
+                            )
+                        )
+                    }
                     uiState.recentFillups.forEachIndexed { index, fillup ->
                         if (index > 0) {
                             HorizontalDivider(color = ledger.rule, thickness = 1.dp)
@@ -408,7 +432,11 @@ private fun TrendSection(
 }
 
 @Composable
-private fun EmptyLedger(onAddEntry: () -> Unit) {
+private fun EmptyLedger(
+    hasVehicle: Boolean,
+    onAddEntry: () -> Unit,
+    onAddVehicle: () -> Unit
+) {
     val spacing = MaterialTheme.spacing
     LedgerPanel {
         Column(
@@ -424,14 +452,23 @@ private fun EmptyLedger(onAddEntry: () -> Unit) {
             )
             Spacer(Modifier.height(spacing.sm))
             Text(
-                text = stringResource(R.string.dashboard_empty_subtitle),
+                text = if (hasVehicle) {
+                    stringResource(R.string.dashboard_empty_subtitle)
+                } else {
+                    stringResource(R.string.settings_vehicle_empty)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(spacing.lg))
-            Button(onClick = onAddEntry) {
-                Text(stringResource(R.string.dashboard_empty_cta))
+            Button(onClick = if (hasVehicle) onAddEntry else onAddVehicle) {
+                Text(
+                    stringResource(
+                        if (hasVehicle) R.string.dashboard_empty_cta
+                        else R.string.dashboard_empty_vehicle_cta
+                    )
+                )
             }
         }
     }

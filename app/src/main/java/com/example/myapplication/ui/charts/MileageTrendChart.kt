@@ -149,6 +149,13 @@ fun MileageTrendChart(
                 val dataSets = mutableListOf<LineDataSet>()
 
                 val combinedPoints = fillups.filter { it.mileageKmPerL != null }
+                // Overlay lines have to sit on the same x positions as the
+                // combined line. Using a category's own index put a petrol
+                // fill-up at x=0 even when it was the third reading overall,
+                // which drew the overlay against the wrong dates.
+                val xById: Map<Long, Int> = combinedPoints
+                    .withIndex()
+                    .associate { (index, fillup) -> fillup.entry.id to index }
                 val perCategoryPoints: List<List<FillupMileage>> = categorySeries.map { series ->
                     series.fillups.filter { it.mileageKmPerL != null }
                 }
@@ -171,20 +178,26 @@ fun MileageTrendChart(
                             override fun getFormattedValue(value: Float): String =
                                 String.format(Locale.getDefault(), "%.1f", value)
                         }
-                        mode = LineDataSet.Mode.CUBIC_BEZIER
+                        // Straight segments, deliberately. A bezier curve
+                        // invents readings between fill-ups that were never
+                        // measured, and its renderer is the fragile path in
+                        // this library.
+                        mode = LineDataSet.Mode.LINEAR
                         setDrawFilled(false)
                     }
                 }
 
                 categorySeries.forEachIndexed { index, series ->
                     val points = perCategoryPoints[index]
-                    if (points.size < 2) return@forEachIndexed
+                    val entries = points.mapNotNull { fillup ->
+                        xById[fillup.entry.id]?.let { position ->
+                            Entry(position.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                        }
+                    }
+                    if (entries.size < 2) return@forEachIndexed
                     val color = categoryColors[FuelCategory.entries.indexOf(series.category)
                         .coerceIn(0, categoryColors.lastIndex)]
                     val categoryLabel = categoryLabels[series.category] ?: series.category.displayName
-                    val entries = points.mapIndexed { idx, fillup ->
-                        Entry(idx.toFloat(), fillup.mileageKmPerL!!.toFloat())
-                    }
                     dataSets += LineDataSet(entries, categoryLabel).apply {
                         this.color = color
                         setCircleColor(color)
@@ -209,7 +222,13 @@ fun MileageTrendChart(
                 }
                 chart.xAxis.labelCount = minOf(combinedPoints.size.coerceAtLeast(1), 4)
 
-                chart.data = if (dataSets.isNotEmpty()) LineData(*dataSets.toTypedArray()) else null
+                // clear() rather than assigning null: a null data set leaves the
+                // renderer with nothing to size itself against.
+                if (dataSets.isEmpty()) {
+                    chart.clear()
+                } else {
+                    chart.data = LineData(*dataSets.toTypedArray())
+                }
                 chart.invalidate()
             }
         )

@@ -17,6 +17,7 @@ enum class FieldError(@StringRes val messageRes: Int) {
     LITERS_NOT_POSITIVE(R.string.error_liters_positive),
     COST_REQUIRED(R.string.error_cost_required),
     COST_NOT_POSITIVE(R.string.error_cost_positive),
+    NO_VEHICLE(R.string.entry_error_no_vehicle),
     LOAD_MISSING(R.string.entry_error_load_missing),
     LOAD_FAILED(R.string.entry_error_load_failed)
 }
