@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -34,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.ui.components.GaugeScaleLabels
+import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
 import com.example.myapplication.ui.components.LedgerPanel
 import com.example.myapplication.ui.components.LedgerRow
@@ -44,6 +46,8 @@ import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
 import com.example.myapplication.ui.components.TrendPoint
 import com.example.myapplication.ui.components.formatOne
+import com.example.myapplication.ui.navigation.LocalShellLayout
+import com.example.myapplication.ui.navigation.ShellLayout
 import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
@@ -80,13 +84,16 @@ fun DashboardScreen(
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
     val integer = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
+    val trendDateFormat = remember { SimpleDateFormat("d MMM", Locale.getDefault()) }
+    val shellLayout = LocalShellLayout.current
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val expanded = maxWidth >= MileLogWindow.expanded
+        // Content width decides the table and readout layouts; the shell decides
+        // whether this screen owns a top bar. They are different questions.
         val roomyReadouts = maxWidth >= MileLogWindow.medium
 
         Column(
@@ -94,7 +101,7 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            if (!expanded) {
+            if (shellLayout == ShellLayout.Compact) {
                 InstrumentBar(title = "", wordmark = true)
             }
 
@@ -115,10 +122,11 @@ fun DashboardScreen(
                     currency = currency,
                     integer = integer,
                     dateFormat = dateFormat,
+                    trendDateFormat = trendDateFormat,
                     onAddEntry = onAddEntry,
                     onViewHistory = onViewHistory,
                     onViewCharts = onViewCharts,
-                    wideLedger = expanded
+                    wideLedger = roomyReadouts
                 )
             }
         }
@@ -137,12 +145,7 @@ private fun Binnacle(
     val average = uiState.averageMileage
     val latest = uiState.latestMileage
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ledger.chrome)
-            .padding(horizontal = spacing.lg, vertical = spacing.lg)
-    ) {
+    InstrumentBand {
         Text(
             text = stringResource(R.string.dashboard_binnacle_title),
             style = MaterialTheme.typography.headlineMedium,
@@ -187,7 +190,6 @@ private fun Binnacle(
                 style = MaterialTheme.typography.displayLarge,
                 color = ledger.chromeText
             )
-            Spacer(Modifier.height(0.dp))
             Text(
                 text = stringResource(R.string.dashboard_gauge_unit),
                 style = MaterialTheme.typography.titleMedium,
@@ -294,6 +296,7 @@ private fun Content(
     currency: NumberFormat,
     integer: NumberFormat,
     dateFormat: SimpleDateFormat,
+    trendDateFormat: SimpleDateFormat,
     onAddEntry: () -> Unit,
     onViewHistory: () -> Unit,
     onViewCharts: () -> Unit,
@@ -354,7 +357,7 @@ private fun Content(
             TrendSection(
                 fillups = uiState.trendFillups,
                 average = uiState.averageMileage,
-                dateFormat = dateFormat,
+                dateFormat = trendDateFormat,
                 onViewCharts = onViewCharts
             )
         }
@@ -397,7 +400,9 @@ private fun TrendSection(
         MileageTrendBars(
             points = points,
             average = mean,
-            ceiling = ceiling
+            ceiling = ceiling,
+            // A five-bar chart stretched across a tablet says less, not more.
+            modifier = Modifier.widthIn(max = 720.dp)
         )
     }
 }

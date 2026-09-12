@@ -13,6 +13,7 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.repository.FuelEntryRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
+import com.example.myapplication.domain.demo.DemoDataGenerator
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +32,9 @@ enum class SettingsMessage(@StringRes val messageRes: Int) {
     EXPORT_SUCCESS(R.string.export_success),
     EXPORT_FAILED(R.string.export_failure),
     CLEARED(R.string.settings_cleared),
-    RESTORED(R.string.settings_restored)
+    RESTORED(R.string.settings_restored),
+    SEEDED(R.string.settings_seeded),
+    SEED_FAILED(R.string.settings_seed_failed)
 }
 
 data class SettingsUiState(
@@ -185,6 +188,37 @@ class SettingsViewModel(
             rows.forEach { repository.insertEntry(it) }
             clearedEntries = emptyList()
             _transient.update { it.copy(message = SettingsMessage.RESTORED) }
+        }
+    }
+
+    /**
+     * Appends a run of sample fill-ups so a fresh install has something to
+     * visualise. Rows continue after the newest real reading, so this never
+     * collides with data the user entered. "Delete all fill-ups" is the way
+     * back out.
+     */
+    fun seedDemoData() {
+        viewModelScope.launch {
+            _transient.update { it.copy(isBusy = true) }
+            runCatching {
+                val rows = DemoDataGenerator.generate(repository.getAllEntries())
+                repository.insertEntries(rows)
+                rows.size
+            }
+                .onSuccess { added ->
+                    _transient.update {
+                        it.copy(
+                            isBusy = false,
+                            message = SettingsMessage.SEEDED,
+                            messageCount = added
+                        )
+                    }
+                }
+                .onFailure {
+                    _transient.update {
+                        it.copy(isBusy = false, message = SettingsMessage.SEED_FAILED)
+                    }
+                }
         }
     }
 

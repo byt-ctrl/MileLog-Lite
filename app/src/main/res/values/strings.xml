@@ -14,32 +14,45 @@
     <string name="fab_add_label">Add</string>
 
     <!-- Dashboard -->
-    <string name="dashboard_title">Dashboard</string>
-    <string name="dashboard_fab_add_entry">Add fuel entry</string>
     <string name="dashboard_empty_title">No entries yet</string>
     <string name="dashboard_empty_subtitle">Add your first fuel entry to start tracking your mileage and expenses.</string>
     <string name="dashboard_empty_cta">Add your first entry</string>
     <string name="dashboard_stat_latest_odometer_title">Latest Odometer</string>
     <string name="dashboard_stat_latest_odometer_empty">—</string>
     <string name="dashboard_stat_latest_odometer_unit">%1$s km</string>
-    <string name="dashboard_stat_latest_odometer_subtitle">Fuel: %1$s</string>
     <string name="dashboard_stat_total_cost_title">Total Fuel Spend</string>
     <string name="dashboard_stat_total_cost_subtitle">%1$d entries total</string>
-    <string name="dashboard_stat_avg_mileage_title">Avg Mileage</string>
-    <string name="dashboard_stat_avg_mileage_value">%1$.1f km/L</string>
-    <string name="dashboard_stat_avg_mileage_subtitle">%1$d km tracked</string>
     <string name="dashboard_stat_cost_per_km_title">Cost per km</string>
     <string name="dashboard_stat_cost_per_km_subtitle">%1$d km tracked</string>
     <string name="dashboard_error_load">Couldn\'t load dashboard data. Please try again.</string>
-    <string name="dashboard_nav_history_title">View History</string>
-    <string name="dashboard_nav_history_subtitle">%1$d entries total</string>
-    <string name="dashboard_nav_charts_title">Charts &amp; Insights</string>
-    <string name="dashboard_nav_charts_subtitle">Mileage &amp; spend trends</string>
+
+    <!-- Dashboard (Instrument Ledger) -->
+    <string name="dashboard_binnacle_title">Fuel log</string>
+    <string name="dashboard_binnacle_subtitle">Single vehicle  ·  %1$s</string>
+    <string name="dashboard_binnacle_subtitle_empty">Single vehicle</string>
+    <string name="dashboard_gauge_label">Average mileage</string>
+    <string name="dashboard_gauge_unit">km/L</string>
+    <string name="dashboard_gauge_scale_note">tank to tank</string>
+    <string name="dashboard_gauge_note_no_average">Mileage starts at the second fill-up, once there is a previous reading to measure against.</string>
+    <string name="dashboard_gauge_note_plain">Average across every measured fill-up.</string>
+    <string name="dashboard_gauge_note_above">Latest fill-up %1$s km/L, %2$s above this average.</string>
+    <string name="dashboard_gauge_note_below">Latest fill-up %1$s km/L, %2$s below this average.</string>
+    <string name="dashboard_gauge_note_level">Latest fill-up matches this average.</string>
+    <string name="dashboard_gauge_a11y">Average mileage %1$s kilometres per litre, latest fill-up %2$s, on a scale from 0 to %3$d</string>
+    <string name="dashboard_gauge_a11y_empty">Mileage gauge with no reading yet, on a scale from 0 to %1$d</string>
+    <string name="dashboard_ledger_title">Fill-up ledger</string>
+    <string name="dashboard_ledger_note">%1$d entries, newest first</string>
+    <string name="dashboard_ledger_action">View all</string>
+    <string name="dashboard_ledger_odometer_value">%1$s km</string>
+    <string name="dashboard_ledger_liters_value">%1$.2f L</string>
+    <string name="dashboard_ledger_mileage_value">%1$s km/L</string>
+    <string name="dashboard_trend_title">Mileage by fill-up</string>
+    <string name="dashboard_trend_note">Dashed line at the %1$s km/L average</string>
+    <string name="dashboard_trend_action">Open charts</string>
 
     <!-- History -->
     <string name="history_title">Fuel History</string>
     <string name="history_export_action">Export entries to CSV</string>
-    <string name="history_fab_add_entry">Add fuel entry</string>
     <string name="history_empty_title_all">No entries yet</string>
     <string name="history_empty_subtitle_all">Your fuel history will appear here once you add entries.</string>
     <string name="history_empty_title_filter">No %1$s entries</string>
@@ -49,15 +62,12 @@
     <string name="history_delete_dialog_title">Delete entry?</string>
     <string name="history_delete_dialog_body">This will permanently delete the entry from %1$s. This action cannot be undone.</string>
     <string name="history_card_delete">Delete entry from %1$s</string>
-    <string name="history_row_odometer">Odometer: %1$d km</string>
-    <string name="history_row_fuel_cost">Fuel: %1$.2f L  •  Cost: %2$s</string>
     <string name="history_error_load">Couldn\'t load history. Please try again.</string>
     <string name="history_export_build_failed">Couldn\'t prepare the export. Please try again.</string>
     <string name="history_entry_deleted">Entry deleted</string>
     <string name="history_filter_all">All</string>
     <string name="history_filter_all_a11y">Filter: all fuel types</string>
     <string name="history_filter_category_a11y">Filter by %1$s</string>
-    <string name="history_export_ready">Export ready</string>
 
     <!-- Charts -->
     <string name="charts_title">Charts &amp; Insights</string>
@@ -66,7 +76,6 @@
     <string name="charts_trend_card_title">Mileage Trend</string>
     <string name="charts_trend_card_subtitle_single">km/L per fill-up</string>
     <string name="charts_trend_card_subtitle_split">km/L per fill-up (combined + per fuel type)</string>
-    <string name="charts_trend_empty">Add at least 2 fuel entries to see the mileage trend.</string>
     <string name="charts_trend_a11y">Mileage trend chart showing fuel efficiency in kilometers per liter over time</string>
     <string name="charts_spend_card_title">Monthly Fuel Spend</string>
     <string name="charts_spend_card_subtitle_single">Total spend (%1$s) by calendar month</string>
@@ -95,68 +104,6 @@
     <string name="entry_error_load_failed">Couldn\'t load this entry. Please try again.</string>
     <string name="entry_loading">Loading entry</string>
 
-    <!-- Validation (validator produces these via displayName lookup) -->
-    <string name="error_date_required">Date is required</string>
-    <string name="error_odometer_required">Odometer reading is required</string>
-    <string name="error_odometer_positive">Odometer must be a positive number</string>
-    <string name="error_odometer_monotonic">Odometer must be greater than the previous reading (%1$d km)</string>
-    <string name="error_odometer_monotonic_no_prev">Odometer must be greater than zero</string>
-    <string name="error_liters_required">Fuel quantity is required</string>
-    <string name="error_liters_positive">Fuel quantity must be greater than 0</string>
-    <string name="error_cost_required">Total cost is required</string>
-    <string name="error_cost_positive">Cost must be greater than 0</string>
-
-    <!-- Fuel categories (also surfaced in dropdown) -->
-    <string name="fuel_category_petrol">Petrol</string>
-    <string name="fuel_category_diesel">Diesel</string>
-    <string name="fuel_category_cng">CNG</string>
-
-    <!-- TopAppBar -->
-    <string name="topappbar_avatar_a11y">Profile</string>
-    <string name="topappbar_notifications_a11y">Notifications</string>
-
-    <!-- Bottom Navigation -->
-    <string name="bottom_nav_dashboard_label">Dashboard</string>
-    <string name="bottom_nav_history_label">History</string>
-    <string name="bottom_nav_reports_label">Reports</string>
-    <string name="bottom_nav_settings_label">Settings</string>
-
-    <!-- Settings -->
-    <string name="settings_title">Settings</string>
-    <string name="settings_basic_heading">Settings</string>
-    <string name="settings_basic_subtitle">App preferences like theme, distance units, export, and data controls will live here.</string>
-
-    <!-- Export snackbar outcomes -->
-    <string name="export_success">Exported %1$d entries to CSV</string>
-    <string name="export_failure">Export failed: %1$s</string>
-
-    <!-- Instrument shell -->
-    <string name="rail_offline_note">Works offline. Every fill-up stays on this device.</string>
-
-    <!-- Dashboard (Instrument Ledger) -->
-    <string name="dashboard_binnacle_title">Fuel log</string>
-    <string name="dashboard_binnacle_subtitle">Single vehicle  ·  %1$s</string>
-    <string name="dashboard_binnacle_subtitle_empty">Single vehicle</string>
-    <string name="dashboard_gauge_label">Average mileage</string>
-    <string name="dashboard_gauge_unit">km/L</string>
-    <string name="dashboard_gauge_scale_note">tank to tank</string>
-    <string name="dashboard_gauge_note_no_average">Mileage starts at the second fill-up, once there is a previous reading to measure against.</string>
-    <string name="dashboard_gauge_note_plain">Average across every measured fill-up.</string>
-    <string name="dashboard_gauge_note_above">Latest fill-up %1$s km/L, %2$s above this average.</string>
-    <string name="dashboard_gauge_note_below">Latest fill-up %1$s km/L, %2$s below this average.</string>
-    <string name="dashboard_gauge_note_level">Latest fill-up matches this average.</string>
-    <string name="dashboard_gauge_a11y">Average mileage %1$s kilometres per litre, latest fill-up %2$s, on a scale from 0 to %3$d</string>
-    <string name="dashboard_gauge_a11y_empty">Mileage gauge with no reading yet, on a scale from 0 to %1$d</string>
-    <string name="dashboard_ledger_title">Fill-up ledger</string>
-    <string name="dashboard_ledger_note">%1$d entries, newest first</string>
-    <string name="dashboard_ledger_action">View all</string>
-    <string name="dashboard_ledger_odometer_value">%1$s km</string>
-    <string name="dashboard_ledger_liters_value">%1$.2f L</string>
-    <string name="dashboard_ledger_mileage_value">%1$s km/L</string>
-    <string name="dashboard_trend_title">Mileage by fill-up</string>
-    <string name="dashboard_trend_note">Dashed line at the %1$s km/L average</string>
-    <string name="dashboard_trend_action">Open charts</string>
-
     <!-- Entry instrument -->
     <string name="entry_instrument_label">Mileage this fill-up</string>
     <string name="entry_instrument_unit">km per litre</string>
@@ -171,12 +118,43 @@
     <string name="entry_readout_price_per_litre">Price per litre</string>
     <string name="entry_readout_price_per_litre_note">what you paid</string>
 
-    <!-- Settings (full screen) -->
+    <!-- Validation (validator produces these via displayName lookup) -->
+    <string name="error_date_required">Date is required</string>
+    <string name="error_odometer_required">Odometer reading is required</string>
+    <string name="error_odometer_positive">Odometer must be a positive number</string>
+    <string name="error_odometer_monotonic">Odometer must be greater than the previous reading (%1$d km)</string>
+    <string name="error_liters_required">Fuel quantity is required</string>
+    <string name="error_liters_positive">Fuel quantity must be greater than 0</string>
+    <string name="error_cost_required">Total cost is required</string>
+    <string name="error_cost_positive">Cost must be greater than 0</string>
+
+    <!-- Fuel categories (also surfaced in the fuel type selector) -->
+    <string name="fuel_category_petrol">Petrol</string>
+    <string name="fuel_category_diesel">Diesel</string>
+    <string name="fuel_category_cng">CNG</string>
+
+    <!-- Navigation -->
+    <string name="bottom_nav_dashboard_label">Dashboard</string>
+    <string name="bottom_nav_history_label">History</string>
+    <string name="bottom_nav_reports_label">Reports</string>
+    <string name="bottom_nav_settings_label">Settings</string>
+    <string name="rail_offline_note">Works offline. Every fill-up stays on this device.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_row">Theme</string>
     <string name="settings_appearance_value">Follows device</string>
     <string name="settings_appearance_note">The instrument panel stays dark in every mode. Only the logbook follows your device setting.</string>
     <string name="settings_section_data">Data</string>
+    <string name="settings_seed_row">Add demo fill-ups</string>
+    <string name="settings_seed_row_note">Fills the log with sample entries so the charts have something to show</string>
+    <string name="settings_seed_dialog_title">Add demo fill-ups?</string>
+    <string name="settings_seed_dialog_body">Adds %1$d sample entries after your latest reading, so the dashboard, history and charts have something to show. Delete all fill-ups removes them again.</string>
+    <string name="settings_seed_confirm">Add demo fill-ups</string>
+    <string name="settings_seed_cancel">Cancel</string>
+    <string name="settings_seeded">Added %1$d demo fill-ups</string>
+    <string name="settings_seed_failed">Couldn\'t add the demo fill-ups. Please try again.</string>
     <string name="settings_export_row">Export fill-ups as CSV</string>
     <string name="settings_export_row_note">Save every entry to a file you choose</string>
     <string name="settings_delete_row">Delete all fill-ups</string>
@@ -200,4 +178,8 @@
     <string name="settings_readout_distance_note">first to last reading</string>
     <string name="settings_readout_storage">Storage</string>
     <string name="settings_readout_storage_note">offline</string>
+
+    <!-- Export snackbar outcomes -->
+    <string name="export_success">Exported %1$d entries to CSV</string>
+    <string name="export_failure">Export failed: %1$s</string>
 </resources>

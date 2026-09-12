@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -33,8 +34,41 @@ import com.example.myapplication.ui.theme.DataTextStyle
 import com.example.myapplication.ui.theme.DataTextStyleSmall
 import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
+
+/**
+ * A full-bleed instrument band whose content is capped and centred.
+ *
+ * The dark material has to reach both window edges or it stops reading as the
+ * machine's casing, but the readings inside should not smear across a tablet.
+ * Background full-bleed, content capped: two containers, which is why this
+ * exists rather than being inlined three times.
+ */
+@Composable
+fun InstrumentBand(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val ledger = MaterialTheme.ledger
+    val spacing = MaterialTheme.spacing
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(ledger.chrome),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = MileLogWindow.contentMaxWidth)
+                .fillMaxWidth()
+                .padding(horizontal = spacing.lg, vertical = spacing.lg),
+            content = content
+        )
+    }
+}
 
 /** A logbook panel: surface fill, hairline edge, small radius, no shadow. */
 @Composable

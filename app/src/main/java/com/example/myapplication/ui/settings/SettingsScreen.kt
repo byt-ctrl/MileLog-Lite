@@ -42,6 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import com.example.myapplication.domain.demo.DemoDataGenerator
+import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
 import com.example.myapplication.ui.components.LedgerPanel
 import com.example.myapplication.ui.components.ReadoutItem
@@ -71,6 +73,7 @@ fun SettingsScreen(
     val spacing = MaterialTheme.spacing
     val integerFormatter = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showSeedDialog by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -94,6 +97,7 @@ fun SettingsScreen(
     val messageText: String? = messageKey?.let { key ->
         when (key) {
             SettingsMessage.EXPORT_SUCCESS -> stringResource(key.messageRes, uiState.messageCount)
+            SettingsMessage.SEEDED -> stringResource(key.messageRes, uiState.messageCount)
             SettingsMessage.EXPORT_FAILED ->
                 stringResource(key.messageRes, uiState.messageDetail.orEmpty())
             else -> stringResource(key.messageRes)
@@ -155,6 +159,15 @@ fun SettingsScreen(
                     SectionHeader(title = stringResource(R.string.settings_section_data))
                     Spacer(Modifier.height(spacing.md))
                     LedgerPanel {
+                        SettingsRow(
+                            title = stringResource(R.string.settings_seed_row),
+                            note = stringResource(R.string.settings_seed_row_note),
+                            onClick = { showSeedDialog = true }
+                        )
+                        HorizontalDivider(
+                            color = MaterialTheme.ledger.rule,
+                            thickness = 1.dp
+                        )
                         SettingsRow(
                             title = stringResource(R.string.settings_export_row),
                             note = stringResource(R.string.settings_export_row_note),
@@ -240,6 +253,41 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (showSeedDialog) {
+        AlertDialog(
+            onDismissRequest = { showSeedDialog = false },
+            shape = MileLogShapes.md,
+            title = { Text(stringResource(R.string.settings_seed_dialog_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.settings_seed_dialog_body,
+                        DemoDataGenerator.DEFAULT_ENTRY_COUNT
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.seedDemoData()
+                        showSeedDialog = false
+                    },
+                    modifier = Modifier.heightIn(min = spacing.touchTarget)
+                ) {
+                    Text(stringResource(R.string.settings_seed_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showSeedDialog = false },
+                    modifier = Modifier.heightIn(min = spacing.touchTarget)
+                ) {
+                    Text(stringResource(R.string.settings_seed_cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -250,12 +298,7 @@ private fun SettingsBinnacle(
     val ledger = MaterialTheme.ledger
     val spacing = MaterialTheme.spacing
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ledger.chrome)
-            .padding(horizontal = spacing.lg, vertical = spacing.lg)
-    ) {
+    InstrumentBand {
         Text(
             text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,

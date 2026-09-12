@@ -1,10 +1,11 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,10 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,8 +33,10 @@ import com.example.myapplication.ui.theme.spacing
 
 /**
  * The instrument bar. Dark in every appearance, because it is the backlit
- * cluster of the machine rather than a themed surface. Carries the wordmark on
- * root destinations and a screen title plus back control on detail ones.
+ * cluster of the machine rather than a themed surface.
+ *
+ * The MileLog mark leads every bar: with the wordmark on root destinations,
+ * beside the screen title on detail ones. Same object as the launcher icon.
  */
 @Composable
 fun InstrumentBar(
@@ -80,14 +80,20 @@ fun InstrumentBar(
             if (wordmark) {
                 MileLogWordmark()
             } else {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = ledger.chromeText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = spacing.xs)
-                )
+                ) {
+                    MileLogMark()
+                    Spacer(Modifier.width(spacing.sm))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = ledger.chromeText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Spacer(Modifier.weight(1f))
@@ -97,11 +103,12 @@ fun InstrumentBar(
     }
 }
 
+/** The product mark plus the name, as it appears on the chrome. */
 @Composable
 fun MileLogWordmark() {
     val ledger = MaterialTheme.ledger
     Row(verticalAlignment = Alignment.CenterVertically) {
-        BrandMark()
+        MileLogMark()
         Spacer(Modifier.width(MaterialTheme.spacing.sm))
         Text(
             text = stringResource(R.string.app_name).uppercase(),
@@ -114,37 +121,16 @@ fun MileLogWordmark() {
     }
 }
 
-/** A four-tick gauge face with the amber band on the leading edge. */
+/**
+ * The MileLog logo: the fuel drop with its amber band, the same vector the
+ * launcher icon is built from. Decorative here, so it carries no description;
+ * the wordmark or title beside it names the screen.
+ */
 @Composable
-private fun BrandMark() {
-    val ledger = MaterialTheme.ledger
-    Canvas(modifier = Modifier.size(width = 22.dp, height = 14.dp)) {
-        val stroke = 1.dp.toPx()
-        val corner = CornerRadius(2.dp.toPx())
-
-        drawRoundRect(
-            color = ledger.chromeMarker.copy(alpha = 0.85f),
-            topLeft = Offset(stroke, stroke),
-            size = Size(size.width * 0.4f - stroke, size.height - stroke * 2),
-            cornerRadius = corner
-        )
-
-        val divisions = 4
-        for (i in 1 until divisions) {
-            val x = size.width * i / divisions
-            drawLine(
-                color = ledger.chromeRule,
-                start = Offset(x, stroke * 2),
-                end = Offset(x, size.height - stroke * 2),
-                strokeWidth = stroke
-            )
-        }
-
-        drawRoundRect(
-            color = ledger.chromeRule,
-            size = size,
-            cornerRadius = corner,
-            style = Stroke(stroke)
-        )
-    }
+fun MileLogMark(modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(R.drawable.ic_milelog_mark),
+        contentDescription = null,
+        modifier = modifier.height(22.dp)
+    )
 }

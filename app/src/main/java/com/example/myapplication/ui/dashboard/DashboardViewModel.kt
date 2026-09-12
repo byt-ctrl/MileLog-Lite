@@ -110,8 +110,12 @@ class DashboardViewModel(
     }
 
     companion object {
-        /** Most recent measured fill-ups drawn on the trend chart. */
-        private const val TREND_LIMIT = 8
+        /**
+         * Measured fill-ups drawn on the trend chart. Kept small on purpose: on
+         * a phone each column is roughly a fifth of the sheet, and more than
+         * that squeezes the date captions into nothing.
+         */
+        private const val TREND_LIMIT = 5
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MileLog mark: the fuel drop with its amber band, taken from the original
+  launcher icon (ic_launcher_foreground.xml) so the header and the home screen
+  icon are the same object.
+
+  Recoloured for the dark instrument bar. The drop is drawn in the chrome text
+  tone and its core is punched out with the chrome surface, which is exactly how
+  the launcher icon builds its ring. #101618 must stay equal to
+  InstrumentSurface in Color.kt or a seam will show.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="15dp"
+    android:height="22dp"
+    android:viewportWidth="32"
+    android:viewportHeight="46">
+
+    <path
+        android:fillColor="#E6EDEC"
+        android:pathData="M16,0 C16,0 0,18 0,30 a16,16 0 0 0 32,0 C32,18 16,0 16,0 Z" />
+
+    <path
+        android:fillColor="#101618"
+        android:pathData="M16,6 C16,6 5,19 5,29 a11,11 0 0 0 22,0 C27,19 16,6 16,6 Z" />
+
+    <path
+        android:fillColor="#F0A83C"
+        android:pathData="M8.5,26 a7.5,7.5 0 0 0 15,0 l-2.6,-4.2 l-4.9,3 l-3,-1.2 Z" />
+</vector>

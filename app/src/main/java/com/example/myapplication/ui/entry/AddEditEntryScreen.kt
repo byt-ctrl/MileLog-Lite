@@ -57,6 +57,7 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.validation.FieldError
 import com.example.myapplication.ui.components.GaugeScaleLabels
+import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
 import com.example.myapplication.ui.components.MileageGauge
 import com.example.myapplication.ui.components.ReadoutItem
@@ -218,12 +219,7 @@ private fun EntryInstrument(
     val spacing = MaterialTheme.spacing
     val calc = computeEntry(uiState)
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ledger.chrome)
-            .padding(horizontal = spacing.lg, vertical = spacing.lg)
-    ) {
+    InstrumentBand {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom

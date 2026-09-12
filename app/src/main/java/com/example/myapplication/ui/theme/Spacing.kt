@@ -45,4 +45,11 @@ fun Modifier.minTouchTargetHeight(): Modifier = heightIn(min = Spacing.touchTarg
 object MileLogWindow {
     val medium: Dp = 600.dp
     val expanded: Dp = 840.dp
+
+    /**
+     * Widest the logbook content is allowed to get. Backgrounds stay full-bleed;
+     * only text and controls are capped, so a wide window centres the ledger
+     * instead of stretching the instrument across it.
+     */
+    val contentMaxWidth: Dp = 1040.dp
 }

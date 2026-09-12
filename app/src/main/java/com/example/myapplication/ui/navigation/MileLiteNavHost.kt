@@ -9,7 +9,9 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -46,6 +48,17 @@ object MileLogRoutes {
 
     fun editEntry(entryId: Long): String = "edit_entry/$entryId"
 }
+
+/** How the app shell is laid out at the current window width. */
+enum class ShellLayout { Compact, Expanded }
+
+/**
+ * The shell's own layout mode, published so screens can react to it. A screen
+ * cannot infer this from its own width: on expanded windows that width is the
+ * window minus the rail, so an 800dp window would look "expanded" to a screen
+ * while no rail exists.
+ */
+val LocalShellLayout = staticCompositionLocalOf { ShellLayout.Compact }
 
 /**
  * Root navigation host.
@@ -86,19 +99,32 @@ fun MileLiteNavHost(
     BoxWithConstraints {
         val expanded = maxWidth >= MileLogWindow.expanded
 
-        if (expanded) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                MileLogRail(
-                    currentRoute = currentRoute,
-                    onTabSelected = onTabSelected,
-                    onAddEntry = onAddEntry
-                )
+        CompositionLocalProvider(
+            LocalShellLayout provides if (expanded) ShellLayout.Expanded else ShellLayout.Compact
+        ) {
+            if (expanded) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    MileLogRail(
+                        currentRoute = currentRoute,
+                        onTabSelected = onTabSelected,
+                        onAddEntry = onAddEntry
+                    )
+                    ShellScaffold(
+                        showBottomBar = false,
+                        currentRoute = currentRoute,
+                        onTabSelected = onTabSelected,
+                        onAddEntry = onAddEntry,
+                        navController = navController,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            } else {
                 ShellScaffold(
-                    showBottomBar = false,
+                    showBottomBar = isTopLevel,
                     currentRoute = currentRoute,
                     onTabSelected = onTabSelected,
                     onAddEntry = onAddEntry,
@@ -106,15 +132,6 @@ fun MileLiteNavHost(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-        } else {
-            ShellScaffold(
-                showBottomBar = isTopLevel,
-                currentRoute = currentRoute,
-                onTabSelected = onTabSelected,
-                onAddEntry = onAddEntry,
-                navController = navController,
-                modifier = Modifier.fillMaxSize()
-            )
         }
     }
 }
