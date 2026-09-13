@@ -10,6 +10,11 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object (DAO) for [FuelEntry] database operations.
+ *
+ * The unscoped (non-vehicle) queries are legacy and have no production caller:
+ * every screen reads through the `*ForVehicle` variants. They are retained for
+ * the DAO tests and are marked deprecated on the repository surface that app
+ * code actually uses.
  */
 @Dao
 interface FuelEntryDao {
@@ -57,7 +62,7 @@ interface FuelEntryDao {
     /**
      * Retrieves the fuel entry with the highest odometer reading.
      */
-    @Query("SELECT * FROM fuel_entries ORDER BY odometer DESC LIMIT 1")
+    @Query("SELECT * FROM fuel_entries ORDER BY odometer DESC, id DESC LIMIT 1")
     suspend fun getLatest(): FuelEntry?
 
     /**
@@ -65,7 +70,7 @@ interface FuelEntryDao {
      */
     @Query(
         "SELECT * FROM fuel_entries WHERE fuelCategory = :category " +
-            "ORDER BY odometer DESC LIMIT 1"
+            "ORDER BY odometer DESC, id DESC LIMIT 1"
     )
     suspend fun getLatestByCategory(category: FuelCategory): FuelEntry?
 
@@ -101,11 +106,11 @@ interface FuelEntryDao {
     /**
      * Retrieves the highest-odometer entry for [vehicleId], the monotonic baseline.
      */
-    @Query("SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId ORDER BY odometer DESC LIMIT 1")
+    @Query("SELECT * FROM fuel_entries WHERE vehicleId = :vehicleId ORDER BY odometer DESC, id DESC LIMIT 1")
     suspend fun getLatestForVehicle(vehicleId: Long): FuelEntry?
 
     /**
-     * Deletes every fuel entry belonging to [vehicleId].
+     * Deletes every fuel entry belonging to [vehicleId] in one statement.
      */
     @Query("DELETE FROM fuel_entries WHERE vehicleId = :vehicleId")
     suspend fun deleteByVehicle(vehicleId: Long)

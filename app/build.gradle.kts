@@ -34,6 +34,16 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // Expose the exported Room schemas to instrumented tests so
+        // MigrationTestHelper can validate migrations against real history.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+}
+
+ksp {
+    // Write the Room schema JSON on every build so migrations have a history.
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

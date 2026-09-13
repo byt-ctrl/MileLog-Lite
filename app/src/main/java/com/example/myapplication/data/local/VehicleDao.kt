@@ -53,8 +53,12 @@ interface VehicleDao {
 
     /**
      * Inserts a new vehicle, returning the auto-generated ID.
+     *
+     * The conflict strategy is `ABORT`, so a duplicate name fails loudly
+     * instead of silently replacing the existing vehicle (and dropping its
+     * active flag). `VehicleValidator` rejects duplicates before this is called.
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(vehicle: Vehicle): Long
 
     /**

@@ -123,10 +123,16 @@ class VehicleDaoTest {
     }
 
     @Test
-    fun insertingAnExistingName_replacesRatherThanDuplicates() = runBlocking {
-        vehicleDao.insert(vehicle(name = "Tata Harrier"))
+    fun insertingAnExistingName_failsAndKeepsTheOriginal() = runBlocking {
         vehicleDao.insert(vehicle(name = "Tata Harrier", make = "Tata"))
 
+        // ABORT (not REPLACE): a duplicate name must not silently drop the
+        // existing vehicle, which would also lose its active flag.
+        val failure = runCatching {
+            vehicleDao.insert(vehicle(name = "Tata Harrier", make = "Stellantis"))
+        }
+
+        assertTrue(failure.isFailure)
         val all = vehicleDao.getAll()
         assertEquals(1, all.size)
         assertEquals("Tata", all.first().make)

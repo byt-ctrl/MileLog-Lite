@@ -93,6 +93,7 @@ class FuelCategoryTest {
      * category-filtering contract. We avoid Room/coroutines in unit tests by
      * doing the same `displayName == value` comparison the DAO uses.
      */
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     private class InMemoryRepository(seed: List<FuelEntry>) : FuelEntryRepository {
         private val all = seed
 
@@ -137,6 +138,8 @@ class FuelCategoryTest {
 
         override suspend fun getLatestEntryForVehicle(vehicleId: Long): FuelEntry? =
             all.filter { it.vehicleId == vehicleId }.maxByOrNull { it.odometer }
+
+        override suspend fun deleteEntriesForVehicle(vehicleId: Long) = error("not used")
 
         override suspend fun insertEntry(entry: FuelEntry): Long = error("not used in tests")
         override suspend fun insertEntries(entries: List<FuelEntry>): List<Long> = error("not used")

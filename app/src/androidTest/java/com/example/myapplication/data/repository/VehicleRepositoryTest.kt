@@ -35,7 +35,7 @@ class VehicleRepositoryTest {
         database = Room.inMemoryDatabaseBuilder(context, MileLiteDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        vehicleRepository = OfflineVehicleRepository(database.vehicleDao(), database.fuelEntryDao())
+        vehicleRepository = OfflineVehicleRepository(database)
         entryRepository = OfflineFuelEntryRepository(database.fuelEntryDao())
     }
 

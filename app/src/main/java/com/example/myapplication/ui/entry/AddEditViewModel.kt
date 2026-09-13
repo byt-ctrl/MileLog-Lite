@@ -107,23 +107,23 @@ class AddEditViewModel(
             result
                 .onSuccess { entry ->
                     if (entry != null) {
-                        val vehicle = if (entry.vehicleId > 0L) {
-                            runCatching { vehicleRepository.getVehicleById(entry.vehicleId) }
-                                .getOrNull()
-                        } else {
-                            null
-                        }
+                        val vehicle = entry.vehicleId
+                            ?.takeIf { it > 0L }
+                            ?.let { vehicleId ->
+                                runCatching { vehicleRepository.getVehicleById(vehicleId) }
+                                    .getOrNull()
+                            }
                         // The live instrument needs the reading this entry is
                         // measured against, which is the nearest lower
                         // odometer within the same vehicle rather than the
                         // newest entry in the log.
-                        val previous = runCatching {
-                            repository.getAllEntriesForVehicle(entry.vehicleId)
+                        val previous = entry.vehicleId?.let { vehicleId ->
+                            runCatching { repository.getAllEntriesForVehicle(vehicleId) }
+                                .getOrNull()
+                                ?.filter { it.id != entry.id && it.odometer < entry.odometer }
+                                ?.maxByOrNull { it.odometer }
+                                ?.odometer
                         }
-                            .getOrNull()
-                            ?.filter { it.id != entry.id && it.odometer < entry.odometer }
-                            ?.maxByOrNull { it.odometer }
-                            ?.odometer
                         _uiState.update {
                             it.copy(
                                 entryId = entry.id,
@@ -236,7 +236,7 @@ class AddEditViewModel(
         viewModelScope.launch {
             val entry = FuelEntry(
                 id = currentState.entryId,
-                vehicleId = currentState.vehicleId ?: 0L,
+                vehicleId = currentState.vehicleId,
                 date = currentState.dateMillis,
                 odometer = currentState.odometer.trim().toInt(),
                 liters = currentState.liters.trim().toDouble(),

@@ -1,7 +1,7 @@
 package com.example.myapplication.data.local
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -9,8 +9,9 @@ import androidx.room.PrimaryKey
  * Room entity representing a single fuel fill-up log.
  *
  * @property id Auto-generated unique primary key.
- * @property vehicleId Owning [Vehicle] ID. Defaults to 0 for rows predating
- *   multi-vehicle support; the schema migration reassigns those to a default vehicle.
+ * @property vehicleId Owning [Vehicle] ID, or null when the row is not
+ *   attributed to a vehicle. Enforced with `ON DELETE CASCADE`, so removing a
+ *   vehicle removes its fill-ups.
  * @property date Epoch timestamp in milliseconds when the fuel fill-up occurred.
  * @property odometer Vehicle odometer reading in kilometers at fill-up.
  * @property liters Volume of fuel filled in liters.
@@ -19,6 +20,14 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "fuel_entries",
+    foreignKeys = [
+        ForeignKey(
+            entity = Vehicle::class,
+            parentColumns = ["id"],
+            childColumns = ["vehicleId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
     indices = [
         Index(value = ["date"]),
         Index(value = ["odometer"]),
@@ -31,8 +40,7 @@ import androidx.room.PrimaryKey
 data class FuelEntry(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(defaultValue = "0")
-    val vehicleId: Long = 0,
+    val vehicleId: Long? = null,
     val date: Long,
     val odometer: Int,
     val liters: Double,

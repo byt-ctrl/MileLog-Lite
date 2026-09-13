@@ -21,6 +21,6 @@ class MileLogApplication : Application() {
     }
 
     val vehicleRepository: VehicleRepository by lazy {
-        OfflineVehicleRepository(database.vehicleDao(), database.fuelEntryDao())
+        OfflineVehicleRepository(database)
     }
 }

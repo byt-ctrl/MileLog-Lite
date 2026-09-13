@@ -10,8 +10,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 > - [Sprint 3: Charts & Visualization](#sprint-3-charts--visualization)
 > - [Sprint 4: Polish, Testing & Release Readiness](#sprint-4-polish-testing--release-readiness)
 > - [Sprint 5: Fuel Category Selection](#sprint-5-fuel-category-selection)
-> - [Sprint 6: Settings, Design System Migration & Bottom Navigation](#sprint-6-settings-design-system-migration--bottom-navigation)
+> - [Sprint 6: Settings, Design System Migration & Bottom Navigation](#sprint-6-settings-design-system-migration--bottom-navigation) — design section superseded
 > - [Sprint 7: Vehicle Management & Seed Data Expansion](#sprint-7-vehicle-management--seed-data-expansion)
+> - [Sprint 8: Instrument Ledger Conformance](#sprint-8-instrument-ledger-conformance-refactor-design)
 
 ---
 
@@ -165,180 +166,128 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 **Timeline:** Week 6
 
-**Primary Goal:** Implement a full Settings screen with user preferences, migrate the entire app to the new "Kinetic Logic" design system, and add a 5-tab bottom navigation bar.
+**Primary Goal:** Implement a full Settings screen with user preferences, settle the app's design system, and add bottom navigation.
 
-### 6.1 Design System Migration (Kinetic Logic)
+> **Design system note (2026-09-13).** The "Kinetic Logic" system originally planned here was **superseded** by the **Instrument Ledger** direction specified in `refactor-design/{dashboard,log-a-trip,setting}/DESIGN.md` and implemented in `ui/theme/` + `ui/components/`. The replacement mapping is recorded below; the Kinetic Logic palette, its shadow-based elevation and its 5-tab bar are **not** in the app and are **not** open work.
 
-**Objective:** Replace the current "Road asphalt + fuel amber + dashboard teal" theme with the new "Kinetic Logic" corporate/modern design system across all screens.
+### 6.1 Design System (superseded — Instrument Ledger shipped instead)
 
-#### 6.1.1 Color Palette Overhaul (`Color.kt`)
-- [x] Replace current Primary (`#1B4D4A` Teal) → `#003D9B` (Dependable Blue)
-- [x] Replace Secondary (`#E8A838` Amber) → `#006C47` (Business/Success Green)
-- [x] Add new accent tokens: `#FF8B00` (Personal Orange), `#36B37E` (Business Green), `#DE350B` (Active Status red)
-- [x] Map all M3 color roles to new Kinetic Logic tokens:
-    - Light scheme: `surface=#F9F9FF`, `surfaceBg=#F4F5F7`, `surfaceContainerLowest=#FFFFFF`, `surfaceContainerLow=#F0F3FF`, `surfaceContainer=#E7EEFF`, `surfaceContainerHigh=#DEE8FF`, `surfaceContainerHighest=#D6E3FE`, `onSurface=#0E1C2F`, `onSurfaceVariant=#434654`, `outline=#737685`, `outlineVariant=#C3C6D6`
-    - Dark scheme: derive inverse counterparts (`inverseSurface=#243145`, `inverseOnSurface=#EBF1FF`, `inversePrimary=#B2C5FF`)
-- [x] Ensure both Light and Dark schemes use the new palette
+**Objective:** Two materials, one object. A permanently dark instrument binnacle carries the readings; a light logbook carries the record. Depth comes from the material change, not from shadow.
 
-#### 6.1.2 Typography Overhaul (`Type.kt`)
-- [x] Add Inter font family (download `Inter-Regular.ttf`, `Inter-Medium.ttf`, `Inter-SemiBold.ttf`, `Inter-Bold.ttf` into `res/font/`)
-- [x] Replace system font with Inter across all text styles
-- [x] Add specialized `displayLarge` style (48sp, Bold, -0.02em letterSpacing, `fontFeatureSettings = "tnum"`) for dashboard KPIs — tabular figures ensure vertical number alignment
-- [x] Add `displayMedium` variant (36sp, Bold, -0.02em) for smaller-screen KPIs
-- [x] Update `labelSmall` with 0.05em letter spacing for metadata labels
+| Planned (Kinetic Logic) | Shipped (Instrument Ledger) |
+|---|---|
+| Dependable Blue `#003D9B`, Business Green secondary | Petrol `#0B4A46` / `#6FC8BB`, Fuel `#8A5200` / `#EDB25A` |
+| Flat corporate surfaces | Constant dark instrument (`#101618`) + logbook paper (`#EDF0EF`); the chrome is identical in every appearance |
+| Shadow-based elevation levels 1–2 | Tonal material change: `MileLogElevation` levels are `0.dp` and `level1/2Shadow` are no-ops |
+| TopAppBar with avatar and notification icon | `InstrumentBar` (wordmark on the dashboard) and `InstrumentBand` for full-bleed instrument sections |
+| Rounded white cards with Level 1 shadow | `LedgerPanel` — hairline rule, small radius, no shadow |
+| Inter across every style | Inter prose + `DataMono` readings, plus `DataTextStyle` / `DataTextStyleSmall` / `MicroLabelStyle` |
 
-#### 6.1.3 Spacing & Shape System
-- [x] Create `Spacing.kt` object with 8px base scale: `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48`
-- [x] Create `Shape.kt` with rounded shape tokens matching design: `sm=4` (0.25rem), `md=8` (0.5rem), `lg=12` (0.75rem), `xl=16` (1rem), `xxl=24` (1.5rem), `full=9999`
-- [x] Update `Theme.kt` to use new shapes: 8px default for cards/buttons/inputs, 16px for chips/tags
-
-#### 6.1.4 Elevation System
-- [x] Implement tonal layer approach:
-    - Level 0 (Base): `surfaceBg=#F4F5F7` for application background
-    - Level 1 (Cards): White surfaces (`surfaceContainerLowest`) with `shadow(elevation=1.dp, shape=RoundedCornerShape(8.dp), color=Color.Black.copy(alpha=0.10), blurRadius=4.dp)`
-    - Level 2 (Active Elements): FAB and Bottom Nav with `shadow(elevation=4.dp, shape=..., color=Color.Black.copy(alpha=0.15), blurRadius=12.dp)`
-    - Overlays: Bottom sheets/modals use `20%` backdrop dim
-- [x] Update card composables to use new shadow/elevation tokens
-
-#### 6.1.5 Component Updates
-- [x] Update TopAppBar: profile avatar (circular, surface-variant background), app title "MileLog Lite" (headlineMedium, primary color), optional notification icon
-- [x] Update all existing screens (Dashboard, History, AddEdit, Charts) to use new color tokens, typography, and spacing
-- [x] Update FAB styling: Primary Blue (`#003D9B`), pill-shaped, Level 2 shadow
-- [x] Update input field styling: 1px border (`outline` at 20% opacity), thickens + Primary Blue on focus, persistent labels above field
-- [x] Update card styling: white surface (`surfaceContainerLowest`), Level 1 shadow, 8px radius
-- [x] Update chip styling: 16px radius for category tags (Petrol/Diesel/CNG), active Business Green / Personal Orange backgrounds
-- [x] Ensure all interactive elements meet 48dp minimum touch target
+- [x] Colour, typography, spacing, shape and elevation tokens rebuilt for Instrument Ledger (`Color.kt`, `Type.kt`, `Spacing.kt`, `Shape.kt`, `Elevation.kt`, `Theme.kt`).
+- [x] Instrument components: `InstrumentBar`, `InstrumentBand`, `LedgerPanel`, `SectionHeader`, `LedgerRow`, `LedgerHeaderRow`, `MileageGauge`, `ReadoutStrip`, `MileageTrendBars`.
+- [x] All screens migrated; dynamic colour stays **off** so the identity is identical on every device.
+- [x] Interactive elements meet the 48dp touch target (`Spacing.touchTarget`, `Modifier.touchTargetMinHeight()`).
 
 ---
 
-### 6.2 Bottom Navigation Bar
+### 6.2 Bottom Navigation
 
-**Objective:** Add a fixed 5-tab bottom navigation bar and restructure navigation flow.
+**Objective:** Navigation that survives at every width, built from the same dark instrument material as the rest of the chrome.
 
-#### 6.2.1 Navigation Restructure (`MileLiteNavHost.kt`)
-- [x] Add new routes: `SETTINGS`, `REPORTS` (alias for Charts)
-- [x] Update `MileLogRoutes` object with new route constants
-- [ ] Create `BottomNavBar.kt` composable with 5 items:
-    - [x] Dashboard (icon: `Icons.Rounded.Dashboard` selected / `Icons.Outlined.Dashboard` unselected, label: "Dashboard")
-    - [x] History (icon: `Icons.Rounded.History` / `Icons.Outlined.History`, label: "History")
-    - [x] Add (icon: `Icons.Rounded.AddCircle`, label: "Add") — centered, elevated pill: `w=48dp`, `h=48dp`, `bg=primary`, `color=onPrimary`, `shadow(elevation=8.dp)`, offset `y=-24dp`
-    - [x] Reports (icon: `Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`, label: "Reports")
-    - [x] Settings (icon: `Icons.Rounded.Settings` / `Icons.Outlined.Settings`, label: "Settings")
-- [x] Active tab styling: use `NavigationBarItemDefaults.colors()` with `selectedIconColor = onPrimaryContainer`, `selectedTextColor = onPrimaryContainer`, `indicatorColor = primaryContainer`
-- [x] Inactive tab styling: use `NavigationBarItemDefaults.colors()` with `unselectedIconColor = onSurfaceVariant`, `unselectedTextColor = onSurfaceVariant`
-- [x] Wire bottom nav to `NavHost` with `startDestination = DASHBOARD`
-- [x] Bottom nav bar: `h=64dp`, `bg=surface`, `shadow(elevation=4.dp, blurRadius=12.dp, alpha=0.15)`, `roundedTopStart=16.dp`, `roundedTopEnd=16.dp`
+#### 6.2.1 Navigation (`MileLiteNavHost.kt`, `BottomNavBar.kt`)
+- [x] Add the `SETTINGS` route and the `REPORTS` alias for the charts destination in `MileLogRoutes`.
+- [x] `MileLogBottomBar` with the four shell destinations:
+    - [x] Dashboard (`Icons.Rounded.Dashboard` / `Icons.Outlined.Dashboard`)
+    - [x] History (`Icons.Rounded.History` / `Icons.Outlined.History`)
+    - [x] Reports (`Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`)
+    - [x] Settings (`Icons.Rounded.Settings` / `Icons.Outlined.Settings`)
+- [x] Selected state reads as a raised fill (`chromeRaisedHigh` indicator) plus a brighter label — never a coloured stripe.
+- [x] `MileLogRail` (228dp) for expanded widths: the same destinations plus the wordmark, the primary action and the offline note, so widening the window never removes a way to move.
+- [x] Bar wired to the `NavHost` with `startDestination = DASHBOARD`; a tab press pops up to the start destination and restores state.
+
+> **Superseded:** the planned fifth "Add" tab (centred elevated pill) was not shipped. Logging a fill-up is the shell's own FAB (`MileLogFab`), which is why it appears on Dashboard, History and Reports but not on Settings.
 
 #### 6.2.2 Screen Navigation Updates
-- [ ] Remove standalone FABs from Dashboard and History screens (replaced by bottom nav "Add" tab)
-- [x] Ensure back navigation works correctly with bottom nav (pop up to start destination)
-- [ ] Charts screen accessible via "Reports" tab instead of card navigation
+- [x] Back navigation with the bottom bar pops up to the start destination.
+- [x] Charts reachable from the Reports tab, and from the dashboard's "Open charts" action.
+- [x] `AddEditEntryScreen` and `AddEditVehicleScreen` are full-screen routes with no shell bars.
+- [ ] Decide whether the primary action should also be reachable from Settings (the FAB is hidden there today).
 
 ---
 
 ### 6.3 Settings Screen
 
-**Objective:** Build a comprehensive Settings screen with all in-scope preference sections.
+**Objective:** A Configure surface, built to `refactor-design/setting/DESIGN.md` and rendered with Instrument Ledger components.
 
-#### 6.3.1 Settings Data Layer
-- [ ] Add `@Query("DELETE FROM fuel_entries")` method `deleteAll()` to `FuelEntryDao.kt`
-- [ ] Create `data/local/UserPreferences.kt`:
-    - Use `Context.getSharedPreferences("milelog_prefs", Context.MODE_PRIVATE)`
-    - Preference keys: `theme_mode` (String), `distance_unit` (String)
-    - Default values: `theme_mode = "system"`, `distance_unit = "km"`
-- [ ] Create `data/repository/SettingsRepository.kt`:
-    - Interface + implementation wrapping `SharedPreferences`
-    - Methods: `getThemeMode(): StateFlow<String>`, `setThemeMode(mode: String)`, `getDistanceUnit(): StateFlow<String>`, `setDistanceUnit(unit: String)`, `clearAllEntries()` (calls `dao.deleteAll()`)
-    - Expose as `StateFlow` for reactive UI updates
+#### 6.3.1 Shipped
 
-#### 6.3.2 Settings UI (`ui/settings/`)
-- [ ] Create `SettingsScreen.kt` with `LazyColumn` and grouped sections:
-    - **Preferences Group** (header: `labelSmall`, uppercase, `onSurfaceVariant`):
-        - Theme row: icon `Palette`, label "Theme", current value display ("Light"/"Dark"/"System"), chevron right → 3-option `AlertDialog`
-        - Distance Units row: icon `Straighten`, label "Distance Units", current value ("km"/"mi"), chevron right → 2-option `AlertDialog`
-    - **Data Group**:
-        - Export Logs row: icon `IosShare`, label "Export Logs", chevron right → triggers `FuelEntryCsvExporter` via system document picker (reuse existing `HistoryViewModel` export logic)
-        - Clear All Data row: icon `DeleteForever`, label "Clear All Data", `color=error` → confirmation `AlertDialog` with title "Clear all fuel entries?", body "This will permanently delete all your fuel entries. This action cannot be undone.", confirm button text "Clear All" (error color), cancel button
-    - **About Group**:
-        - App Version row: icon `Info`, label "Version", value from `BuildConfig.VERSION_NAME`
-        - Credits row: icon `Code`, label "Built with Jetpack Compose", no action
-    - Card styling: `surfaceContainerLowest`, `RoundedCornerShape(8.dp)`, Level 1 shadow, `padding=16.dp`
-    - Row styling: `padding=16.dp`, `48.dp` min touch target, `Divider` between rows with `surfaceVariant` color
-- [ ] Create `SettingsViewModel.kt`:
-    - Inject `SettingsRepository` + `FuelEntryRepository`
-    - Observe preferences as `StateFlow`
-    - Methods: `setThemeMode(mode)`, `setDistanceUnit(unit)`, `clearAllEntries(onComplete: () -> Unit)`
-    - Clear data: confirm state flow, executes `settingsRepository.clearAllEntries()`, navigates or resets UI on completion
+`ui/settings/SettingsScreen.kt` + `SettingsViewModel.kt`, using `LedgerPanel`, `SectionHeader` and `SettingsRow` (60dp rows, hairline dividers) rather than the Kinetic Logic card layout:
 
-#### 6.3.3 Theme Integration
-- [ ] Update `Theme.kt`: `MileLogTheme` accepts `themeMode: String` parameter ("light"/"dark"/"system")
-- [ ] Implement theme resolution:
-    - "system" → `isSystemInDarkTheme()` (follows device setting)
-    - "light" → always `darkTheme = false`
-    - "dark" → always `darkTheme = true`
-- [ ] Theme changes apply immediately via recomposition (no app restart needed)
-- [ ] In `MainActivity.kt`: collect `themeMode` from `SettingsViewModel`, pass to `MileLogTheme` composable
+- [x] Opens with an instrument readout of the current state (fill-ups logged, distance tracked, storage) instead of a decorative header.
+- [x] **Vehicle** group: vehicles with the active selection, tap to switch, edit route, and delete with a confirmation dialog.
+- [x] **Data** group: Export fill-ups as CSV through the system document picker; Delete all fill-ups with confirmation **and undo**; Add demo fill-ups.
+- [x] **About** group: version, storage ("This device"), network ("Not required").
+- [x] Every claim on the screen is true of the product — there is no subscription, sync, account or log out, so none of them appear.
+- [x] Clear-all is scoped to the active vehicle and restores from memory on undo, so **no global `deleteAll()` is needed**; a bulk `deleteByVehicle` covers the delete.
+- [x] Content descriptions and a 48dp minimum touch target on every interactive row.
 
-#### 6.3.4 Distance Unit Integration
-- [ ] Create `domain/conversion/DistanceConverter.kt` with pure functions:
-    - `kmToMiles(km: Double): Double` → `km * 0.621371`
-    - `formatDistance(value: Double, unit: String): String` → rounds to 1 decimal, appends unit ("km" or "mi")
-- [ ] Update `DashboardScreen.kt`: read `distanceUnit` preference, convert odometer/cost-per-km display values
-- [ ] Update `HistoryScreen.kt`: convert displayed mileage and odometer values based on preference
-- [ ] Update Charts: Y-axis labels and data points respect the unit preference (convert values for display, keep chart data in km internally)
-- [ ] Underlying data stays in km; conversion is display-only
+**Deviations from the original spec:** the settings screen is not a `LazyColumn` of M3 cards, and the Vehicle section is a **list** rather than the single-vehicle form the spec assumed (the app is multi-vehicle since Sprint 7).
+
+#### 6.3.2 Still open — moved to Sprint 8
+
+- [ ] **Appearance** control: the row ships but is static ("Theme — Follows device"). `refactor-design/setting/DESIGN.md` asks for a real radio group (Light / Dark / System).
+- [ ] **Distance unit** on the vehicle form, plus a `DistanceConverter`.
+- [ ] Preferences persistence: no `UserPreferences` / `SettingsRepository` exists yet (`theme_mode`, `distance_unit`).
+
+#### 6.3.3 Theme Integration (open)
+
+- [ ] `MileLogTheme(themeMode: String)` resolving `system → isSystemInDarkTheme()`, `light → false`, `dark → true`.
+- [ ] Collect the preference in `MainActivity` so a change applies by recomposition, with no restart.
+- [ ] Keep the spec's rule: the instrument stays dark in every mode; only the logbook follows the setting.
+
+#### 6.3.4 Distance Unit Integration (open)
+
+- [ ] `domain/conversion/DistanceConverter.kt` with `kmToMiles(km) = km * 0.621371` and `formatDistance(value, unit)`.
+- [ ] Dashboard: convert the odometer and cost-per-km readouts.
+- [ ] History: convert the displayed odometer and mileage.
+- [ ] Charts: axis labels and points respect the unit, while chart data stays in km internally.
+- [ ] Storage stays in km; conversion is display-only.
 
 ---
 
 ### 6.4 Integration & Wiring
 
-#### 6.4.1 Application Class Update
-- [ ] Add `SettingsRepository` to `MileLogApplication` (manual DI)
-- [ ] Pass settings state to `MainActivity` composable
-
-#### 6.4.2 MainActivity Update
-- [ ] Collect theme preference at top level
-- [ ] Apply theme before `setContent`
-- [x] Wrap `MileLiteNavHost` with bottom nav scaffold
-
-#### 6.4.3 Navigation Flow
-- [ ] Bottom nav persists across all screens
-- [x] Settings screen accessible from any tab via bottom nav
-- [x] "Add" tab opens AddEditEntryScreen as full-screen overlay or standard route
+- [x] `MainActivity` wraps `MileLiteNavHost` in `MileLogTheme` inside a `Surface`; the system bars stay transparent and follow the resolved appearance.
+- [x] Settings is reachable from any tab, and back navigation from a full-screen route returns to the shell with its navigation intact.
+- [x] Logging a fill-up opens `AddEditEntryScreen` as a full-screen route from the shell FAB / rail action.
+- [ ] Add `SettingsRepository` to `MileLogApplication` (manual DI), collect the theme preference at the top level and apply it before `setContent` — blocked on the Sprint 8 preferences work.
 
 ---
 
 ### 6.5 Sprint 6 Milestone
-- [ ] App uses the new Kinetic Logic design system across all screens
-- [ ] 5-tab bottom navigation bar is functional with correct active states
-- [ ] Settings screen allows users to toggle theme, switch distance units, export logs, clear data, and view app info
-- [ ] All preferences persist across app restarts
-- [ ] All existing functionality (CRUD, calculations, charts) continues to work correctly with the new design system and navigation
+- [x] Settings screen ships with Vehicle, Data (export, clear with undo, demo seed) and About groups, reachable from the bottom bar.
+- [x] Bottom navigation is functional with correct selected/unselected states at both compact and expanded widths.
+- [x] All existing functionality (CRUD, calculations, charts, export) continues to work with the shipped design system and navigation.
+- [ ] ~~App uses the new Kinetic Logic design system across all screens~~ — **superseded**; Instrument Ledger shipped instead (§6.1).
+- [ ] ~~5-tab bottom navigation bar is functional~~ — **superseded**; four destinations plus a shell FAB shipped instead (§6.2).
+- [ ] Theme toggle and distance units, with preferences persisting across restarts — **moved to Sprint 8**.
 
 ---
 
 ### 6.6 Sprint 6 Testing
 
-#### 6.6.1 Unit Tests
-- [ ] SettingsRepository: read/write preferences correctly
-- [ ] Theme mode preference state management
-- [ ] Distance unit conversion logic (km → mi display)
-- [ ] Clear data operation (verify all entries deleted)
+#### 6.6.1 Covered by the shipped code
+- [x] Clear data: scoped to the active vehicle and restorable through undo (`SettingsViewModel.clearAllEntries` / `undoClear`).
+- [x] Export from Settings writes the active vehicle's CSV through the document picker.
+- [x] Instrumented suite covers the per-vehicle delete path (`VehicleDaoTest`, `FuelEntryDaoCategoryTest`, `VehicleRepositoryTest`) — 61 instrumented tests passing.
+- [x] Bottom navigation: four destinations navigate correctly; the selected tab shows the filled icon (`Icons.Rounded`), the rest outlined (`Icons.Outlined`).
+- [x] Accessibility: interactive elements carry content descriptions and 48dp minimum targets.
+- [x] Full regression: add → edit → delete → dashboard and charts update (`FullRegressionTest`).
 
-#### 6.6.2 Integration Tests
-- [ ] DAO deleteAll operation (used by Clear Data)
-- [ ] Settings persistence across app restart (write preference, kill app, verify on reopen)
-
-#### 6.6.3 Manual Testing
-- [ ] Theme switching: Light → Dark → System, verify all screens update
-- [ ] Distance units: Switch km ↔ mi, verify Dashboard KPIs and History entries convert
-- [ ] Bottom nav: All 5 tabs navigate correctly, active tab shows filled icon (Icons.Rounded), inactive tabs show outlined icon (Icons.Outlined)
-- [ ] Add tab: Opens entry form from any screen
-- [ ] Settings: Export Logs works from Settings screen
-- [ ] Settings: Clear Data shows confirmation, clears all entries, dashboard resets to empty state
-- [ ] Font scaling: Settings screen handles large font sizes without clipping
-- [ ] Accessibility: All interactive elements have content descriptions
-- [ ] Full regression: add → edit → delete → dashboard updates → charts update with new design
+#### 6.6.2 Moved to Sprint 8
+- [ ] `SettingsRepository` read/write; theme-mode state management; distance conversion (km → mi) display.
+- [ ] Settings persistence across an app restart.
+- [ ] Manual: theme switching Light → Dark → System across every screen; km ↔ mi conversion across Dashboard, History and Charts.
 
 ---
 
@@ -379,12 +328,67 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] `testDebugUnitTest` passes (68 unit tests) and `assembleDebug` builds.
 - [x] Instrumented test sources compile (`assembleDebugAndroidTest`).
 - [ ] Manual test on a device/emulator: add a vehicle, log an entry, switch vehicles, and confirm the dashboard, history and charts follow the selection.
-- [ ] Run `connectedDebugAndroidTest` on a booted emulator to execute the new vehicle DAO/repository tests.
+- [x] Run `connectedDebugAndroidTest` on a booted emulator to execute the new vehicle DAO/repository tests (61 instrumented tests, 0 failures).
+
+### 7.4 Database Hardening (post-review)
+
+Findings from the `DATABASE_STATUS.md` review, implemented after Sprint 7.
+
+- [x] Add `MIGRATION_1_2` (defensive) so v1 installs no longer wipe on upgrade.
+- [x] Narrow the destructive fallback to `fallbackToDestructiveMigrationOnDowngrade` — a missing upgrade path now fails loudly.
+- [x] Make the `vehicleId` relationship real: nullable column + `@ForeignKey(ON DELETE CASCADE)` via `MIGRATION_3_4` (table rebuild).
+- [x] Wrap `deleteVehicleWithEntries` in `database.withTransaction { }`.
+- [x] Repair the single-active invariant on every open (`REPAIR_ACTIVE_VEHICLE`).
+- [x] Switch `VehicleDao.insert` to `OnConflictStrategy.ABORT`; update the unique-name test.
+- [x] Enable `exportSchema = true`, export the schema JSON, expose it to instrumented tests and add `MigrationTest` (v1→v4, v2→v4, v3→v4, FK enforcement).
+- [x] Use `deleteByVehicle` for Settings clear-all and deprecate the dead unscoped repository queries.
+- [x] Exclude the Room database from cloud backup (device-to-device transfer retained), matching the offline-only promise.
+- [x] Fix category filtering: Room bound the enum `name` (`"PETROL"`) while rows store `displayName` (`"Petrol"`), so every filter matched nothing. Added `FuelCategoryConverters`.
+- [x] Add the missing `id DESC` tie-break to the `getLatest*` queries.
+- [x] Verify: 75 unit tests + 61 instrumented tests, all passing.
+- [ ] Deferred: `SettingsRepository`/`UserPreferences` and `DistanceConverter`, now tracked in **Sprint 8**.
+
+---
+
+## Sprint 8: Instrument Ledger Conformance (`refactor-design`)
+
+**Timeline:** Week 8
+
+**Primary Goal:** Close the remaining gaps between the shipped app and the Instrument Ledger specs in `refactor-design/{dashboard,log-a-trip,setting}/DESIGN.md`. These are the items Sprint 6 left open once its Kinetic Logic sections were superseded.
+
+### 8.1 Settings — Appearance & Units (`refactor-design/setting/DESIGN.md`)
+- [ ] Create `data/local/UserPreferences.kt` (`SharedPreferences("milelog_prefs")`; keys `theme_mode` default `"system"`, `distance_unit` default `"km"`).
+- [ ] Create `data/repository/SettingsRepository.kt` exposing both preferences as `StateFlow` with setters, and add it to `MileLogApplication`.
+- [ ] Replace the static Appearance row with a real radio group (Light / Dark / System), keeping the note that the instrument stays dark in every mode and only the logbook follows the setting.
+- [ ] `MileLogTheme(themeMode: String)`, and collect it in `MainActivity` so a change applies by recomposition.
+- [ ] Add a **Distance unit** field to the vehicle form and create `domain/conversion/DistanceConverter.kt` (`kmToMiles`, `formatDistance`).
+- [ ] Wire the unit through Dashboard (odometer, cost/km), History (odometer, mileage) and the Charts axis labels — display-only, storage stays km.
+- [ ] Open Settings with the current configuration as a readout (distance unit, currency, network), per the spec's "Configure surface" framing.
+
+### 8.2 Log a Fill-up (`refactor-design/log-a-trip/DESIGN.md`)
+- [ ] Reorder the entry sheet to the specified sequence: **fuel type** (radio group) → date → odometer (previous reading as context) → litres → cost. Today the category selector is last.
+- [ ] Label the primary action **"Save fill-up"** and state the destination beside it: "Saved on this device, nothing uploaded".
+- [ ] On a valid submit, replace the form with a summary of what was recorded instead of navigating straight back.
+- [ ] Invalid state: keep the inline messages, add the banner that counts the invalid fields, and move focus to the first invalid field. (Save stays enabled — a disabled button hides what needs fixing.)
+
+### 8.3 Dashboard (`refactor-design/dashboard/DESIGN.md`)
+- [ ] Give the dashboard ledger rows an **edit link**, so the first screen can edit a fill-up rather than only viewing it (History owns editing today).
+- [ ] Re-check the gauge's amber marker and tick marks, and the "numbers printed under each bar" trend, at both compact and expanded widths.
+
+### 8.4 Sprint 8 Milestone
+- [ ] Every screen matches its `refactor-design` spec, and the two preference-backed features (theme, distance unit) persist across restarts.
+
+### 8.5 Sprint 8 Testing
+- [ ] Unit tests: `SettingsRepository` read/write; theme-mode resolution (`system`/`light`/`dark`); `DistanceConverter` (km → mi and formatting).
+- [ ] Instrumented: preference persistence across a simulated restart.
+- [ ] Manual: theme Light → Dark → System across all screens; km ↔ mi across Dashboard, History and Charts; entry-sheet order and the post-save summary; validation banner and focus move.
 
 ---
 
 ## Deferred / Not in Mini Scope
 
 > More features have been done in original full application , This is completely diff , in terms of UI wise
+
+The only open items carried by this plan are the **Sprint 8** conformance gaps (Appearance control, distance units and their persistence, the entry-sheet order and post-save summary, and the dashboard ledger edit link). Everything else is either shipped or explicitly superseded.
 
 *End of Document*

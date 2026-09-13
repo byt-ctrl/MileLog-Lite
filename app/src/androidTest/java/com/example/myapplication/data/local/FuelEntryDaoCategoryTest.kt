@@ -101,8 +101,12 @@ class FuelEntryDaoCategoryTest {
         // Seeded with dates 1000 (petrol) and 3000 (petrol); expect 3000 first.
         assertEquals(3_000L, petrol[0].date)
         assertEquals(1_000L, petrol[1].date)
-        // Sanity: every returned id corresponds to a Petrol row we inserted.
-        val expectedIds = seeded.filter { it.fuelCategory == "Petrol" }.map { it.id }
+        // Sanity: the returned ids are the seeded Petrol rows, in the DAO's
+        // documented order (date DESC, odometer DESC, id DESC).
+        val expectedIds = seeded
+            .filter { it.fuelCategory == "Petrol" }
+            .sortedByDescending { it.date }
+            .map { it.id }
         assertEquals(expectedIds, petrol.map { it.id })
     }
 
@@ -231,8 +235,8 @@ class FuelEntryDaoCategoryTest {
 
         val all = dao.getAll(null)
 
-        // Null means "no filter": every row is returned.
-        assertEquals(seeded.map { it.id }, all.map { it.id })
+        // Null means "no filter": every row is returned, newest first.
+        assertEquals(seeded.sortedByDescending { it.date }.map { it.id }, all.map { it.id })
     }
 
     @Test
@@ -259,15 +263,19 @@ class FuelEntryDaoCategoryTest {
             entry(date = 4_000L, odometer = 2_500, fuelCategory = "PETROL")    // enum name
         )
 
-        // Every known enum filter returns exactly the one canonical Petrol row.
-        FuelCategory.entries.forEach { category ->
-            val filtered = dao.getAll(category)
-            assertEquals(
-                "Filter for ${category.name} should return only rows with exact displayName match",
-                1, filtered.size
-            )
-            assertEquals("Petrol", filtered[0].fuelCategory)
-        }
+        // Only the canonical "Petrol" row matches a category filter. The
+        // unknown, wrong-case and enum-name values must not match any of them,
+        // and must not crash the query.
+        val petrol = dao.getAll(FuelCategory.PETROL)
+        assertEquals(
+            "Filter for PETROL should return only rows with an exact displayName match",
+            1, petrol.size
+        )
+        assertEquals("Petrol", petrol[0].fuelCategory)
+        assertTrue(dao.getAll(FuelCategory.DIESEL).isEmpty())
+        assertTrue(dao.getAll(FuelCategory.CNG).isEmpty())
+        // The unmatched rows still exist when no filter is applied.
+        assertEquals(4, dao.getAll(null).size)
     }
 
     @Test
@@ -290,6 +298,9 @@ class FuelEntryDaoCategoryTest {
         // Insert a row with distinctive, non-default values in every column,
         // then read it back through the category filter to confirm Room
         // mapping is byte-equal (no truncation, no coercion).
+        // The vehicleId foreign key requires the referenced vehicle to exist.
+        database.vehicleDao().insert(Vehicle(id = 99L, name = "FK vehicle"))
+
         val original = FuelEntry(
             vehicleId = 99L,
             date = 1_700_000_000_000L,
@@ -370,10 +381,10 @@ class FuelEntryDaoCategoryTest {
         val all = dao.getAll(null)
         val elapsedMs = (System.nanoTime() - startNanos) / 1_000_000
 
-        // Exact split: indices 0,3,6,... -> Petrol; 1,4,7,... -> Diesel; 2,5,8,... -> CNG.
-        val expectedPetrol = n / 3
-        val expectedDiesel = n / 3
-        val expectedCng = n - 2 * (n / 3)
+        // Exact partition of 1..n by i % 3: 0 -> Petrol, 1 -> Diesel, 2 -> CNG.
+        val expectedPetrol = (1..n).count { it % 3 == 0 }
+        val expectedDiesel = (1..n).count { it % 3 == 1 }
+        val expectedCng = (1..n).count { it % 3 == 2 }
 
         assertEquals(expectedPetrol, petrol.size)
         assertEquals(expectedDiesel, diesel.size)

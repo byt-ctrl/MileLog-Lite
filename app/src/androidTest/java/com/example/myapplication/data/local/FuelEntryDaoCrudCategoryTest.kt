@@ -252,9 +252,10 @@ class FuelEntryDaoCrudCategoryTest {
         val all = dao.getAll(null)
         val elapsedMs = (System.nanoTime() - startNanos) / 1_000_000
 
-        assertEquals(n / 3, petrol.size)
-        assertEquals(n / 3, diesel.size)
-        assertEquals(n - 2 * (n / 3), cng.size)
+        // Exact partition of 1..n by i % 3: 0 -> Petrol, 1 -> Diesel, 2 -> CNG.
+        assertEquals((1..n).count { it % 3 == 0 }, petrol.size)
+        assertEquals((1..n).count { it % 3 == 1 }, diesel.size)
+        assertEquals((1..n).count { it % 3 == 2 }, cng.size)
         assertEquals(n, all.size)
 
         // Sub-second on 500 rows with index

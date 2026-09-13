@@ -1,8 +1,8 @@
 package com.example.myapplication.data.repository
 
-import com.example.myapplication.data.local.FuelEntryDao
+import androidx.room.withTransaction
+import com.example.myapplication.data.local.MileLiteDatabase
 import com.example.myapplication.data.local.Vehicle
-import com.example.myapplication.data.local.VehicleDao
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -63,12 +63,14 @@ interface VehicleRepository {
 }
 
 /**
- * Offline implementation of [VehicleRepository] backed by the Room DAOs.
+ * Offline implementation of [VehicleRepository] backed by the Room database.
  */
 class OfflineVehicleRepository(
-    private val vehicleDao: VehicleDao,
-    private val fuelEntryDao: FuelEntryDao
+    private val database: MileLiteDatabase
 ) : VehicleRepository {
+
+    private val vehicleDao = database.vehicleDao()
+    private val fuelEntryDao = database.fuelEntryDao()
 
     override fun getAllVehiclesFlow(): Flow<List<Vehicle>> = vehicleDao.getAllFlow()
 
@@ -88,14 +90,23 @@ class OfflineVehicleRepository(
 
     override suspend fun setActiveVehicle(id: Long) = vehicleDao.setActive(id)
 
+    /**
+     * Runs as one transaction so the entries, the vehicle and the promoted
+     * active vehicle cannot end up half-applied. Without it, a crash between
+     * the deletes would leave orphaned fill-ups or no active vehicle.
+     */
     override suspend fun deleteVehicleWithEntries(vehicleId: Long) {
-        val target = vehicleDao.getById(vehicleId)
-        fuelEntryDao.deleteByVehicle(vehicleId)
-        if (target != null) {
-            vehicleDao.delete(target)
-        }
-        if (vehicleDao.getActive() == null) {
-            vehicleDao.getAll().firstOrNull()?.let { vehicleDao.setActive(it.id) }
+        database.withTransaction {
+            val target = vehicleDao.getById(vehicleId)
+            if (target != null) {
+                // The foreign key cascades, but deleting explicitly keeps the
+                // intent obvious and works regardless of FK enforcement.
+                fuelEntryDao.deleteByVehicle(vehicleId)
+                vehicleDao.delete(target)
+            }
+            if (vehicleDao.getActive() == null) {
+                vehicleDao.getAll().firstOrNull()?.let { vehicleDao.setActive(it.id) }
+            }
         }
     }
 }

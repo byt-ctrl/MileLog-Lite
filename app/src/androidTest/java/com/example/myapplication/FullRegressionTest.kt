@@ -31,6 +31,7 @@ import java.util.Calendar
  * correctly to dashboard KPIs and chart data series.
  */
 @RunWith(AndroidJUnit4::class)
+@Suppress("DEPRECATION")
 class FullRegressionTest {
 
     private lateinit var database: MileLiteDatabase
@@ -423,28 +424,28 @@ class FullRegressionTest {
         // Add CNG entry (middle odometer)
         val id3 = repository.insertEntry(FuelEntry(date = date3, odometer = 3000, liters = 20.0, cost = 2000.0, fuelCategory = "CNG"))
 
-        // Latest entry by odometer is Diesel (5000)
+        // The repository returns entries newest-first by date, so the newest
+        // entry (March, CNG) is what the dashboard shows as "latest".
         val allEntries = repository.getAllEntries()
         val latestCategory = FuelCategory.fromDisplayName(allEntries.first().fuelCategory)
-        assertEquals(FuelCategory.DIESEL, latestCategory)
+        assertEquals(FuelCategory.CNG, latestCategory)
 
-        // Edit Diesel to have lower odometer
+        // Editing the Diesel entry changes its odometer only, not the newest
+        // date, so the latest category is unchanged.
         val entry2 = repository.getEntryById(id2)!!
         repository.updateEntry(entry2.copy(odometer = 500))
 
-        // Now latest is CNG (3000)
         val allAfterEdit = repository.getAllEntries()
         val latestCategoryAfterEdit = FuelCategory.fromDisplayName(allAfterEdit.first().fuelCategory)
         assertEquals(FuelCategory.CNG, latestCategoryAfterEdit)
 
-        // Delete CNG entry
+        // Deleting the newest entry promotes the next newest (February Diesel).
         val entry3 = repository.getEntryById(id3)!!
         repository.deleteEntry(entry3)
 
-        // Now latest is Petrol (1000)
         val allAfterDelete = repository.getAllEntries()
         val latestCategoryAfterDelete = FuelCategory.fromDisplayName(allAfterDelete.first().fuelCategory)
-        assertEquals(FuelCategory.PETROL, latestCategoryAfterDelete)
+        assertEquals(FuelCategory.DIESEL, latestCategoryAfterDelete)
     }
 
     @Test
@@ -485,8 +486,9 @@ class FullRegressionTest {
         val petrolSpend = categorySpends.first { it.category == FuelCategory.PETROL }
         val dieselSpend = categorySpends.first { it.category == FuelCategory.DIESEL }
 
-        // Jan: Petrol=3000+2000=5000, Diesel=2500
-        assertEquals(5000.0, petrolSpend.values[0], 0.001)
+        // Jan: Petrol=3000, Diesel=2500; Feb: Petrol=2000 (date3 is February).
+        assertEquals(3000.0, petrolSpend.values[0], 0.001)
+        assertEquals(2000.0, petrolSpend.values[1], 0.001)
         assertEquals(2500.0, dieselSpend.values[0], 0.001)
 
         // Delete Diesel entry

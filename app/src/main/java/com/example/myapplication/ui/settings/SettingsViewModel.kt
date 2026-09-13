@@ -226,20 +226,23 @@ class SettingsViewModel(
     }
 
     /**
-     * Removes every fill-up for the active vehicle, holding the rows so
-     * [undoClear] can put them back. The repository has no bulk delete, so this
-     * walks the rows; the action is rare and the list is small by design.
+     * Removes every fill-up for the active vehicle in one statement, holding the
+     * rows in memory so [undoClear] can put them back.
      */
     fun clearAllEntries() {
         viewModelScope.launch {
             _transient.update { it.copy(isBusy = true) }
             runCatching {
                 val vehicle = vehicleRepository.getActiveVehicle()
-                if (vehicle == null) emptyList() else repository.getAllEntriesForVehicle(vehicle.id)
+                val entries = vehicle?.let { repository.getAllEntriesForVehicle(it.id) }
+                    ?: emptyList()
+                vehicle?.id to entries
             }
-                .onSuccess { entries ->
+                .onSuccess { (vehicleId, entries) ->
                     clearedEntries = entries
-                    entries.forEach { repository.deleteEntry(it) }
+                    if (vehicleId != null) {
+                        repository.deleteEntriesForVehicle(vehicleId)
+                    }
                     _transient.update {
                         it.copy(isBusy = false, message = SettingsMessage.CLEARED)
                     }

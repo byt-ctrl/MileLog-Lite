@@ -5,15 +5,10 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Keep the Room database out of Google Drive backup; the app's
+             offline-only promise depends on it. Device-to-device transfer is
+             intentionally left enabled (no <device-transfer> section). -->
+        <exclude domain="database" path="." />
+        <exclude domain="device_database" path="." />
     </cloud-backup>
-    <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
-    -->
 </data-extraction-rules>

@@ -7,7 +7,11 @@
 -->
 <full-backup-content>
     <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+      MileLog Lite promises that fuel logs never leave the device, so the Room
+      database is kept out of cloud backup. Excludes narrow the default
+      ("back up almost everything"); they do not disable other domains.
+      Device-to-device transfer is governed separately by data_extraction_rules.xml.
+    -->
+    <exclude domain="database" path="." />
+    <exclude domain="device_database" path="." />
 </full-backup-content>
