@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
@@ -137,13 +138,20 @@ val LedgerColumnLabels = listOf(
 /** Relative column widths, positionally matched to [LedgerColumnLabels]. */
 val LedgerColumnWeights = listOf(1.3f, 1.1f, 0.8f, 1f, 1.15f)
 
+/**
+ * Width reserved for a row's trailing control. Fixed, so the column captions
+ * stay over their columns whether a screen puts an icon, a link or nothing
+ * beside them.
+ */
+val LedgerTrailingWidth: Dp = 76.dp
+
 /** Column captions for the wide ledger. */
 @Composable
 fun LedgerHeaderRow(
     labels: List<String>,
     weights: List<Float>,
     modifier: Modifier = Modifier,
-    trailingWidth: Boolean = false
+    reserveTrailing: Boolean = false
 ) {
     val ledger = MaterialTheme.ledger
     Row(
@@ -162,8 +170,8 @@ fun LedgerHeaderRow(
                 )
             }
         }
-        if (trailingWidth) {
-            Spacer(Modifier.width(48.dp))
+        if (reserveTrailing) {
+            Spacer(Modifier.width(LedgerTrailingWidth))
         }
     }
     HorizontalDivider(color = ledger.ruleStrong, thickness = 1.dp)
@@ -277,7 +285,14 @@ fun LedgerRow(
             }
         }
 
-        trailing?.invoke()
+        trailing?.let { control ->
+            Box(
+                modifier = Modifier.width(LedgerTrailingWidth),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                control()
+            }
+        }
     }
 }
 

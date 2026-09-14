@@ -14,8 +14,10 @@ import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.SettingsRepository
 import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.MileageCalculator
+import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +54,8 @@ data class HistoryUiState(
     val vehicle: Vehicle? = null,
     val entries: List<FuelEntry> = emptyList(),
     val selectedCategory: FuelCategory? = null,
+    /** Unit every distance and mileage readout is converted to for display. */
+    val distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     val isLoading: Boolean = true,
     val errorMessage: HistoryMessage? = null,
     val exportReady: String? = null,
@@ -88,7 +92,8 @@ private data class ExportState(
 class HistoryViewModel(
     application: Application,
     private val repository: FuelEntryRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val settingsRepository: SettingsRepository
 ) : AndroidViewModel(application) {
 
     private val _retryTrigger = MutableStateFlow(0)
@@ -108,17 +113,19 @@ class HistoryViewModel(
     val uiState: StateFlow<HistoryUiState> = combine(
         _retryTrigger,
         _selectedCategory,
-        _exportState
-    ) { _, category, export ->
-        category to export
+        _exportState,
+        settingsRepository.distanceUnit
+    ) { _, category, export, distanceUnit ->
+        Triple(category, export, distanceUnit)
     }
-        .flatMapLatest { (category, export) ->
+        .flatMapLatest { (category, export, distanceUnit) ->
             vehicleRepository.getActiveVehicleFlow().flatMapLatest { vehicle ->
                 if (vehicle == null) {
                     flowOf(
                         HistoryUiState(
                             vehicle = null,
                             selectedCategory = category,
+                            distanceUnit = distanceUnit,
                             isLoading = false,
                             exportReady = export.exportReady,
                             exportMessage = export.exportMessage,
@@ -136,6 +143,7 @@ class HistoryViewModel(
                             vehicle = vehicle,
                             entries = filtered,
                             selectedCategory = category,
+                            distanceUnit = distanceUnit,
                             isLoading = false,
                             exportReady = export.exportReady,
                             exportMessage = export.exportMessage,
@@ -290,7 +298,12 @@ class HistoryViewModel(
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                HistoryViewModel(application, application.repository, application.vehicleRepository)
+                HistoryViewModel(
+                    application,
+                    application.repository,
+                    application.vehicleRepository,
+                    application.settingsRepository
+                )
             }
         }
     }

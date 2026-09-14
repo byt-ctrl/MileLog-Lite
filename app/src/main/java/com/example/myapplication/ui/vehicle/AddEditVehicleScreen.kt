@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -29,9 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -42,8 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
+import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.components.SegmentedChoice
 import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.ledger
@@ -54,7 +52,8 @@ import com.example.myapplication.ui.theme.spacing
  *
  * The instrument states the vehicle being configured, then the form below
  * carries the fields every screen reads back: the name shown in the header, the
- * make and model, an optional registration, and the default fuel type.
+ * make and model, an optional registration, the default fuel type, and the unit
+ * every distance is printed in.
  */
 @Composable
 fun AddEditVehicleScreen(
@@ -234,9 +233,27 @@ private fun VehicleForm(
 
         Column(modifier = Modifier.fillMaxWidth()) {
             VehicleFieldLabel(text = stringResource(R.string.vehicle_field_fuel_label))
-            FuelTypeSegment(
+            SegmentedChoice(
+                options = FuelCategory.entries,
                 selected = uiState.fuelType,
-                onSelected = viewModel::onFuelTypeChanged
+                label = { stringResource(it.labelRes) },
+                onSelect = viewModel::onFuelTypeChanged
+            )
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            VehicleFieldLabel(text = stringResource(R.string.vehicle_field_distance_unit_label))
+            SegmentedChoice(
+                options = DistanceUnit.entries,
+                selected = uiState.distanceUnit,
+                label = { stringResource(it.labelRes) },
+                onSelect = viewModel::onDistanceUnitChanged
+            )
+            Text(
+                text = stringResource(R.string.vehicle_field_distance_unit_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = spacing.sm)
             )
         }
 
@@ -260,54 +277,14 @@ private fun VehicleForm(
         ) {
             Text(
                 text = stringResource(
-                    if (uiState.isEditMode) R.string.action_update else R.string.action_save
+                    if (uiState.isEditMode) {
+                        R.string.vehicle_action_save_changes
+                    } else {
+                        R.string.vehicle_action_save
+                    }
                 ),
                 style = MaterialTheme.typography.titleMedium
             )
-        }
-    }
-}
-
-@Composable
-private fun FuelTypeSegment(
-    selected: FuelCategory,
-    onSelected: (FuelCategory) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val ledger = MaterialTheme.ledger
-    val colors = MaterialTheme.colorScheme
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MileLogShapes.sm)
-            .background(ledger.rule)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        FuelCategory.entries.forEach { category ->
-            val isSelected = category == selected
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(MileLogShapes.sm)
-                    .background(if (isSelected) colors.primary else colors.surface)
-                    .selectable(
-                        selected = isSelected,
-                        role = Role.RadioButton,
-                        onClick = { onSelected(category) }
-                    )
-                    .heightIn(min = 44.dp)
-                    .padding(horizontal = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(category.labelRes),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }

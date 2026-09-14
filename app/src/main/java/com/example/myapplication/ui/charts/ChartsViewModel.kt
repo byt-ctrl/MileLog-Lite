@@ -10,17 +10,20 @@ import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.SettingsRepository
 import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.domain.calculation.MileageCalculator
 import com.example.myapplication.domain.calculation.MonthlyFuelSpend
+import com.example.myapplication.domain.conversion.DistanceUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -41,6 +44,11 @@ data class ChartsUiState(
     val monthlySpends: List<MonthlyFuelSpend> = emptyList(),
     val categoryMileageSeries: List<CategoryMileageSeries> = emptyList(),
     val categoryMonthlySpends: List<CategoryMonthlySpendSeries> = emptyList(),
+    /**
+     * Unit the trend chart converts its points and axis to. The series
+     * themselves stay in km/L; this only changes what is drawn.
+     */
+    val distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     val entryCount: Int = 0,
     val isLoading: Boolean = true,
     val errorMessage: ChartsMessage? = null
@@ -48,23 +56,26 @@ data class ChartsUiState(
 
 class ChartsViewModel(
     private val repository: FuelEntryRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _retryTrigger = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<ChartsUiState> = _retryTrigger
-        .flatMapLatest { vehicleRepository.getActiveVehicleFlow() }
-        .flatMapLatest { vehicle ->
+    val uiState: StateFlow<ChartsUiState> = combine(
+        _retryTrigger.flatMapLatest { vehicleRepository.getActiveVehicleFlow() },
+        settingsRepository.distanceUnit
+    ) { vehicle, distanceUnit -> vehicle to distanceUnit }
+        .flatMapLatest { (vehicle, distanceUnit) ->
             val entriesFlow = if (vehicle == null) {
                 flowOf(emptyList())
             } else {
                 repository.getAllEntriesFlowForVehicle(vehicle.id)
             }
-            entriesFlow.map { entries -> vehicle to entries }
+            entriesFlow.map { entries -> Triple(vehicle, distanceUnit, entries) }
         }
-        .map { (vehicle, entries) ->
+        .map { (vehicle, distanceUnit, entries) ->
             ChartsUiState(
                 vehicle = vehicle,
                 fillups = MileageCalculator.calculatePerFillupMileage(entries),
@@ -74,6 +85,7 @@ class ChartsViewModel(
                     entries,
                     MileageCalculator.calculateMonthlySpend(entries)
                 ),
+                distanceUnit = distanceUnit,
                 entryCount = entries.size,
                 isLoading = false
             )
@@ -101,7 +113,11 @@ class ChartsViewModel(
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                ChartsViewModel(application.repository, application.vehicleRepository)
+                ChartsViewModel(
+                    application.repository,
+                    application.vehicleRepository,
+                    application.settingsRepository
+                )
             }
         }
     }

@@ -4,14 +4,19 @@
     <!-- Common -->
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
-    <string name="action_save">Save Entry</string>
-    <string name="action_update">Update Entry</string>
     <string name="action_delete">Delete</string>
     <string name="action_undo">Undo</string>
     <string name="action_navigate_back">Navigate back</string>
     <string name="action_add_fuel_entry">Add Fuel Entry</string>
     <string name="loading_generic">Loading</string>
     <string name="fab_add_label">Add</string>
+
+    <!-- Units. Distances are stored in kilometres; these label what is shown. -->
+    <string name="unit_kilometres">km</string>
+    <string name="unit_miles">mi</string>
+    <string name="unit_kilometres_per_litre">km/L</string>
+    <string name="unit_miles_per_litre">mi/L</string>
+    <string name="value_with_unit">%1$s %2$s</string>
 
     <!-- Ledger column headers -->
     <string name="ledger_column_date">Date</string>
@@ -26,11 +31,10 @@
     <string name="dashboard_empty_cta">Add your first entry</string>
     <string name="dashboard_stat_latest_odometer_title">Latest Odometer</string>
     <string name="dashboard_stat_latest_odometer_empty">—</string>
-    <string name="dashboard_stat_latest_odometer_unit">%1$s km</string>
     <string name="dashboard_stat_total_cost_title">Total Fuel Spend</string>
     <string name="dashboard_stat_total_cost_subtitle">%1$d entries total</string>
-    <string name="dashboard_stat_cost_per_km_title">Cost per km</string>
-    <string name="dashboard_stat_cost_per_km_subtitle">%1$d km tracked</string>
+    <string name="dashboard_stat_cost_per_distance_title">Cost per %1$s</string>
+    <string name="dashboard_stat_cost_per_distance_subtitle">%1$s tracked</string>
     <string name="dashboard_error_load">Couldn\'t load dashboard data. Please try again.</string>
 
     <!-- Dashboard (Instrument Ledger) -->
@@ -39,23 +43,23 @@
     <string name="dashboard_binnacle_subtitle_empty">No vehicle yet</string>
     <string name="dashboard_empty_vehicle_cta">Add your first vehicle</string>
     <string name="dashboard_gauge_label">Average mileage</string>
-    <string name="dashboard_gauge_unit">km/L</string>
     <string name="dashboard_gauge_scale_note">tank to tank</string>
     <string name="dashboard_gauge_note_no_average">Mileage starts at the second fill-up, once there is a previous reading to measure against.</string>
     <string name="dashboard_gauge_note_plain">Average across every measured fill-up.</string>
-    <string name="dashboard_gauge_note_above">Latest fill-up %1$s km/L, %2$s above this average.</string>
-    <string name="dashboard_gauge_note_below">Latest fill-up %1$s km/L, %2$s below this average.</string>
+    <string name="dashboard_gauge_note_above">Latest fill-up %1$s, %2$s above this average.</string>
+    <string name="dashboard_gauge_note_below">Latest fill-up %1$s, %2$s below this average.</string>
     <string name="dashboard_gauge_note_level">Latest fill-up matches this average.</string>
-    <string name="dashboard_gauge_a11y">Average mileage %1$s kilometres per litre, latest fill-up %2$s, on a scale from 0 to %3$d</string>
-    <string name="dashboard_gauge_a11y_empty">Mileage gauge with no reading yet, on a scale from 0 to %1$d</string>
+    <string name="dashboard_gauge_a11y">Average mileage %1$s, latest fill-up %2$s, on a %3$s scale</string>
+    <string name="dashboard_gauge_a11y_empty">Mileage gauge with no reading yet, on a %1$s scale</string>
+    <string name="dashboard_gauge_scale_range">0 to %1$s</string>
     <string name="dashboard_ledger_title">Fill-up ledger</string>
     <string name="dashboard_ledger_note">%1$d entries, newest first</string>
     <string name="dashboard_ledger_action">View all</string>
-    <string name="dashboard_ledger_odometer_value">%1$s km</string>
+    <string name="dashboard_ledger_edit">Edit</string>
+    <string name="dashboard_ledger_edit_a11y">Edit fill-up from %1$s</string>
     <string name="dashboard_ledger_liters_value">%1$.2f L</string>
-    <string name="dashboard_ledger_mileage_value">%1$s km/L</string>
     <string name="dashboard_trend_title">Mileage by fill-up</string>
-    <string name="dashboard_trend_note">Dashed line at the %1$s km/L average</string>
+    <string name="dashboard_trend_note">Dashed line at the %1$s average</string>
     <string name="dashboard_trend_action">Open charts</string>
 
     <!-- History -->
@@ -82,9 +86,9 @@
     <string name="charts_empty_title">Not enough data yet</string>
     <string name="charts_empty_subtitle">Add at least 2 fuel entries to see charts and insights.</string>
     <string name="charts_trend_card_title">Mileage Trend</string>
-    <string name="charts_trend_card_subtitle_single">km/L per fill-up</string>
-    <string name="charts_trend_card_subtitle_split">km/L per fill-up (combined + per fuel type)</string>
-    <string name="charts_trend_a11y">Mileage trend chart showing fuel efficiency in kilometers per liter over time</string>
+    <string name="charts_trend_card_subtitle_single">%1$s per fill-up</string>
+    <string name="charts_trend_card_subtitle_split">%1$s per fill-up (combined + per fuel type)</string>
+    <string name="charts_trend_a11y">Mileage trend chart showing fuel efficiency in %1$s over time</string>
     <string name="charts_spend_card_title">Monthly Fuel Spend</string>
     <string name="charts_spend_card_subtitle_single">Total spend (%1$s) by calendar month</string>
     <string name="charts_spend_card_subtitle_split">Total spend (%1$s) by calendar month, split by fuel type</string>
@@ -102,8 +106,7 @@
     <string name="entry_field_date_a11y">Select date</string>
     <string name="entry_field_date_dialog_confirm">Select date</string>
     <string name="entry_field_odometer_label">Odometer Reading</string>
-    <string name="entry_field_odometer_suffix">km</string>
-    <string name="entry_field_odometer_helper">Previous reading: %1$d km</string>
+    <string name="entry_field_odometer_helper">Previous reading: %1$s</string>
     <string name="entry_field_liters_label">Fuel Quantity</string>
     <string name="entry_field_liters_suffix">L</string>
     <string name="entry_field_cost_label">Total Cost</string>
@@ -112,15 +115,24 @@
     <string name="entry_error_load_failed">Couldn\'t load this entry. Please try again.</string>
     <string name="entry_error_no_vehicle">Add a vehicle before logging a fill-up.</string>
     <string name="entry_loading">Loading entry</string>
+    <string name="entry_action_save">Save fill-up</string>
+    <string name="entry_action_save_changes">Save changes</string>
+    <string name="entry_save_destination">Saved on this device, nothing uploaded</string>
+    <string name="entry_saved_title">Fill-up saved</string>
+    <string name="entry_saved_title_edit">Changes saved</string>
+    <string name="entry_saved_done">Done</string>
+    <plurals name="entry_validation_banner">
+        <item quantity="one">%1$d field needs attention</item>
+        <item quantity="other">%1$d fields need attention</item>
+    </plurals>
 
     <!-- Entry instrument -->
     <string name="entry_instrument_label">Mileage this fill-up</string>
-    <string name="entry_instrument_unit">km per litre</string>
     <string name="entry_instrument_note_no_previous">Mileage is measured from the previous fill-up.</string>
-    <string name="entry_instrument_note_idle">Needs an odometer reading above %1$s km.</string>
-    <string name="entry_instrument_note_ready">Measured against the previous reading of %1$s km.</string>
-    <string name="entry_instrument_a11y">Mileage %1$s kilometres per litre, on a scale from 0 to %2$d</string>
-    <string name="entry_instrument_a11y_empty">Mileage readout with no value yet, on a scale from 0 to %1$d</string>
+    <string name="entry_instrument_note_idle">Needs an odometer reading above %1$s.</string>
+    <string name="entry_instrument_note_ready">Measured against the previous reading of %1$s.</string>
+    <string name="entry_instrument_a11y">Mileage %1$s, on a %2$s scale</string>
+    <string name="entry_instrument_a11y_empty">Mileage readout with no value yet, on a %1$s scale</string>
     <string name="entry_readout_distance">Distance</string>
     <string name="entry_readout_distance_note">since the last fill-up</string>
     <string name="entry_readout_cost_per_km_note">on this fill-up</string>
@@ -131,7 +143,7 @@
     <string name="error_date_required">Date is required</string>
     <string name="error_odometer_required">Odometer reading is required</string>
     <string name="error_odometer_positive">Odometer must be a positive number</string>
-    <string name="error_odometer_monotonic">Odometer must be greater than the previous reading (%1$d km)</string>
+    <string name="error_odometer_monotonic">Odometer must be greater than the previous reading (%1$s)</string>
     <string name="error_liters_required">Fuel quantity is required</string>
     <string name="error_liters_positive">Fuel quantity must be greater than 0</string>
     <string name="error_cost_required">Total cost is required</string>
@@ -161,6 +173,10 @@
     <string name="vehicle_field_registration_label">Registration Number</string>
     <string name="vehicle_field_registration_note">Optional</string>
     <string name="vehicle_field_fuel_label">Default Fuel Type</string>
+    <string name="vehicle_field_distance_unit_label">Distance Unit</string>
+    <string name="vehicle_field_distance_unit_note">Applies to every odometer and mileage in the app</string>
+    <string name="vehicle_action_save">Save vehicle</string>
+    <string name="vehicle_action_save_changes">Save changes</string>
     <string name="vehicle_active_note">%1$s  ·  %2$s</string>
     <string name="vehicle_deleted">Vehicle deleted</string>
     <string name="error_vehicle_name_required">Vehicle name is required</string>
@@ -183,9 +199,11 @@
     <string name="settings_vehicle_delete_cancel">Keep vehicle</string>
     <string name="settings_vehicle_empty">No vehicles yet. Add one to start logging fill-ups.</string>
     <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_appearance_row">Theme</string>
-    <string name="settings_appearance_value">Follows device</string>
-    <string name="settings_appearance_note">The instrument panel stays dark in every mode. Only the logbook follows your device setting.</string>
+    <string name="settings_appearance_note">The instrument panel stays dark in every mode. Only the logbook follows your choice.</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_a11y">Appearance: %1$s</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_seed_row">Add demo fill-ups</string>
     <string name="settings_seed_row_note">Fills the log with sample entries so the charts have something to show</string>
@@ -212,12 +230,13 @@
     <string name="settings_about_network">Network</string>
     <string name="settings_about_network_value">Not required</string>
     <string name="settings_binnacle_subtitle">Every entry stays on this device</string>
-    <string name="settings_readout_entries">Fill-ups logged</string>
-    <string name="settings_readout_entries_note">in this log</string>
-    <string name="settings_readout_distance">Distance tracked</string>
-    <string name="settings_readout_distance_note">first to last reading</string>
-    <string name="settings_readout_storage">Storage</string>
-    <string name="settings_readout_storage_note">offline</string>
+    <string name="settings_readout_unit">Distance unit</string>
+    <string name="settings_readout_unit_note">odometer and mileage</string>
+    <string name="settings_readout_currency">Currency</string>
+    <string name="settings_readout_currency_note">Indian rupee</string>
+    <string name="settings_currency_value">INR (₹)</string>
+    <string name="settings_readout_network">Network</string>
+    <string name="settings_readout_network_note">nothing is uploaded</string>
 
     <!-- Export snackbar outcomes -->
     <string name="export_success">Exported %1$d entries to CSV</string>

@@ -62,7 +62,8 @@ import com.example.myapplication.ui.components.LedgerColumnLabels
 import com.example.myapplication.ui.components.LedgerColumnWeights
 import com.example.myapplication.ui.components.LedgerHeaderRow
 import com.example.myapplication.ui.components.LedgerRow
-import com.example.myapplication.ui.components.formatOne
+import com.example.myapplication.ui.components.formatDistanceWithUnit
+import com.example.myapplication.ui.components.formatMileageWithUnit
 import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.MileLogWindow
@@ -89,10 +90,10 @@ fun HistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val entries = uiState.entries
+    val distanceUnit = uiState.distanceUnit
     var entryPendingDelete by remember { mutableStateOf<FuelEntry?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
-    val integerFormatter = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     val dateFormatter = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
     val spacing = MaterialTheme.spacing
 
@@ -239,7 +240,8 @@ fun HistoryScreen(
                             item {
                                 LedgerHeaderRow(
                                     labels = LedgerColumnLabels.map { stringResource(it) },
-                                    weights = LedgerColumnWeights
+                                    weights = LedgerColumnWeights,
+                                    reserveTrailing = true
                                 )
                             }
                         }
@@ -253,9 +255,9 @@ fun HistoryScreen(
                             val formattedDate = dateFormatter.format(Date(entry.date))
                             LedgerRow(
                                 date = formattedDate,
-                                odometer = stringResource(
-                                    R.string.dashboard_ledger_odometer_value,
-                                    integerFormatter.format(entry.odometer)
+                                odometer = formatDistanceWithUnit(
+                                    entry.odometer.toDouble(),
+                                    distanceUnit
                                 ),
                                 liters = if (wide) {
                                     stringResource(R.string.dashboard_ledger_liters_value, entry.liters)
@@ -266,7 +268,7 @@ fun HistoryScreen(
                                         )
                                 },
                                 mileage = uiState.mileageById[entry.id]?.let { value ->
-                                    stringResource(R.string.dashboard_ledger_mileage_value, formatOne(value))
+                                    formatMileageWithUnit(value, distanceUnit)
                                 },
                                 cost = currencyFormatter.format(entry.cost),
                                 compact = !wide,

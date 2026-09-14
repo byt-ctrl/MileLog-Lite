@@ -20,6 +20,9 @@ import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.CategoryMileageSeries
 import com.example.myapplication.domain.calculation.FillupMileage
+import com.example.myapplication.domain.conversion.DistanceConverter
+import com.example.myapplication.domain.conversion.DistanceUnit
+import com.example.myapplication.ui.components.mileageLabel
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.level1Shadow
@@ -36,7 +39,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * A reusable Composable that displays a mileage trend line chart (km/L per fill-up)
+ * A reusable Composable that displays a mileage trend line chart (per fill-up)
  * in chronological order using MPAndroidChart.
  *
  * The combined (all-categories) trend is rendered as the primary line, and one
@@ -47,12 +50,15 @@ import java.util.Locale
  *   (with null mileage) is skipped since we can't compute mileage without a prior reading.
  * @param categorySeries Per-category mileage overlays. Only categories with at least
  *   one mileage-bearing entry are drawn.
+ * @param distanceUnit Unit the points and the value labels are drawn in. The
+ *   series stay in km/L; only what the chart draws changes.
  * @param modifier Modifier for the chart card container.
  */
 @Composable
 fun MileageTrendChart(
     fillups: List<FillupMileage>,
     categorySeries: List<CategoryMileageSeries> = emptyList(),
+    distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
@@ -65,12 +71,13 @@ fun MileageTrendChart(
     val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
 
     val combinedLabel = stringResource(R.string.charts_combined_label)
+    val mileageLabel = distanceUnit.mileageLabel()
     val categoryLabels: Map<FuelCategory, String> = buildMap {
         FuelCategory.entries.forEach { category ->
             put(category, stringResource(category.labelRes))
         }
     }
-    val trendA11y = stringResource(R.string.charts_trend_a11y)
+    val trendA11y = stringResource(R.string.charts_trend_a11y, mileageLabel)
     val spacing = MaterialTheme.spacing
 
     ElevatedCard(
@@ -93,9 +100,9 @@ fun MileageTrendChart(
         )
         Text(
             text = if (categorySeries.isEmpty()) {
-                stringResource(R.string.charts_trend_card_subtitle_single)
+                stringResource(R.string.charts_trend_card_subtitle_single, mileageLabel)
             } else {
-                stringResource(R.string.charts_trend_card_subtitle_split)
+                stringResource(R.string.charts_trend_card_subtitle_split, mileageLabel)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -162,7 +169,11 @@ fun MileageTrendChart(
 
                 if (combinedPoints.size >= 2) {
                     val entries = combinedPoints.mapIndexed { index, fillup ->
-                        Entry(index.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                        Entry(
+                            index.toFloat(),
+                            DistanceConverter.convertMileage(fillup.mileageKmPerL!!, distanceUnit)
+                                .toFloat()
+                        )
                     }
                     dataSets += LineDataSet(entries, combinedLabel).apply {
                         color = primaryColor
@@ -191,7 +202,13 @@ fun MileageTrendChart(
                     val points = perCategoryPoints[index]
                     val entries = points.mapNotNull { fillup ->
                         xById[fillup.entry.id]?.let { position ->
-                            Entry(position.toFloat(), fillup.mileageKmPerL!!.toFloat())
+                            Entry(
+                                position.toFloat(),
+                                DistanceConverter.convertMileage(
+                                    fillup.mileageKmPerL!!,
+                                    distanceUnit
+                                ).toFloat()
+                            )
                         }
                     }
                     if (entries.size < 2) return@forEachIndexed

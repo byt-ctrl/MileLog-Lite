@@ -8,7 +8,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.Vehicle
+import com.example.myapplication.data.repository.SettingsRepository
 import com.example.myapplication.data.repository.VehicleRepository
+import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.domain.validation.VehicleFieldError
 import com.example.myapplication.domain.validation.VehicleValidator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,7 @@ data class AddEditVehicleUiState(
     val model: String = "",
     val registrationNumber: String = "",
     val fuelType: FuelCategory = FuelCategory.DEFAULT,
+    val distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     val nameError: VehicleFieldError? = null,
     val saveError: VehicleFieldError? = null,
     val isLoading: Boolean = false,
@@ -43,10 +46,13 @@ data class AddEditVehicleUiState(
  * ViewModel managing state and validation for the Add/Edit Vehicle screen.
  */
 class AddEditVehicleViewModel(
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AddEditVehicleUiState())
+    private val _uiState = MutableStateFlow(
+        AddEditVehicleUiState(distanceUnit = settingsRepository.distanceUnit.value)
+    )
     val uiState: StateFlow<AddEditVehicleUiState> = _uiState.asStateFlow()
 
     private var pendingLoadId: Long = 0L
@@ -117,6 +123,24 @@ class AddEditVehicleViewModel(
     }
 
     /**
+     * Applies the chosen distance unit immediately.
+     *
+     * The unit is a preference of the install rather than of the vehicle, so
+     * it is written as it is picked instead of on save: backing out of the form
+     * must not be the only way to keep a change the user could see taking
+     * effect.
+     */
+    fun onDistanceUnitChanged(unit: DistanceUnit) {
+        _uiState.update { it.copy(distanceUnit = unit) }
+        viewModelScope.launch {
+            runCatching { settingsRepository.setDistanceUnit(unit) }
+                .onFailure {
+                    _uiState.update { it.copy(saveError = VehicleFieldError.LOAD_FAILED) }
+                }
+        }
+    }
+
+    /**
      * Validates and persists the vehicle. A brand new vehicle becomes active
      * when nothing is selected yet, so the app always has something to log
      * against once the first vehicle exists.
@@ -176,7 +200,10 @@ class AddEditVehicleViewModel(
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                AddEditVehicleViewModel(application.vehicleRepository)
+                AddEditVehicleViewModel(
+                    application.vehicleRepository,
+                    application.settingsRepository
+                )
             }
         }
     }

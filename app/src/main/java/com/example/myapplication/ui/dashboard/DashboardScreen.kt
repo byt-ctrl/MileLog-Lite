@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -35,6 +36,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.calculation.FillupMileage
+import com.example.myapplication.domain.conversion.DistanceConverter
+import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.ui.components.GaugeScaleLabels
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
@@ -49,7 +52,13 @@ import com.example.myapplication.ui.components.ReadoutItem
 import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
 import com.example.myapplication.ui.components.TrendPoint
+import com.example.myapplication.ui.components.distanceLabel
+import com.example.myapplication.ui.components.formatDistanceWithUnit
+import com.example.myapplication.ui.components.formatMileageWithUnit
 import com.example.myapplication.ui.components.formatOne
+import com.example.myapplication.ui.components.formatTick
+import com.example.myapplication.ui.components.mileageLabel
+import com.example.myapplication.ui.components.withUnit
 import com.example.myapplication.ui.navigation.LocalShellLayout
 import com.example.myapplication.ui.navigation.ShellLayout
 import com.example.myapplication.ui.theme.MicroLabelStyle
@@ -83,11 +92,11 @@ fun DashboardScreen(
     onViewHistory: () -> Unit,
     onViewCharts: () -> Unit,
     onAddVehicle: () -> Unit,
+    onEditEntry: (Long) -> Unit,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN")) }
-    val integer = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
     val trendDateFormat = remember { SimpleDateFormat("d MMM", Locale.getDefault()) }
     val shellLayout = LocalShellLayout.current
@@ -113,7 +122,6 @@ fun DashboardScreen(
             Binnacle(
                 uiState = uiState,
                 currency = currency,
-                integer = integer,
                 roomyReadouts = roomyReadouts
             )
 
@@ -125,13 +133,13 @@ fun DashboardScreen(
                 else -> Content(
                     uiState = uiState,
                     currency = currency,
-                    integer = integer,
                     dateFormat = dateFormat,
                     trendDateFormat = trendDateFormat,
                     onAddEntry = onAddEntry,
                     onAddVehicle = onAddVehicle,
                     onViewHistory = onViewHistory,
                     onViewCharts = onViewCharts,
+                    onEditEntry = onEditEntry,
                     wideLedger = roomyReadouts
                 )
             }
@@ -143,13 +151,16 @@ fun DashboardScreen(
 private fun Binnacle(
     uiState: DashboardUiState,
     currency: NumberFormat,
-    integer: NumberFormat,
     roomyReadouts: Boolean
 ) {
     val ledger = MaterialTheme.ledger
     val spacing = MaterialTheme.spacing
+    val unit = uiState.distanceUnit
     val average = uiState.averageMileage
     val latest = uiState.latestMileage
+    // The dial keeps its 0..30 km/L shape in either unit, so the ticks, the
+    // marker and the printed number always describe the same position.
+    val ceiling = DistanceConverter.convertMileage(GAUGE_CEILING, unit)
 
     InstrumentBand {
         Text(
@@ -193,12 +204,13 @@ private fun Binnacle(
 
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = average?.let { formatOne(it) } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+                text = average?.let { formatOne(DistanceConverter.convertMileage(it, unit)) }
+                    ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
                 style = MaterialTheme.typography.displayLarge,
                 color = ledger.chromeText
             )
             Text(
-                text = stringResource(R.string.dashboard_gauge_unit),
+                text = unit.mileageLabel(),
                 style = MaterialTheme.typography.titleMedium,
                 color = ledger.chromeReadout,
                 modifier = Modifier.padding(start = spacing.sm, bottom = 6.dp)
@@ -208,19 +220,19 @@ private fun Binnacle(
         Spacer(Modifier.height(spacing.md))
 
         MileageGauge(
-            value = average,
-            ceiling = GAUGE_CEILING,
-            contentDescription = gaugeA11y(average, latest)
+            value = average?.let { DistanceConverter.convertMileage(it, unit) },
+            ceiling = ceiling,
+            contentDescription = gaugeA11y(average, latest, ceiling, unit)
         )
 
         Spacer(Modifier.height(spacing.sm))
 
-        GaugeScaleLabels(ceiling = GAUGE_CEILING)
+        GaugeScaleLabels(ceiling = ceiling)
 
         Spacer(Modifier.height(spacing.sm))
 
         Text(
-            text = gaugeNote(average, latest),
+            text = gaugeNote(average, latest, unit),
             style = MaterialTheme.typography.labelSmall,
             color = ledger.chromeTextMuted
         )
@@ -228,7 +240,7 @@ private fun Binnacle(
         Spacer(Modifier.height(spacing.lg))
 
         ReadoutStrip(
-            items = readouts(uiState, currency, integer),
+            items = readouts(uiState, currency),
             compact = !roomyReadouts
         )
     }
@@ -237,81 +249,105 @@ private fun Binnacle(
 @Composable
 private fun readouts(
     uiState: DashboardUiState,
-    currency: NumberFormat,
-    integer: NumberFormat
-): List<ReadoutItem> = listOf(
-    ReadoutItem(
-        label = stringResource(R.string.dashboard_stat_latest_odometer_title),
-        value = uiState.latestOdometer?.let {
-            stringResource(R.string.dashboard_stat_latest_odometer_unit, integer.format(it))
-        } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
-        note = stringResource(R.string.dashboard_stat_total_cost_subtitle, uiState.entryCount)
-    ),
-    ReadoutItem(
-        label = stringResource(R.string.dashboard_stat_cost_per_km_title),
-        value = uiState.costPerKm?.let { currency.format(it) }
-            ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
-        note = stringResource(R.string.dashboard_stat_cost_per_km_subtitle, uiState.totalDistance)
-    ),
-    ReadoutItem(
-        label = stringResource(R.string.dashboard_stat_total_cost_title),
-        value = currency.format(uiState.totalCost),
-        note = stringResource(R.string.dashboard_stat_total_cost_subtitle, uiState.entryCount)
-    )
-)
-
-@Composable
-private fun gaugeNote(average: Double?, latest: Double?): String = when {
-    average == null -> stringResource(R.string.dashboard_gauge_note_no_average)
-    latest == null -> stringResource(R.string.dashboard_gauge_note_plain, formatOne(average))
-    abs(latest - average) < 0.05 -> stringResource(R.string.dashboard_gauge_note_level)
-    latest > average -> stringResource(
-        R.string.dashboard_gauge_note_above,
-        formatOne(latest),
-        formatOne(abs(latest - average))
-    )
-    else -> stringResource(
-        R.string.dashboard_gauge_note_below,
-        formatOne(latest),
-        formatOne(abs(latest - average))
+    currency: NumberFormat
+): List<ReadoutItem> {
+    val unit = uiState.distanceUnit
+    return listOf(
+        ReadoutItem(
+            label = stringResource(R.string.dashboard_stat_latest_odometer_title),
+            value = uiState.latestOdometer?.let { formatDistanceWithUnit(it.toDouble(), unit) }
+                ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            note = stringResource(R.string.dashboard_stat_total_cost_subtitle, uiState.entryCount)
+        ),
+        ReadoutItem(
+            label = stringResource(
+                R.string.dashboard_stat_cost_per_distance_title,
+                unit.distanceLabel()
+            ),
+            value = uiState.costPerKm?.let { costPerKm ->
+                currency.format(DistanceConverter.convertCostPerDistance(costPerKm, unit))
+            } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            note = stringResource(
+                R.string.dashboard_stat_cost_per_distance_subtitle,
+                formatDistanceWithUnit(uiState.totalDistance.toDouble(), unit)
+            )
+        ),
+        ReadoutItem(
+            label = stringResource(R.string.dashboard_stat_total_cost_title),
+            value = currency.format(uiState.totalCost),
+            note = stringResource(R.string.dashboard_stat_total_cost_subtitle, uiState.entryCount)
+        )
     )
 }
 
 @Composable
-private fun gaugeA11y(average: Double?, latest: Double?): String = when {
-    average == null -> stringResource(
-        R.string.dashboard_gauge_a11y_empty,
-        GAUGE_CEILING.toInt()
+private fun gaugeNote(average: Double?, latest: Double?, unit: DistanceUnit): String = when {
+    average == null -> stringResource(R.string.dashboard_gauge_note_no_average)
+    latest == null -> stringResource(R.string.dashboard_gauge_note_plain)
+    else -> {
+        val averageInUnit = DistanceConverter.convertMileage(average, unit)
+        val latestInUnit = DistanceConverter.convertMileage(latest, unit)
+        val latestText = formatMileageWithUnit(latest, unit)
+        when {
+            abs(latestInUnit - averageInUnit) < 0.05 -> stringResource(R.string.dashboard_gauge_note_level)
+            latestInUnit > averageInUnit -> stringResource(
+                R.string.dashboard_gauge_note_above,
+                latestText,
+                formatOne(abs(latestInUnit - averageInUnit))
+            )
+            else -> stringResource(
+                R.string.dashboard_gauge_note_below,
+                latestText,
+                formatOne(abs(latestInUnit - averageInUnit))
+            )
+        }
+    }
+}
+
+@Composable
+private fun gaugeA11y(
+    average: Double?,
+    latest: Double?,
+    ceiling: Double,
+    unit: DistanceUnit
+): String {
+    val scale = stringResource(
+        R.string.dashboard_gauge_scale_range,
+        withUnit(formatTick(ceiling), unit.mileageLabel())
     )
-    latest == null -> stringResource(
-        R.string.dashboard_gauge_a11y,
-        formatOne(average),
-        stringResource(R.string.dashboard_stat_latest_odometer_empty),
-        GAUGE_CEILING.toInt()
-    )
-    else -> stringResource(
-        R.string.dashboard_gauge_a11y,
-        formatOne(average),
-        formatOne(latest),
-        GAUGE_CEILING.toInt()
-    )
+    return when {
+        average == null -> stringResource(R.string.dashboard_gauge_a11y_empty, scale)
+        latest == null -> stringResource(
+            R.string.dashboard_gauge_a11y,
+            formatMileageWithUnit(average, unit),
+            stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            scale
+        )
+        else -> stringResource(
+            R.string.dashboard_gauge_a11y,
+            formatMileageWithUnit(average, unit),
+            formatMileageWithUnit(latest, unit),
+            scale
+        )
+    }
 }
 
 @Composable
 private fun Content(
     uiState: DashboardUiState,
     currency: NumberFormat,
-    integer: NumberFormat,
     dateFormat: SimpleDateFormat,
     trendDateFormat: SimpleDateFormat,
     onAddEntry: () -> Unit,
     onAddVehicle: () -> Unit,
     onViewHistory: () -> Unit,
     onViewCharts: () -> Unit,
+    onEditEntry: (Long) -> Unit,
     wideLedger: Boolean
 ) {
     val ledger = MaterialTheme.ledger
     val spacing = MaterialTheme.spacing
+    val unit = uiState.distanceUnit
 
     Column(
         modifier = Modifier
@@ -345,6 +381,7 @@ private fun Content(
                         LedgerHeaderRow(
                             labels = LedgerColumnLabels.map { stringResource(it) },
                             weights = LedgerColumnWeights,
+                            reserveTrailing = true,
                             modifier = Modifier.padding(
                                 horizontal = spacing.md,
                                 vertical = spacing.md
@@ -355,22 +392,40 @@ private fun Content(
                         if (index > 0) {
                             HorizontalDivider(color = ledger.rule, thickness = 1.dp)
                         }
+                        val formattedDate = dateFormat.format(Date(fillup.entry.date))
+                        val editA11y = stringResource(
+                            R.string.dashboard_ledger_edit_a11y,
+                            formattedDate
+                        )
                         LedgerRow(
-                            date = dateFormat.format(Date(fillup.entry.date)),
-                            odometer = stringResource(
-                                R.string.dashboard_ledger_odometer_value,
-                                integer.format(fillup.entry.odometer)
+                            date = formattedDate,
+                            odometer = formatDistanceWithUnit(
+                                fillup.entry.odometer.toDouble(),
+                                unit
                             ),
                             liters = stringResource(
                                 R.string.dashboard_ledger_liters_value,
                                 fillup.entry.liters
                             ),
                             mileage = fillup.mileageKmPerL?.let { value ->
-                                stringResource(R.string.dashboard_ledger_mileage_value, formatOne(value))
+                                formatMileageWithUnit(value, unit)
                             },
                             cost = currency.format(fillup.entry.cost),
                             compact = !wideLedger,
-                            modifier = Modifier.padding(horizontal = spacing.md)
+                            modifier = Modifier.padding(horizontal = spacing.md),
+                            trailing = {
+                                // The ledger opens the log; this is the one
+                                // place the first screen can change a row
+                                // without a detour through History.
+                                TextButton(
+                                    onClick = { onEditEntry(fillup.entry.id) },
+                                    modifier = Modifier
+                                        .heightIn(min = spacing.touchTarget)
+                                        .semantics { contentDescription = editA11y }
+                                ) {
+                                    Text(stringResource(R.string.dashboard_ledger_edit))
+                                }
+                            }
                         )
                     }
                 }
@@ -381,6 +436,7 @@ private fun Content(
             TrendSection(
                 fillups = uiState.trendFillups,
                 average = uiState.averageMileage,
+                unit = unit,
                 dateFormat = trendDateFormat,
                 onViewCharts = onViewCharts
             )
@@ -392,20 +448,23 @@ private fun Content(
 private fun TrendSection(
     fillups: List<FillupMileage>,
     average: Double?,
+    unit: DistanceUnit,
     dateFormat: SimpleDateFormat,
     onViewCharts: () -> Unit
 ) {
     val spacing = MaterialTheme.spacing
 
     val values = fillups.mapNotNull { it.mileageKmPerL }
-    val mean = average ?: values.average()
+        .map { DistanceConverter.convertMileage(it, unit) }
+    val mean = average?.let { DistanceConverter.convertMileage(it, unit) } ?: values.average()
     val ceiling = max(TREND_FLOOR_CEILING, ceil((values.maxOrNull() ?: 0.0) / 2.0) * 2.0)
     val points = fillups.mapNotNull { fillup ->
         fillup.mileageKmPerL?.let { value ->
+            val converted = DistanceConverter.convertMileage(value, unit)
             TrendPoint(
                 label = dateFormat.format(Date(fillup.entry.date)),
-                value = value,
-                delta = value - mean
+                value = converted,
+                delta = converted - mean
             )
         }
     }
@@ -413,7 +472,10 @@ private fun TrendSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(
             title = stringResource(R.string.dashboard_trend_title),
-            note = stringResource(R.string.dashboard_trend_note, formatOne(mean)),
+            note = stringResource(
+                R.string.dashboard_trend_note,
+                withUnit(formatOne(mean), unit.mileageLabel())
+            ),
             action = {
                 TextButton(onClick = onViewCharts) {
                     Text(stringResource(R.string.dashboard_trend_action))

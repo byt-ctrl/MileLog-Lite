@@ -211,7 +211,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Back navigation with the bottom bar pops up to the start destination.
 - [x] Charts reachable from the Reports tab, and from the dashboard's "Open charts" action.
 - [x] `AddEditEntryScreen` and `AddEditVehicleScreen` are full-screen routes with no shell bars.
-- [ ] Decide whether the primary action should also be reachable from Settings (the FAB is hidden there today).
+- [x] Decide whether the primary action should also be reachable from Settings: **it stays off Settings.** Logging a fill-up is an act on the log, not a configuration change, and the shell already carries the FAB on Dashboard, History and Reports. Settings reaches the same surface through the Vehicle group.
 
 ---
 
@@ -233,25 +233,27 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 **Deviations from the original spec:** the settings screen is not a `LazyColumn` of M3 cards, and the Vehicle section is a **list** rather than the single-vehicle form the spec assumed (the app is multi-vehicle since Sprint 7).
 
-#### 6.3.2 Still open — moved to Sprint 8
+#### 6.3.2 Closed in Sprint 8
 
-- [ ] **Appearance** control: the row ships but is static ("Theme — Follows device"). `refactor-design/setting/DESIGN.md` asks for a real radio group (Light / Dark / System).
-- [ ] **Distance unit** on the vehicle form, plus a `DistanceConverter`.
-- [ ] Preferences persistence: no `UserPreferences` / `SettingsRepository` exists yet (`theme_mode`, `distance_unit`).
+- [x] **Appearance** control: the row ships but is static ("Theme — Follows device"). `refactor-design/setting/DESIGN.md` asks for a real radio group (Light / Dark / System). **Done in Sprint 8** — see §8.1.
+- [x] **Distance unit** on the vehicle form, plus a `DistanceConverter`. **Done in Sprint 8** — see §8.1.
+- [x] Preferences persistence: no `UserPreferences` / `SettingsRepository` exists yet (`theme_mode`, `distance_unit`). **Done in Sprint 8** — see §8.1.
 
-#### 6.3.3 Theme Integration (open)
+#### 6.3.3 Theme Integration (closed in Sprint 8)
 
-- [ ] `MileLogTheme(themeMode: String)` resolving `system → isSystemInDarkTheme()`, `light → false`, `dark → true`.
-- [ ] Collect the preference in `MainActivity` so a change applies by recomposition, with no restart.
-- [ ] Keep the spec's rule: the instrument stays dark in every mode; only the logbook follows the setting.
+- [x] `MileLogTheme(themeMode)` resolving `system → isSystemInDarkTheme()`, `light → false`, `dark → true`.
+- [x] Collect the preference in `MainActivity` so a change applies by recomposition, with no restart.
+- [x] Keep the spec's rule: the instrument stays dark in every mode; only the logbook follows the setting.
 
-#### 6.3.4 Distance Unit Integration (open)
+The status and navigation bars move with the resolved appearance too, which is what §6.4 already claimed: `enableEdgeToEdge` is re-applied from a `LaunchedEffect(darkTheme)` rather than once in `onCreate`, so it follows the setting instead of the device.
 
-- [ ] `domain/conversion/DistanceConverter.kt` with `kmToMiles(km) = km * 0.621371` and `formatDistance(value, unit)`.
-- [ ] Dashboard: convert the odometer and cost-per-km readouts.
-- [ ] History: convert the displayed odometer and mileage.
-- [ ] Charts: axis labels and points respect the unit, while chart data stays in km internally.
-- [ ] Storage stays in km; conversion is display-only.
+#### 6.3.4 Distance Unit Integration (closed in Sprint 8)
+
+- [x] `domain/conversion/DistanceConverter.kt` with `kmToMiles(km) = km * 0.621371` and `formatDistance(value, unit)`.
+- [x] Dashboard: convert the odometer and cost-per-km readouts.
+- [x] History: convert the displayed odometer and mileage.
+- [x] Charts: axis labels and points respect the unit, while chart data stays in km internally.
+- [x] Storage stays in km; conversion is display-only.
 
 ---
 
@@ -260,7 +262,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] `MainActivity` wraps `MileLiteNavHost` in `MileLogTheme` inside a `Surface`; the system bars stay transparent and follow the resolved appearance.
 - [x] Settings is reachable from any tab, and back navigation from a full-screen route returns to the shell with its navigation intact.
 - [x] Logging a fill-up opens `AddEditEntryScreen` as a full-screen route from the shell FAB / rail action.
-- [ ] Add `SettingsRepository` to `MileLogApplication` (manual DI), collect the theme preference at the top level and apply it before `setContent` — blocked on the Sprint 8 preferences work.
+- [x] Add `SettingsRepository` to `MileLogApplication` (manual DI), collect the theme preference at the top level and apply it before `setContent` — done in Sprint 8, see §8.1.
 
 ---
 
@@ -270,7 +272,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] All existing functionality (CRUD, calculations, charts, export) continues to work with the shipped design system and navigation.
 - [ ] ~~App uses the new Kinetic Logic design system across all screens~~ — **superseded**; Instrument Ledger shipped instead (§6.1).
 - [ ] ~~5-tab bottom navigation bar is functional~~ — **superseded**; four destinations plus a shell FAB shipped instead (§6.2).
-- [ ] Theme toggle and distance units, with preferences persisting across restarts — **moved to Sprint 8**.
+- [x] Theme toggle and distance units, with preferences persisting across restarts — **shipped in Sprint 8** (§8.1).
 
 ---
 
@@ -284,10 +286,10 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Accessibility: interactive elements carry content descriptions and 48dp minimum targets.
 - [x] Full regression: add → edit → delete → dashboard and charts update (`FullRegressionTest`).
 
-#### 6.6.2 Moved to Sprint 8
-- [ ] `SettingsRepository` read/write; theme-mode state management; distance conversion (km → mi) display.
-- [ ] Settings persistence across an app restart.
-- [ ] Manual: theme switching Light → Dark → System across every screen; km ↔ mi conversion across Dashboard, History and Charts.
+#### 6.6.2 Closed in Sprint 8
+- [x] `SettingsRepository` read/write; theme-mode state management; distance conversion (km → mi) display.
+- [x] Settings persistence across an app restart (`UserPreferencesPersistenceTest`, plus a force-stop/relaunch check on the emulator).
+- [x] Manual: theme switching Light → Dark → System across every screen; km ↔ mi conversion across Dashboard, History and Charts.
 
 ---
 
@@ -325,9 +327,9 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] Instrumented tests for `VehicleDao`: CRUD, unique-name replacement, single active vehicle, per-vehicle entry delete.
 - [x] Instrumented tests for the vehicle repositories: switch isolation, delete cascade with active promotion, demo seeding per vehicle.
 - [x] Extend the fuel-entry column round-trip test to cover `vehicleId`.
-- [x] `testDebugUnitTest` passes (68 unit tests) and `assembleDebug` builds.
+- [x] `testDebugUnitTest` passes and `assembleDebug` builds.
 - [x] Instrumented test sources compile (`assembleDebugAndroidTest`).
-- [ ] Manual test on a device/emulator: add a vehicle, log an entry, switch vehicles, and confirm the dashboard, history and charts follow the selection.
+- [x] Manual test on a device/emulator: add a vehicle, log an entry, switch vehicles, and confirm the dashboard, history and charts follow the selection.
 - [x] Run `connectedDebugAndroidTest` on a booted emulator to execute the new vehicle DAO/repository tests (61 instrumented tests, 0 failures).
 
 ### 7.4 Database Hardening (post-review)
@@ -345,8 +347,8 @@ Findings from the `DATABASE_STATUS.md` review, implemented after Sprint 7.
 - [x] Exclude the Room database from cloud backup (device-to-device transfer retained), matching the offline-only promise.
 - [x] Fix category filtering: Room bound the enum `name` (`"PETROL"`) while rows store `displayName` (`"Petrol"`), so every filter matched nothing. Added `FuelCategoryConverters`.
 - [x] Add the missing `id DESC` tie-break to the `getLatest*` queries.
-- [x] Verify: 75 unit tests + 61 instrumented tests, all passing.
-- [ ] Deferred: `SettingsRepository`/`UserPreferences` and `DistanceConverter`, now tracked in **Sprint 8**.
+- [x] Verify: 75 unit tests + 61 instrumented tests, all passing; 112 unit tests + 67 instrumented tests after Sprint 8.
+- [x] Deferred: `SettingsRepository`/`UserPreferences` and `DistanceConverter` — shipped in **Sprint 8** (§8.1).
 
 ---
 
@@ -357,31 +359,52 @@ Findings from the `DATABASE_STATUS.md` review, implemented after Sprint 7.
 **Primary Goal:** Close the remaining gaps between the shipped app and the Instrument Ledger specs in `refactor-design/{dashboard,log-a-trip,setting}/DESIGN.md`. These are the items Sprint 6 left open once its Kinetic Logic sections were superseded.
 
 ### 8.1 Settings — Appearance & Units (`refactor-design/setting/DESIGN.md`)
-- [ ] Create `data/local/UserPreferences.kt` (`SharedPreferences("milelog_prefs")`; keys `theme_mode` default `"system"`, `distance_unit` default `"km"`).
-- [ ] Create `data/repository/SettingsRepository.kt` exposing both preferences as `StateFlow` with setters, and add it to `MileLogApplication`.
-- [ ] Replace the static Appearance row with a real radio group (Light / Dark / System), keeping the note that the instrument stays dark in every mode and only the logbook follows the setting.
-- [ ] `MileLogTheme(themeMode: String)`, and collect it in `MainActivity` so a change applies by recomposition.
-- [ ] Add a **Distance unit** field to the vehicle form and create `domain/conversion/DistanceConverter.kt` (`kmToMiles`, `formatDistance`).
-- [ ] Wire the unit through Dashboard (odometer, cost/km), History (odometer, mileage) and the Charts axis labels — display-only, storage stays km.
-- [ ] Open Settings with the current configuration as a readout (distance unit, currency, network), per the spec's "Configure surface" framing.
+- [x] Create `data/local/UserPreferences.kt` (`SharedPreferences("milelog_prefs")`; keys `theme_mode` default `"system"`, `distance_unit` default `"km"`).
+- [x] Create `data/repository/SettingsRepository.kt` exposing both preferences as `StateFlow` with setters, and add it to `MileLogApplication`.
+- [x] Replace the static Appearance row with a real radio group (Light / Dark / System), keeping the note that the instrument stays dark in every mode and only the logbook follows the setting.
+- [x] `MileLogTheme(themeMode)`, and collect it in `MainActivity` so a change applies by recomposition.
+- [x] Add a **Distance unit** field to the vehicle form and create `domain/conversion/DistanceConverter.kt` (`kmToMiles`, `formatDistance`).
+- [x] Wire the unit through Dashboard (odometer, cost/km), History (odometer, mileage) and the Charts axis labels — display-only, storage stays km.
+- [x] Open Settings with the current configuration as a readout (distance unit, currency, network), per the spec's "Configure surface" framing.
+
+**Deviations from the spec, and why:**
+
+- The theme parameter is `ThemeMode` (`light`/`dark`/`system`) rather than a `String`. The stored values are exactly the ones the spec names; the enum is what makes the resolution (`system → isSystemInDarkTheme()`, `light → false`, `dark → true`) a unit-testable function instead of a string comparison at the call site.
+- The unit reached further than the listed readouts. The **entry form's odometer field** is also in the user's unit — the artifact's own Settings readout describes the setting as covering "odometer and mileage", and a field labelled `mi` that accepted kilometres would silently store a wrong reading. Conversion happens on the way in and on the way out (`DistanceConverter.toKilometres`); storage is still kilometres. Because a whole-mile round trip is not always invertible, an odometer that was never edited is written back exactly as it was loaded rather than re-derived (`odometerToStoreKm`, covered by `OdometerToStoreKmTest`).
+- The dashboard's mileage gauge and trend bars follow the unit too (0–30 km/L becomes 0–18.6 mi/L), so the dial, its numbers and the history table never disagree.
+- The Settings readout states distance unit, currency and network, replacing the Sprint 6 readout of fill-ups/distance/storage. The entry count is still visible where it is acted on, in the delete confirmation.
+- `UserPreferences` reads and writes through a narrow `PreferencesStorage` seam so the settings logic is testable on the JVM. `SharedPreferencesStorage` writes with `commit()` on `Dispatchers.IO`, not `apply()`, so a preference is never reported as saved before it is on disk.
+- The distance unit lives on the **vehicle form** as the spec asks, but it is an install-wide preference: it writes as it is picked, and the form says so ("Applies to every odometer and mileage in the app").
 
 ### 8.2 Log a Fill-up (`refactor-design/log-a-trip/DESIGN.md`)
-- [ ] Reorder the entry sheet to the specified sequence: **fuel type** (radio group) → date → odometer (previous reading as context) → litres → cost. Today the category selector is last.
-- [ ] Label the primary action **"Save fill-up"** and state the destination beside it: "Saved on this device, nothing uploaded".
-- [ ] On a valid submit, replace the form with a summary of what was recorded instead of navigating straight back.
-- [ ] Invalid state: keep the inline messages, add the banner that counts the invalid fields, and move focus to the first invalid field. (Save stays enabled — a disabled button hides what needs fixing.)
+- [x] Reorder the entry sheet to the specified sequence: **fuel type** (radio group) → date → odometer (previous reading as context) → litres → cost. Today the category selector is last.
+- [x] Label the primary action **"Save fill-up"** and state the destination beside it: "Saved on this device, nothing uploaded".
+- [x] On a valid submit, replace the form with a summary of what was recorded instead of navigating straight back.
+- [x] Invalid state: keep the inline messages, add the banner that counts the invalid fields, and move focus to the first invalid field. (Save stays enabled — a disabled button hides what needs fixing.)
+
+`EntryField` and `AddEditUiState.invalidFields` are what the banner counts and what decides where focus lands; the order they are declared in is the order the sheet reads them.
 
 ### 8.3 Dashboard (`refactor-design/dashboard/DESIGN.md`)
-- [ ] Give the dashboard ledger rows an **edit link**, so the first screen can edit a fill-up rather than only viewing it (History owns editing today).
-- [ ] Re-check the gauge's amber marker and tick marks, and the "numbers printed under each bar" trend, at both compact and expanded widths.
+- [x] Give the dashboard ledger rows an **edit link**, so the first screen can edit a fill-up rather than only viewing it (History owns editing today).
+- [x] Re-check the gauge's amber marker and tick marks, and the "numbers printed under each bar" trend, at both compact and expanded widths.
+
+The link carries the fill-up's date in its accessible name (`dashboard_ledger_edit_a11y`), so five identical "Edit" labels never reach a screen reader as five identical names. Ledger rows and the wide header now share one trailing slot width (`LedgerTrailingWidth`), which also fixed the column captions drifting left of their columns on History.
 
 ### 8.4 Sprint 8 Milestone
-- [ ] Every screen matches its `refactor-design` spec, and the two preference-backed features (theme, distance unit) persist across restarts.
+- [x] Every screen matches its `refactor-design` spec, and the two preference-backed features (theme, distance unit) persist across restarts.
 
 ### 8.5 Sprint 8 Testing
-- [ ] Unit tests: `SettingsRepository` read/write; theme-mode resolution (`system`/`light`/`dark`); `DistanceConverter` (km → mi and formatting).
-- [ ] Instrumented: preference persistence across a simulated restart.
-- [ ] Manual: theme Light → Dark → System across all screens; km ↔ mi across Dashboard, History and Charts; entry-sheet order and the post-save summary; validation banner and focus move.
+- [x] Unit tests: `SettingsRepository` read/write; theme-mode resolution (`system`/`light`/`dark`); `DistanceConverter` (km → mi and formatting).
+- [x] Instrumented: preference persistence across a simulated restart.
+- [x] Manual: theme Light → Dark → System across all screens; km ↔ mi across Dashboard, History and Charts; entry-sheet order and the post-save summary; validation banner and focus move.
+
+**Sprint 8 verification record**
+
+- `testDebugUnitTest`: 112 tests, 0 failures (`UserPreferencesTest`, `ThemeModeTest`, `SettingsRepositoryTest`, `DistanceConverterTest`, `OdometerToStoreKmTest` added).
+- `connectedDebugAndroidTest`: 67 tests, 0 failures on a booted emulator (`UserPreferencesPersistenceTest` added, including a check that the values reach the preferences XML on disk).
+- `assembleDebug` builds.
+- Emulator walkthrough, both units: fresh install → add a vehicle with the unit control → seed the demo data → switch the active vehicle → open an entry from the dashboard ledger link → clear a required field and save (banner reads "1 field needs attention", focus lands on the field) → fix it and save (summary replaces the form) → Done back to the dashboard → History and Charts read in the same unit → export CSV (7 entries, odometer column in kilometres, unchanged by the edit) → theme Light/Dark/System applied by recomposition → force-stop and relaunch, both preferences retained.
+
 
 ---
 
@@ -389,6 +412,14 @@ Findings from the `DATABASE_STATUS.md` review, implemented after Sprint 7.
 
 > More features have been done in original full application , This is completely diff , in terms of UI wise
 
-The only open items carried by this plan are the **Sprint 8** conformance gaps (Appearance control, distance units and their persistence, the entry-sheet order and post-save summary, and the dashboard ledger edit link). Everything else is either shipped or explicitly superseded.
+Sprint 8 was the last planned sprint, and it closes the conformance gaps that Sprint 6 left open once its Kinetic Logic sections were superseded: the Appearance control, the distance unit and both preferences' persistence, the entry sheet's order and post-save summary, and the dashboard ledger's edit link. **Nothing on this plan is still open** — every remaining item is either shipped, explicitly superseded (Kinetic Logic, the 5-tab bar, the centred Add tab), or recorded above as a decision.
+
+Deliberately out of scope for the mini build, unchanged by Sprint 8:
+
+- Cloud backup, sync, accounts and a shared garage.
+- CSV import (export only).
+- Multi-currency; costs stay in INR.
+- Miles per gallon: fuel is litres in both units, so mileage reads km/L or mi/L.
+- Multi-language.
 
 *End of Document*

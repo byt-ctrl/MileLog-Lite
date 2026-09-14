@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.example.myapplication.data.local.ThemeMode
 
 /**
  * Instrument Ledger color schemes.
@@ -93,11 +94,19 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = RuleDark
 )
 
+/**
+ * Applies the Instrument Ledger identity.
+ *
+ * @param themeMode The appearance chosen in Settings. Only the logbook follows
+ *   it: the instrument roles travel through [LocalLedgerColors] and stay dark
+ *   in every mode, which is why there is no dark-instrument variant.
+ */
 @Composable
 fun MileLogTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.DEFAULT,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = themeMode.isDark(isSystemInDarkTheme())
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val ledgerColors = if (darkTheme) DarkLedgerColors else LightLedgerColors
 

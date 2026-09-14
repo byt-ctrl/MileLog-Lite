@@ -12,14 +12,18 @@ import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.FuelEntry
 import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.SettingsRepository
 import com.example.myapplication.data.repository.VehicleRepository
 import com.example.myapplication.domain.calculation.FillupMileage
 import com.example.myapplication.domain.calculation.MileageCalculator
+import com.example.myapplication.domain.conversion.DistanceUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -56,6 +60,8 @@ data class DashboardUiState(
     val trendFillups: List<FillupMileage> = emptyList(),
     /** Mileage returned by the most recent fill-up, for the gauge comparison. */
     val latestMileage: Double? = null,
+    /** Unit every distance and mileage readout is converted to for display. */
+    val distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     val isLoading: Boolean = true,
     val errorMessage: DashboardMessage? = null
 ) {
@@ -64,47 +70,37 @@ data class DashboardUiState(
     }
 }
 
+/** Everything a dashboard reading is built from, resolved once per emission. */
+private data class DashboardInput(
+    val vehicle: Vehicle?,
+    val distanceUnit: DistanceUnit,
+    val entries: List<FuelEntry>
+)
+
 class DashboardViewModel(
     private val repository: FuelEntryRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _retryTrigger = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<DashboardUiState> = _retryTrigger
+    private val inputs: Flow<DashboardInput> = _retryTrigger
         .flatMapLatest { vehicleRepository.getActiveVehicleFlow() }
-        .flatMapLatest { vehicle ->
-            val entriesFlow = if (vehicle == null) {
+        .flatMapLatest { vehicle: Vehicle? ->
+            val entriesFlow: Flow<List<FuelEntry>> = if (vehicle == null) {
                 flowOf(emptyList())
             } else {
                 repository.getAllEntriesFlowForVehicle(vehicle.id)
             }
-            entriesFlow.map { entries -> vehicle to entries }
+            combine(entriesFlow, settingsRepository.distanceUnit) { entries, distanceUnit ->
+                DashboardInput(vehicle, distanceUnit, entries)
+            }
         }
-        .map { (vehicle, entries) ->
-            val stats = MileageCalculator.calculateDashboardStats(entries)
-            val fillups = MileageCalculator.calculatePerFillupMileage(entries)
-            val measured = fillups.filter { it.mileageKmPerL != null }
-            DashboardUiState(
-                vehicle = vehicle,
-                latestOdometer = stats.latestOdometer,
-                latestFuelCategory = entries.firstOrNull()
-                    ?.let { FuelCategory.fromDisplayName(it.fuelCategory) },
-                totalDistance = stats.totalDistance,
-                totalFuel = stats.totalFuel,
-                totalCost = stats.totalCost,
-                averageMileage = stats.averageMileage,
-                costPerKm = stats.costPerKm,
-                entryCount = entries.size,
-                recentFillups = fillups
-                    .takeLast(DashboardUiState.RECENT_LIMIT)
-                    .reversed(),
-                trendFillups = measured.takeLast(TREND_LIMIT),
-                latestMileage = measured.lastOrNull()?.mileageKmPerL,
-                isLoading = false
-            )
-        }
+
+    val uiState: StateFlow<DashboardUiState> = inputs
+        .map { input -> buildState(input) }
         .catch { _ ->
             emit(
                 DashboardUiState(
@@ -118,6 +114,32 @@ class DashboardViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = DashboardUiState(isLoading = true)
         )
+
+    private fun buildState(input: DashboardInput): DashboardUiState {
+        val entries = input.entries
+        val stats = MileageCalculator.calculateDashboardStats(entries)
+        val fillups = MileageCalculator.calculatePerFillupMileage(entries)
+        val measured = fillups.filter { it.mileageKmPerL != null }
+        return DashboardUiState(
+            vehicle = input.vehicle,
+            latestOdometer = stats.latestOdometer,
+            latestFuelCategory = entries.firstOrNull()
+                ?.let { FuelCategory.fromDisplayName(it.fuelCategory) },
+            totalDistance = stats.totalDistance,
+            totalFuel = stats.totalFuel,
+            totalCost = stats.totalCost,
+            averageMileage = stats.averageMileage,
+            costPerKm = stats.costPerKm,
+            entryCount = entries.size,
+            recentFillups = fillups
+                .takeLast(DashboardUiState.RECENT_LIMIT)
+                .reversed(),
+            trendFillups = measured.takeLast(TREND_LIMIT),
+            latestMileage = measured.lastOrNull()?.mileageKmPerL,
+            distanceUnit = input.distanceUnit,
+            isLoading = false
+        )
+    }
 
     fun retry() {
         _retryTrigger.update { it + 1 }
@@ -134,7 +156,11 @@ class DashboardViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MileLogApplication)
-                DashboardViewModel(application.repository, application.vehicleRepository)
+                DashboardViewModel(
+                    application.repository,
+                    application.vehicleRepository,
+                    application.settingsRepository
+                )
             }
         }
     }

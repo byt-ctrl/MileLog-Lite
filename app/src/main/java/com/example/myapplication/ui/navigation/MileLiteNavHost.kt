@@ -182,7 +182,10 @@ private fun ShellScaffold(
                     onAddEntry = onAddEntry,
                     onViewHistory = { onTabSelected(MileLogRoutes.HISTORY) },
                     onViewCharts = { onTabSelected(MileLogRoutes.CHARTS) },
-                    onAddVehicle = { navController.navigate(MileLogRoutes.VEHICLE_ADD) }
+                    onAddVehicle = { navController.navigate(MileLogRoutes.VEHICLE_ADD) },
+                    onEditEntry = { entryId ->
+                        navController.navigate(MileLogRoutes.editEntry(entryId))
+                    }
                 )
             }
             composable(MileLogRoutes.CHARTS) {

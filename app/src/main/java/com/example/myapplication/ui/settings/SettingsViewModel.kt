@@ -11,10 +11,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.myapplication.MileLogApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelEntry
+import com.example.myapplication.data.local.ThemeMode
 import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.data.repository.FuelEntryRepository
+import com.example.myapplication.data.repository.SettingsRepository
 import com.example.myapplication.data.repository.VehicleRepository
-import com.example.myapplication.domain.calculation.MileageCalculator
+import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.domain.demo.DemoDataGenerator
 import com.example.myapplication.domain.export.FuelEntryCsvExporter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +51,8 @@ data class SettingsUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val activeVehicle: Vehicle? = null,
     val entryCount: Int = 0,
-    val totalDistance: Int = 0,
+    val themeMode: ThemeMode = ThemeMode.DEFAULT,
+    val distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     val exportReady: String? = null,
     val message: SettingsMessage? = null,
     val messageCount: Int = 0,
@@ -70,15 +73,17 @@ private data class SettingsTransient(
  * Settings state.
  *
  * Everything exposed here is a real capability of the app: the vehicle list and
- * active selection come from the database, the entry count and distance belong
- * to the active vehicle, export writes a CSV through the same exporter the
- * History screen uses, and clearing the log keeps the removed rows so the action
- * is recoverable.
+ * active selection come from the database, the entry count belongs to the
+ * active vehicle, the appearance and distance unit come from the settings
+ * repository, export writes a CSV through the same exporter the History screen
+ * uses, and clearing the log keeps the removed rows so the action is
+ * recoverable.
  */
 class SettingsViewModel(
     application: Application,
     private val repository: FuelEntryRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val settingsRepository: SettingsRepository
 ) : AndroidViewModel(application) {
 
     private val _transient = MutableStateFlow(SettingsTransient())
@@ -86,33 +91,38 @@ class SettingsViewModel(
     /** Rows removed by the most recent clear, held for undo. */
     private var clearedEntries: List<FuelEntry> = emptyList()
 
+    private val settings = combine(
+        settingsRepository.themeMode,
+        settingsRepository.distanceUnit
+    ) { themeMode, distanceUnit -> themeMode to distanceUnit }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<SettingsUiState> = combine(
         vehicleRepository.getAllVehiclesFlow(),
         vehicleRepository.getActiveVehicleFlow(),
-        _transient
-    ) { vehicles, activeVehicle, transient ->
-        Triple(vehicles, activeVehicle, transient)
+        _transient,
+        settings
+    ) { vehicles, activeVehicle, transient, (themeMode, distanceUnit) ->
+        SettingsUiState(
+            vehicles = vehicles,
+            activeVehicle = activeVehicle,
+            themeMode = themeMode,
+            distanceUnit = distanceUnit,
+            exportReady = transient.exportReady,
+            message = transient.message,
+            messageCount = transient.messageCount,
+            messageDetail = transient.messageDetail,
+            isBusy = transient.isBusy
+        )
     }
-        .flatMapLatest { (vehicles, activeVehicle, transient) ->
-            val entriesFlow = if (activeVehicle == null) {
+        .flatMapLatest { state ->
+            val vehicle = state.activeVehicle
+            val entriesFlow = if (vehicle == null) {
                 flowOf(emptyList())
             } else {
-                repository.getAllEntriesFlowForVehicle(activeVehicle.id)
+                repository.getAllEntriesFlowForVehicle(vehicle.id)
             }
-            entriesFlow.map { entries ->
-                SettingsUiState(
-                    vehicles = vehicles,
-                    activeVehicle = activeVehicle,
-                    entryCount = entries.size,
-                    totalDistance = MileageCalculator.calculateDashboardStats(entries).totalDistance,
-                    exportReady = transient.exportReady,
-                    message = transient.message,
-                    messageCount = transient.messageCount,
-                    messageDetail = transient.messageDetail,
-                    isBusy = transient.isBusy
-                )
-            }
+            entriesFlow.map { entries -> state.copy(entryCount = entries.size) }
         }
         .catch { _ ->
             emit(SettingsUiState(message = SettingsMessage.EXPORT_FAILED))
@@ -122,6 +132,19 @@ class SettingsViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SettingsUiState()
         )
+
+    /**
+     * Applies the chosen appearance. The theme reads this back at the top of
+     * the tree, so the change lands by recomposition rather than restart.
+     */
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            runCatching { settingsRepository.setThemeMode(mode) }
+                .onFailure {
+                    _transient.update { it.copy(message = SettingsMessage.ACTION_FAILED) }
+                }
+        }
+    }
 
     /**
      * Selects the vehicle every screen then logs against.
@@ -330,7 +353,8 @@ class SettingsViewModel(
                 SettingsViewModel(
                     application,
                     application.repository,
-                    application.vehicleRepository
+                    application.vehicleRepository,
+                    application.settingsRepository
                 )
             }
         }

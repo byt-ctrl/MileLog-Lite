@@ -215,6 +215,7 @@ private fun ChartsContent(
                         MileageTrendChart(
                             fillups = uiState.fillups,
                             categorySeries = uiState.categoryMileageSeries,
+                            distanceUnit = uiState.distanceUnit,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -236,6 +237,7 @@ private fun ChartsContent(
                         MileageTrendChart(
                             fillups = uiState.fillups,
                             categorySeries = uiState.categoryMileageSeries,
+                            distanceUnit = uiState.distanceUnit,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

@@ -39,8 +39,8 @@ cd MileLog-Lite/MileLog-Lite
 
 | Action | Command | Expected Output |
 |---|---|---|
-| **Unit Tests** | `.\gradlew.bat testDebugUnitTest` | Executes domain calculations & validator test suites |
-| **Benchmark Tests** | `.\gradlew.bat connectedDebugAndroidTest` | Runs on-device database queries and UI test suites |
+| **Unit Tests** | `.\gradlew.bat testDebugUnitTest` | 112 tests: calculations, validators, CSV export, preferences, units, theme resolution |
+| **Instrumented Tests** | `.\gradlew.bat connectedDebugAndroidTest` | 67 tests on a booted device/emulator: DAO, migrations, repositories, preferences on disk |
 | **Debug Build** | `.\gradlew.bat assembleDebug` | Produces `app-debug.apk` in `app/build/outputs/apk/debug/` |
 | **Install & Launch** | `adb install -r app/build/outputs/apk/debug/app-debug.apk`<br>`adb shell am start -n "com.example.myapplication/.MainActivity"` | Installs and opens the application on device |
 
@@ -49,76 +49,93 @@ cd MileLog-Lite/MileLog-Lite
 ## 2. Feature Specification
 
 ### 2.1 Core Capabilities
-- **Fast Fill-up Logging:** Complete a new log in fewer than three interactions from the home screen using the dedicated button or Floating Action Button (FAB).
-- **Fuel Category Selection:** Categorize entries by fuel type (Petrol, Diesel, CNG) with a dropdown selector in the add/edit form. Filter history and charts by category using filter chips.
+- **Fast Fill-up Logging:** Complete a new log from the shell's Floating Action Button on Dashboard, History or Reports (or the rail action on expanded windows). The sheet reads in the order the entry is decided: fuel type, date, odometer, litres, cost.
+- **Fuel Category Selection:** Categorize entries by fuel type (Petrol, Diesel, CNG) with a segmented radio group in the add/edit form. Filter history by category using filter chips, and read per-category charts.
+- **Appearance:** A Light / Dark / System radio group in Settings. The instrument panel (top bar, rail, bottom bar, binnacle) stays dark in every mode; only the logbook follows the choice. Applied by recomposition, no restart.
+- **Distance Unit:** Kilometres or miles, set from the vehicle form and stated in the Settings readout. Every odometer, distance, mileage and cost-per-distance readout converts, including the entry form's odometer field and the charts' axes. **Storage and all calculations stay in kilometres**; conversion is display-only (`DistanceConverter`).
+- **Multi-Vehicle:** Add, edit, switch and delete vehicles from Settings. Every fill-up belongs to a vehicle, and Dashboard, History, Charts and the entry form all follow the active selection.
 - **Automated Calculations:**
-  - **Per-Fillup Fuel Economy:** Calculated as `(Current Odometer - Previous Odometer) / Fuel Volume` (km/L).
-  - **Running Average Mileage:** Evaluated across all valid fuel intervals (`Total Distance / Total Fuel excluding first fill`).
-  - **Cost per Kilometer:** Operating cost ratio calculated as `Total Cost / Total Distance`.
-  - **Summary Metrics:** Total expenditure, total liters consumed, latest recorded odometer reading, and latest fuel category.
-  - **Per-Category Analytics:** Independent mileage averages and monthly spend breakdowns per fuel type.
+  - **Per-Fillup Fuel Economy:** `(Current Odometer - Previous Odometer) / Fuel Volume` (km/L).
+  - **Running Average Mileage:** `Total Distance / Total Fuel excluding the baseline fill-up`.
+  - **Cost per Distance:** `Total Cost / Total Distance`.
+  - **Summary Metrics:** Total expenditure, total litres, latest odometer reading, latest fuel category.
+  - **Per-Category Analytics:** Independent mileage series and monthly spend breakdowns per fuel type.
 - **Visual Trend Analytics:**
-  - **Mileage Trend Line Chart:** Chronological plot showing fuel economy progression over fill-up dates. Supports combined view and per-category overlay lines (dashed).
-  - **Monthly Spend Bar Chart:** Grouped bar chart depicting total fuel costs categorized by calendar month. Supports single-series (total) and multi-series (per-category) modes.
-  - **Empty / Single-Entry States:** Contextual fallback views when fewer than two records are available for charting.
+  - **Mileage Trend Line Chart:** Chronological plot of fuel economy per fill-up, combined plus dashed per-category overlays.
+  - **Monthly Spend Bar Chart:** Total fuel cost grouped by calendar month, single-series or grouped per category.
+  - **Empty / Single-Entry States:** Contextual fallback views when there are fewer than two records.
 - **Full History Management:**
-  - Reverse-chronological feed of all recorded fill-ups.
-  - Category filter chips for quick filtering by fuel type (All / Petrol / Diesel / CNG).
-  - Tap-to-edit interaction for modifying existing entries.
-  - Guarded deletion flow requiring explicit confirmation before record removal.
-  - Undo-on-delete via snackbar.
+  - Reverse-chronological ledger (newest first), figures right-aligned so columns compare vertically.
+  - Category filter chips (All / Petrol / Diesel / CNG).
+  - Tap a row to edit; the dashboard ledger carries an Edit link per row.
+  - Guarded deletion requiring explicit confirmation, with undo via snackbar.
 - **Input Validation Rules:**
-  - Rejects odometer values that are equal to or lower than the previous recorded reading.
-  - Rejects zero or negative values for fuel volume and total cost.
-  - Displays inline contextual error notices below each form field.
+  - Rejects odometer readings equal to or lower than the previous reading for the vehicle.
+  - Rejects zero or negative fuel volume and total cost.
+  - Inline message under each invalid field, a banner counting them (`%d fields need attention`), and focus moved to the first invalid field. Save is never disabled.
+- **Post-Save Summary:** A valid save replaces the form with a readout of what was recorded (vehicle, category, date, odometer, litres, cost, measured mileage, price per litre) rather than navigating straight back.
 - **Offline Persistence:**
-  - Backed by Room SQLite with database indices on `date`, `odometer`, composite `(date, odometer)`, and `fuelCategory` for sub-millisecond query performance.
+  - Room SQLite with indices on `date`, `odometer`, composite `(date, odometer)`, `fuelCategory`, and `vehicleId`.
+  - Foreign key from `fuel_entries.vehicleId` to `vehicles.id` with `ON DELETE CASCADE`.
+- **Preferences:** `theme_mode` and `distance_unit` in `SharedPreferences("milelog_prefs")`, written with `commit()` so they survive the process that set them.
 - **CSV Export:**
-  - One-tap export of the active vehicle's fuel history to a CSV file (`id,date,vehicle,odometer,liters,cost,mileage,fuel_category`) via the system document picker (SAF). Export-only — no import or backup/restore.
-  - Dates are ISO-8601 (`yyyy-MM-dd`), numbers use fixed decimals with a dot separator, mileage is recomputed with the same calculator the dashboard uses (blank for the baseline fill-up), rows are chronological, and the file is UTF-8 with a BOM for spreadsheet compatibility.
-- **Accessibility & Font Scaling:**
-  - Fully dynamic layout capable of scaling up to 200% system font size without truncation, overlap, or scroll clipping.
+  - One-tap export of the active vehicle's fuel history to `milelog_fuel_entries.csv` (`id,date,vehicle,odometer,liters,cost,mileage,fuel_category`) via the system document picker (SAF). Export-only — no import or backup/restore.
+  - Dates are ISO-8601 (`yyyy-MM-dd`), numbers use fixed decimals with a dot separator, mileage is recomputed with the same calculator the dashboard uses (blank for the baseline fill-up), rows are chronological, and the file is UTF-8 with a BOM. Columns stay in kilometres, matching storage.
+- **Demo Data:** Settings → Add demo fill-ups creates six vehicles (Creta, Seltos, Harrier — each Diesel and CNG) with seven sample fill-ups each, appended after any existing readings.
+- **Accessibility:** Content descriptions on interactive elements, 48dp minimum touch targets, live-region validation notices, and layouts that tolerate large system font scale.
 
 ---
 
 ## 3. Core Screen Overview
 
 ### 3.1 Dashboard Screen (`DashboardScreen.kt`)
-- **Purpose:** Central landing screen displaying primary vehicle metrics and one-tap access to all workflows.
+- **Purpose:** Monitor surface, read in the order a driver checks it: gauge, readouts, record.
 - **UI Structure:**
-  - *Metric Cards:* 2x2 grid containing Latest Odometer (with fuel category subtitle), Total Fuel Spend, Average Mileage (km/L), and Cost per km.
-  - *Primary Action:* "Add Fuel Entry" button for rapid logging.
-  - *Navigation Cards:* Two cards routing to "Fuel History" and "Charts & Insights".
-  - *Empty State:* Displayed when zero entries exist, prompting the user to add their initial record.
-  - *Error State:* Retry-enabled error display with contextual error messages.
+  - *Binnacle (instrument band):* average mileage gauge on a real 0–30 km/L scale (0–18.6 mi/L in miles) with ticks and an amber marker, plus a readout strip of latest odometer, cost per km/mile and total spend.
+  - *Fill-up ledger:* ruled table, newest first — date, odometer, litres, mileage, cost and an Edit link per row. Below 600dp each row stacks into two lines; at and above it the columns are captioned and aligned.
+  - *Mileage by fill-up:* one bar per measured fill-up on a zero-based scale with the value and signed delta printed under each bar.
+  - *Empty / Error States:* prompt to add a vehicle or the first entry; retry-enabled error block.
 
 ### 3.2 Add / Edit Fuel Entry Screen (`AddEditEntryScreen.kt`)
-- **Purpose:** Input form for logging a new fill-up or updating an existing entry.
+- **Purpose:** Operate surface where the instrument becomes the input display.
 - **UI Structure:**
-  - *Date Selector:* Field opening a Material 3 date picker dialog (defaults to today's date).
-  - *Odometer Field:* Numeric input showing the previous reading as helper text.
-  - *Fuel Quantity Field:* Decimal input formatted in liters (L).
-  - *Total Cost Field:* Decimal input formatted in Indian Rupees (INR).
-  - *Fuel Category Dropdown:* Material 3 `ExposedDropdownMenuBox` with Petrol, Diesel, CNG options.
-  - *Primary Button:* "Save Entry" / "Update Entry" with keyboard-aware padding (`imePadding`).
+  - *Instrument band:* live mileage on the same gauge scale as the dashboard, plus distance since the last fill-up, cost per km/mile and price per litre. A missing or low odometer leaves the dial at zero and the readouts at `—`.
+  - *Entry sheet:* fuel type (segmented radio group) → date → odometer (previous reading as helper text and validation context) → litres → cost.
+  - *Validation:* inline messages, the counting banner, focus moved to the first invalid field; save stays enabled.
+  - *Commit:* "Save fill-up" / "Save changes" with "Saved on this device, nothing uploaded" beside it.
+  - *Saved summary:* replaces the sheet after a successful write, with a Done action.
+  - Keyboard-aware padding (`imePadding`) and a Material 3 date picker dialog.
 
 ### 3.3 Fuel History Screen (`HistoryScreen.kt`)
-- **Purpose:** Chronological log of all recorded fill-ups with category filtering.
+- **Purpose:** Chronological ledger of the active vehicle's fill-ups with category filtering.
 - **UI Structure:**
-  - *Category Filter Chips:* Horizontal scrollable row ("All" + one chip per `FuelCategory`).
-  - *Entry Cards:* Displays date, odometer reading, fuel volume (L), total cost (INR), and computed mileage badge.
-  - *Edit Action:* Tapping anywhere on a card opens the entry in edit mode.
-  - *Delete Action:* Dedicated delete button opening a modal confirmation dialog with undo snackbar.
-  - *CSV Export:* Top-bar action triggering the system document picker for CSV export.
-  - *Floating Action Button:* Fixed bottom-right button to quickly add a new entry.
+  - *Category Filter Chips:* horizontally scrollable row ("All" plus one chip per `FuelCategory`).
+  - *Ledger Rows:* date, odometer, litres (+ category on phones), mileage and cost; the baseline entry has no mileage and shows `—`.
+  - *Edit Action:* tapping a row opens the entry in edit mode.
+  - *Delete Action:* per-row delete opening a modal confirmation, with an undo snackbar afterwards.
+  - *CSV Export:* top-bar action triggering the system document picker, reporting how many entries were written.
+  - *Floating Action Button:* fixed bottom-right button to add a new entry.
 
 ### 3.4 Charts & Insights Screen (`ChartsScreen.kt`)
-- **Purpose:** Visual analytics suite providing graphical representation of fuel economy and spend patterns.
+- **Purpose:** Visual analytics for fuel economy and spend patterns.
 - **UI Structure:**
-  - *Mileage Trend Card:* Line chart plotting km/L efficiency per fill-up using smooth curves. Supports per-category overlay lines (dashed).
-  - *Monthly Spend Card:* Bar chart plotting total expenditure grouped by calendar month. Supports grouped multi-series mode for per-category breakdown.
-  - *Fallback View:* Friendly notification displayed when fewer than two entries are available.
-  - *Error State:* Retry-enabled error display.
+  - *Mileage Trend Card:* line chart of mileage per fill-up, drawn in the selected unit. Combined line plus dashed per-category overlays, straight segments (a curve would invent readings between fill-ups).
+  - *Monthly Spend Card:* bar chart of total cost per calendar month, single-series or grouped per category.
+  - *Layout:* plots stack below 720dp of content width and sit side by side above it.
+  - *Fallback / Error States:* friendly notice under two entries; retry-enabled error block.
+
+### 3.5 Settings Screen (`SettingsScreen.kt`)
+- **Purpose:** Configure surface. It opens with the current configuration as an instrument readout rather than a decorative header.
+- **UI Structure:**
+  - *Configuration readout:* distance unit, currency, network (nothing is uploaded).
+  - *Vehicle group:* the vehicle list with the active selection, tap to switch, edit and delete (with confirmation), and an Add vehicle row.
+  - *Appearance group:* Light / Dark / System radio group with the note that the instrument stays dark in every mode.
+  - *Data group:* Add demo fill-ups, Export fill-ups as CSV, Delete all fill-ups (confirmation and undo).
+  - *About group:* version, storage ("This device"), network ("Not required").
+
+### 3.6 Add / Edit Vehicle Screen (`AddEditVehicleScreen.kt`)
+- **Purpose:** Configure a vehicle: name, make, model, optional registration, default fuel type, and the distance unit.
+- **Note:** the distance unit is an install-wide preference, so it writes as it is picked while the rest of the form saves on submit.
 
 ---
 
@@ -131,32 +148,44 @@ The application follows **MVVM + Repository** architecture with unidirectional d
 UI (Compose Screens) → ViewModel (StateFlow) → Repository → DAO (Room) → SQLite
                           ↓
                     Domain Logic (Pure Kotlin)
-                    MileageCalculator / FuelEntryValidator / FuelEntryCsvExporter
+                    MileageCalculator / FuelEntryValidator / VehicleValidator
+                    FuelEntryCsvExporter / DistanceConverter / DemoDataGenerator
 ```
 
 ### 4.2 Package Structure
 
 ```
 com.example.myapplication/
-├── MainActivity.kt                    # Entry point, edge-to-edge, theme + nav host
+├── MainActivity.kt                    # Entry point, edge-to-edge, collects themeMode, applies MileLogTheme
 ├── MileLogApplication.kt              # Application subclass, manual DI root
 │
 ├── data/
 │   ├── local/
-│   │   ├── FuelCategory.kt            # Enum: PETROL, DIESEL, CNG
-│   │   ├── FuelEntry.kt               # Room @Entity with indexes
-│   │   ├── FuelEntryDao.kt            # Room @Dao with 11 methods
-│   │   └── MileLiteDatabase.kt        # Room Database (v2)
+│   │   ├── FuelCategory.kt            # Enum: PETROL, DIESEL, CNG (+ FuelCategoryConverters)
+│   │   ├── FuelEntry.kt               # Room @Entity with indices and vehicle FK
+│   │   ├── FuelEntryDao.kt            # Room @Dao, vehicle-scoped and category-scoped queries
+│   │   ├── MileLiteDatabase.kt        # Room Database (v4) + migrations + single-active repair
+│   │   ├── ThemeMode.kt               # Enum: LIGHT, DARK, SYSTEM + isDark resolution
+│   │   ├── UserPreferences.kt         # PreferencesStorage seam + typed preference access
+│   │   └── Vehicle.kt                 # Room @Entity, unique name, active flag
 │   └── repository/
-│       └── FuelEntryRepository.kt     # Interface + OfflineFuelEntryRepository
+│       ├── FuelEntryRepository.kt     # Interface + OfflineFuelEntryRepository
+│       ├── SettingsRepository.kt      # Interface + OfflineSettingsRepository (StateFlow)
+│       └── VehicleRepository.kt       # Interface + OfflineVehicleRepository
 │
 ├── domain/
 │   ├── calculation/
-│   │   └── MileageCalculator.kt       # DashboardStats, FillupMileage, MonthlySpend
+│   │   └── MileageCalculator.kt       # DashboardStats, FillupMileage, MonthlySpend, per-category series
+│   ├── conversion/
+│   │   ├── DistanceConverter.kt       # kmToMiles, toKilometres, convertMileage, formatDistance
+│   │   └── DistanceUnit.kt            # Enum: KILOMETERS, MILES
+│   ├── demo/
+│   │   └── DemoDataGenerator.kt       # Six demo profiles and their histories
 │   ├── export/
 │   │   └── FuelEntryCsvExporter.kt    # Pure-Kotlin CSV builder
 │   └── validation/
-│       └── FuelEntryValidator.kt      # FieldError, ValidationResult, validate()
+│       ├── FuelEntryValidator.kt      # FieldError, ValidationResult, validate()
+│       └── VehicleValidator.kt        # VehicleFieldError, required and duplicate names
 │
 └── ui/
     ├── charts/
@@ -165,37 +194,48 @@ com.example.myapplication/
     │   ├── MileageTrendChart.kt       # MPAndroidChart LineChart wrapper
     │   └── MonthlySpendChart.kt       # MPAndroidChart BarChart wrapper
     ├── components/
-    │   ├── MileLogTopAppBar.kt        # Shared top app bar
-    │   └── MileLogFab.kt              # Shared floating action button
+    │   ├── InstrumentChrome.kt        # InstrumentBar, wordmark, product mark
+    │   ├── InstrumentReadouts.kt      # MileageGauge, GaugeScaleLabels, ReadoutStrip
+    │   ├── Ledger.kt                  # LedgerPanel, SectionHeader, LedgerRow, MileageTrendBars
+    │   ├── DistanceText.kt            # Unit-aware copy: formatDistanceWithUnit, formatMileageWithUnit
+    │   ├── SegmentedChoice.kt         # Shared segmented radio group
+    │   └── MileLogFab.kt              # Shell primary action
     ├── dashboard/
-    │   ├── DashboardScreen.kt         # 2x2 stat cards + nav tiles + FAB
+    │   ├── DashboardScreen.kt         # Binnacle + ledger with edit links + trend
     │   └── DashboardViewModel.kt      # Dashboard state management
     ├── entry/
-    │   ├── AddEditEntryScreen.kt      # Form with date picker, category dropdown
-    │   └── AddEditViewModel.kt        # Form state, validation, save
+    │   ├── AddEditEntryScreen.kt      # Live instrument, ordered sheet, validation, saved summary
+    │   └── AddEditViewModel.kt        # Form state, validation, unit conversion, save
     ├── history/
-    │   ├── HistoryScreen.kt           # Filtered list, delete, undo, CSV export
+    │   ├── HistoryScreen.kt           # Filtered ledger, delete, undo, CSV export
     │   └── HistoryViewModel.kt        # Category filter, delete+undo, export
     ├── navigation/
-    │   └── MileLiteNavHost.kt         # Routes + NavHost (dashboard, history, add/edit, charts)
+    │   ├── MileLiteNavHost.kt         # Routes + NavHost + shell layout composition local
+    │   └── BottomNavBar.kt            # MileLogBottomBar (compact) and MileLogRail (expanded)
+    ├── settings/
+    │   ├── SettingsScreen.kt          # Configuration readout, vehicle/appearance/data/about groups
+    │   └── SettingsViewModel.kt       # Vehicles, theme, export, clear+undo, demo seed
+    ├── vehicle/
+    │   ├── AddEditVehicleScreen.kt    # Vehicle form incl. the distance unit control
+    │   └── AddEditVehicleViewModel.kt # Vehicle form state and validation
     └── theme/
-        ├── Color.kt                   # Kinetic Logic color palette
-        ├── Theme.kt                   # Light/Dark schemes (follows system), dynamic color OFF
-        ├── Type.kt                    # Inter typography hierarchy
-        ├── Spacing.kt                 # 8px spacing scale + 48dp touch target
-        ├── Shape.kt                   # Rounded shape tokens + M3 mapping
-        └── Elevation.kt               # Tonal elevation levels + shadow helpers
+        ├── Color.kt                   # Instrument Ledger palette + LedgerColors
+        ├── Theme.kt                   # MileLogTheme(themeMode), dynamic color OFF
+        ├── Type.kt                    # Inter typography + DataMono / DataTextStyle
+        ├── Spacing.kt                 # Spacing scale, touch targets, window breakpoints
+        ├── Shape.kt                   # Small radii + M3 mapping
+        └── Elevation.kt               # Tonal material change (level1/2 shadows are no-ops)
 ```
 
 ### 4.3 Layer Responsibilities
 
 | Layer | Primary Components | Responsibility |
 |---|---|---|
-| **Presentation (UI)** | Jetpack Compose, Material Design 3 | Declarative screen layouts, theme tokens, and dynamic font scaling |
-| **State Management** | ViewModels, StateFlow, Coroutines | Exposing immutable UI states and processing user actions |
-| **Domain Logic** | `MileageCalculator`, `FuelEntryValidator`, `FuelEntryCsvExporter` | Pure Kotlin business logic, validation rules, and CSV generation |
-| **Data & Persistence** | Room, SQLite, `FuelEntryRepository` | Local indexed database queries and transactional data operations |
-| **Visualization** | MPAndroidChart via Compose `AndroidView` | Native rendering of line and bar charts with per-category overlays |
+| **Presentation (UI)** | Jetpack Compose, Material Design 3 | Declarative screen layouts, instrument/logbook materials, unit-aware copy |
+| **State Management** | ViewModels, StateFlow, Coroutines | Immutable UI states, user actions, preference + database flow combination |
+| **Domain Logic** | `MileageCalculator`, validators, `FuelEntryCsvExporter`, `DistanceConverter`, `DemoDataGenerator` | Pure Kotlin business logic, validation, conversion, CSV generation |
+| **Data & Persistence** | Room, SQLite, repositories, `UserPreferences` | Indexed queries, transactional operations, preference persistence |
+| **Visualization** | MPAndroidChart via Compose `AndroidView` | Native line and bar rendering with per-category overlays |
 
 ---
 
@@ -206,19 +246,34 @@ com.example.myapplication/
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | `Long` | `@PrimaryKey(autoGenerate = true)` | Auto-generated unique identifier |
+| `vehicleId` | `Long?` | FK → `vehicles.id`, `ON DELETE CASCADE`, indexed | Owning vehicle; null only for an entry whose vehicle was removed |
 | `date` | `Long` | NOT NULL | Epoch timestamp in milliseconds |
-| `odometer` | `Int` | NOT NULL | Vehicle odometer reading in km |
-| `liters` | `Double` | NOT NULL | Fuel volume in liters |
+| `odometer` | `Int` | NOT NULL | Vehicle odometer reading **in km** |
+| `liters` | `Double` | NOT NULL | Fuel volume in litres |
 | `cost` | `Double` | NOT NULL | Total cost in INR |
 | `fuelCategory` | `String` | NOT NULL, default `"Petrol"` | Fuel type display name |
 
-### 5.2 Database Indexes
+### 5.2 Entity: `Vehicle`
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `Long` | `@PrimaryKey(autoGenerate = true)` | Auto-generated unique identifier |
+| `name` | `String` | unique index | Display name, e.g. "Hyundai Creta" |
+| `make` | `String` | default `""` | Manufacturer |
+| `model` | `String` | default `""` | Model line |
+| `registrationNumber` | `String` | default `""` | Optional registration plate |
+| `fuelType` | `String` | default `"Petrol"` | Default fuel category for new entries |
+| `isActive` | `Boolean` | default `false` | The single vehicle currently selected |
+
+### 5.3 Database Indexes
 1. `Index(value = ["date"])` — date-based queries and sorting
 2. `Index(value = ["odometer"])` — odometer-based lookups
 3. `Index(value = ["date", "odometer"])` — composite index for combined queries
 4. `Index(value = ["fuelCategory"])` — category filter queries
+5. `Index(value = ["vehicleId"])` — per-vehicle scoping
+6. `Index(value = ["name"], unique = true)` on `vehicles`
 
-### 5.3 FuelCategory Enum
+### 5.4 FuelCategory Enum
 
 | Value | Display Name | Description |
 |---|---|---|
@@ -226,27 +281,22 @@ com.example.myapplication/
 | `DIESEL` | "Diesel" | Diesel fuel |
 | `CNG` | "CNG" | Compressed Natural Gas |
 
-### 5.4 DAO Methods (11 total)
-
-| Method | Return Type | Description |
-|---|---|---|
-| `getAllFlow()` | `Flow<List<FuelEntry>>` | Reactive all entries, most-recent-first |
-| `getAllFlow(category)` | `Flow<List<FuelEntry>>` | Reactive filtered by category (null = all) |
-| `getAll()` | `suspend List<FuelEntry>` | All entries, most-recent-first |
-| `getAll(category)` | `suspend List<FuelEntry>` | Filtered by category (null = all) |
-| `getById(id)` | `suspend FuelEntry?` | Single entry lookup by ID |
-| `getLatest()` | `suspend FuelEntry?` | Highest odometer entry |
-| `getLatestByCategory(category)` | `suspend FuelEntry?` | Highest odometer within category |
-| `insert(entry)` | `suspend Long` | Insert with REPLACE strategy |
-| `insertAll(entries)` | `suspend List<Long>` | Bulk insert |
-| `update(entry)` | `suspend Unit` | Update existing entry |
-| `delete(entry)` | `suspend Unit` | Delete entry |
-
 ### 5.5 Database Configuration
-- **Version:** 2
-- **Name:** `milelog_lite.db`
-- **Export Schema:** false
-- **Migration Strategy:** `fallbackToDestructiveMigration(dropAllTables = true)`
+- **Version:** 4, named `milelog_lite.db`
+- **Export Schema:** `true`, written to `app/schemas` and exposed to instrumented tests
+- **Migrations:** `MIGRATION_1_2` (fuel category), `MIGRATION_2_3` (vehicles, `vehicleId`, existing rows filed under a default vehicle), `MIGRATION_3_4` (nullable `vehicleId` + FK cascade, table rebuild)
+- **Fallback:** `fallbackToDestructiveMigrationOnDowngrade` only — a missing upgrade path fails loudly rather than wiping data
+- **Invariant repair:** `REPAIR_ACTIVE_VEHICLE` runs on every open so exactly one vehicle is active
+- **Backup:** the database is excluded from cloud backup (device-to-device transfer retained)
+
+### 5.6 Preferences
+
+| Key | Values | Default |
+|---|---|---|
+| `theme_mode` | `"light"`, `"dark"`, `"system"` | `"system"` |
+| `distance_unit` | `"km"`, `"mi"` | `"km"` |
+
+Stored in `SharedPreferences("milelog_prefs")` through `SharedPreferencesStorage` (a `commit()` on `Dispatchers.IO`) and exposed as `StateFlow`s by `OfflineSettingsRepository`.
 
 ---
 
@@ -265,7 +315,7 @@ com.example.myapplication/
 | Lifecycle ViewModel Compose | 2.11.0 | ViewModel integration |
 | MPAndroidChart | v3.1.0 | Line and bar charts |
 | Core KTX | 1.19.0 | Kotlin extensions |
-| Activity Compose | 1.13.0 | Activity integration |
+| Activity Compose | 1.13.0 | Activity integration, `enableEdgeToEdge` |
 
 ### 6.2 Testing Dependencies
 
@@ -275,7 +325,7 @@ com.example.myapplication/
 | AndroidX JUnit | 1.3.0 | Instrumented testing |
 | Espresso Core | 3.7.0 | UI testing |
 | Compose UI Test JUnit4 | (BOM-managed) | Compose testing |
-| Room Testing | 2.8.4 | Database testing |
+| Room Testing | 2.8.4 | Database and migration testing |
 
 ### 6.3 Build Configuration
 
@@ -300,86 +350,70 @@ com.example.myapplication/
 |---|---|---|---|
 | `"dashboard"` | `DASHBOARD` | `DashboardScreen` | None (start destination) |
 | `"history"` | `HISTORY` | `HistoryScreen` | None |
+| `"charts"` | `CHARTS` (`REPORTS`) | `ChartsScreen` | None |
+| `"settings"` | `SETTINGS` | `SettingsScreen` | None |
 | `"add_entry"` | `ADD_ENTRY` | `AddEditEntryScreen(entryId = 0L)` | None |
 | `"edit_entry/{entryId}"` | `EDIT_ENTRY` | `AddEditEntryScreen(entryId)` | `entryId: Long` |
-| `"charts"` | `CHARTS` | `ChartsScreen` | None |
+| `"vehicle_add"` | `VEHICLE_ADD` | `AddEditVehicleScreen(vehicleId = 0L)` | None |
+| `"vehicle_edit/{vehicleId}"` | `VEHICLE_EDIT` | `AddEditVehicleScreen(vehicleId)` | `vehicleId: Long` |
 
-### 7.2 Navigation Flow
-- **Dashboard** → Add Entry (FAB), History (card), Charts (card)
-- **History** → Edit Entry (tap card), Add Entry (FAB), Navigate Up (back arrow)
-- **Charts** → Navigate Up, Add Entry (empty state button)
-- **Add/Edit** → Navigate Up (on save or back)
+### 7.2 Shell
+- Below 840dp the shell is a dark bottom bar with four destinations (Dashboard, History, Reports, Settings) plus the primary-action FAB on everything except Settings.
+- At and above 840dp it is a dark 228dp rail carrying the same destinations, the wordmark, the primary action and the offline note.
+- A tab press pops up to the start destination and restores state; back from a tab pops to the start destination.
+- `AddEditEntryScreen` and `AddEditVehicleScreen` are full-screen routes with no shell bars.
+
+### 7.3 Navigation Flow
+- **Dashboard** → Add Entry (FAB), History ("View all"), Charts ("Open charts"), Edit Entry (ledger row link), Add Vehicle (empty state)
+- **History** → Edit Entry (tap row), Add Entry (FAB), Delete Entry (row action + confirmation + undo), Export CSV (top bar)
+- **Charts** → Add Entry (empty state CTA)
+- **Settings** → Add Vehicle, Edit Vehicle, switch active vehicle, export, clear with undo, seed demo data
+- **Add/Edit** → back arrow, or Done after a save
 
 ---
 
 ## 8. Theme System
 
-### 8.1 Color Palette (Kinetic Logic)
+### 8.1 Instrument Ledger
 
-| Role | Light | Dark |
+Two materials, one object. The top of every screen is a permanently dark instrument binnacle; below it the surface is a light logbook. Depth comes from the material change, not from shadow.
+
+| Token group | Light | Dark |
 |---|---|---|
-| **Primary** | `#003D9B` (Dependable Blue) | `#B2C5FF` |
-| onPrimary | `#FFFFFF` | `#00215F` |
-| primaryContainer | `#0052CC` | `#0052CC` |
-| onPrimaryContainer | `#C4D2FF` | `#C4D2FF` |
-| **Secondary** | `#006C47` (Business Green) | `#65DCA4` |
-| onSecondary | `#FFFFFF` | `#005235` |
-| secondaryContainer | `#82F9BE` | `#005235` |
-| onSecondaryContainer | `#00734C` | `#82F9BE` |
-| **Tertiary** | `#004B51` (Teal) | `#4BD9E5` |
-| onTertiary | `#FFFFFF` | `#002022` |
-| tertiaryContainer | `#00656C` | `#004F55` |
-| onTertiaryContainer | `#5BE6F2` | `#7FF4FF` |
-| **Background** | `#F4F5F7` | `#1A2330` |
-| **Surface** | `#F9F9FF` | `#243145` |
-| surfaceContainerLowest | `#FFFFFF` | `#161E2B` |
-| surfaceContainerLow | `#F0F3FF` | `#1C2634` |
-| surfaceContainer | `#E7EEFF` | `#212C3D` |
-| surfaceContainerHigh | `#DEE8FF` | `#2A3850` |
-| surfaceContainerHighest | `#D6E3FE` | `#304159` |
-| SurfaceVariant | `#D6E3FE` | `#434654` |
-| onSurface | `#0E1C2F` | `#EBF1FF` |
-| onSurfaceVariant | `#434654` | `#C3C6D6` |
-| Outline | `#737685` | `#8D92A5` |
-| OutlineVariant | `#C3C6D6` | `#434654` |
-| Error | `#BA1A1A` | `#FFB4AB` |
-| onError | `#FFFFFF` | `#690005` |
-| ErrorContainer | `#FFDAD6` | `#93000A` |
-| onErrorContainer | `#410002` | `#FFDAD6` |
+| Logbook paper (`background`) | `#EDF0EF` | `#0C1112` |
+| Logbook panel (`surface`) | `#FBFCFB` | `#141A1C` |
+| Ink (`onSurface`) | `#0E1413` | `#E7EDEB` |
+| Primary (petrol) | `#0B4A46` | `#6FC8BB` |
+| Secondary (fuel) | `#8A5200` | `#EDB25A` |
+| Rule / rule strong | `#D5DBD9` / `#B9C2BF` | `#222C2E` / `#33403F` |
 
-Accents: `#FF8B00` (Personal Orange), `#36B37E` (Business Green), `#DE350B` (Active Status red). Inverse roles: light `inverseSurface=#243145`, `inverseOnSurface=#EBF1FF`, `inversePrimary=#B2C5FF` (flipped in dark).
+The instrument roles are **identical in both appearances** and travel through `LocalLedgerColors`, not the Material scheme: surface `#101618`, raised `#182023`, rule `#2B3639`, text `#E6EDEC`, muted `#9BA8A6`, readout `#57C0B2`, marker `#F0A83C`.
 
-**Design Decision:** Dynamic color is intentionally disabled to preserve consistent brand identity.
+**Design Decision:** Dynamic color is intentionally disabled, so the identity is identical on every device.
 
-### 8.2 Typography
+### 8.2 Appearance Preference
+`MileLogTheme(themeMode)` resolves `ThemeMode.SYSTEM → isSystemInDarkTheme()`, `LIGHT → false`, `DARK → true`. `MainActivity` collects `SettingsRepository.themeMode` and re-applies `enableEdgeToEdge` from a `LaunchedEffect(darkTheme)`, so the logbook, the system-bar icon contrast and everything below recompose on change without a restart. The instrument never flips.
 
-All styles use the Inter family (`inter_regular`, `inter_medium`, `inter_semibold`, `inter_bold`). Hierarchy is driven by weight contrast, with tabular figures (`tnum`) on KPI display styles:
+### 8.3 Typography
 
-| Style | Weight | Size (sp) | Line Height (sp) | Letter Spacing (sp) |
+Inter for prose, `DataMono` for readings. The classes that matter:
+
+| Style | Family | Weight | Size (sp) | Notes |
 |---|---|---|---|---|
-| displayLarge | Bold | 48 | 52 | -0.96 |
-| displayMedium | Bold | 36 | 44 | -0.72 |
-| displaySmall | Bold | 24 | 30 | 0 |
-| headlineLarge | SemiBold | 28 | 34 | 0 |
-| headlineMedium | SemiBold | 24 | 30 | 0 |
-| headlineSmall | SemiBold | 20 | 26 | 0 |
-| titleLarge | SemiBold | 20 | 26 | 0 |
-| titleMedium | Medium | 16 | 22 | 0.15 |
-| titleSmall | Medium | 14 | 20 | 0.1 |
-| bodyLarge | Normal | 16 | 24 | 0.5 |
-| bodyMedium | Normal | 14 | 20 | 0.25 |
-| bodySmall | Normal | 12 | 16 | 0.4 |
-| labelLarge | Medium | 14 | 20 | 0.1 |
-| labelMedium | Medium | 12 | 16 | 0.5 |
-| labelSmall | Medium | 11 | 16 | 0.55 |
+| displayLarge / displayMedium | Inter | SemiBold | 48 / 36 | Gauge value |
+| headlineMedium | Inter | SemiBold | 24 | Binnacle title |
+| titleLarge | Inter | SemiBold | 20 | Section headers |
+| titleMedium | Inter | Medium | 16 | Row titles |
+| bodyMedium / bodySmall | Inter | Normal | 14 / 12 | Prose and notes |
+| `DataTextStyle` / `DataTextStyleSmall` | DataMono | Normal | 15 / 13 | Ledger figures, tabular |
+| `MicroLabelStyle` | Inter | SemiBold | 11, 0.09em | Column captions, field labels |
 
-### 8.3 Spacing, Shapes & Elevation (Kinetic Logic)
+### 8.4 Spacing, Shapes & Elevation
 
-- **Spacing (`Spacing.kt`, 8px base):** `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `touchTarget=48` (48dp minimum touch height via `touchTargetMinHeight()`).
-- **Shapes (`Shape.kt`):** `sm=4`, `md=8`, `lg=12`, `xl=16`, `xxl=24`, `full=9999`, `chip=xl`. M3 mapping: extraSmall/small/medium → 8px, large → 12px, extraLarge → 24px.
-- **Elevation (`Elevation.kt`, tonal layers):** Level 0 = `background` canvas; Level 1 (cards) = white `surfaceContainerLowest`, 1dp, black 10%, 4dp blur; Level 2 (FAB / bottom nav) = 4dp, black 15%, 12dp blur; overlays = 20% scrim. Helpers: `level1Shadow()`, `level2Shadow()`.
-
-> Note: `MileLogTheme` currently follows the system dark setting (`darkTheme = isSystemInDarkTheme()`). A user-selectable theme mode (Light/Dark/System) is part of the planned Settings work, not yet wired.
+- **Spacing (`Spacing.kt`, 4px base):** `xs=4`, `sm=8`, `md=12`, `lg=16`, `xl=24`, `xxl=32`, `xxxl=48`, `touchTarget=48`, `touchTargetMin=44`. Modifiers: `touchTargetMinHeight()`, `minTouchTargetHeight()`.
+- **Window breakpoints (`MileLogWindow`):** `medium=600` (readout strip becomes a ruled list), `expanded=840` (bottom bar becomes a rail), `contentMaxWidth=1040`.
+- **Shapes (`Shape.kt`):** small radii (4–6px) throughout; `MileLogShapes.sm` and `.md` are what the panels and fields use.
+- **Elevation (`Elevation.kt`):** tonal, not shadowed. `MileLogElevation.level1` is `0.dp` and `level1Shadow()` / `level2Shadow()` are no-ops: with two materials already reading as two depths, a shadow would only muddy the instrument.
 
 ---
 
@@ -387,190 +421,151 @@ All styles use the Inter family (`inter_regular`, `inter_medium`, `inter_semibol
 
 ### 9.1 Test Summary
 
-| Category | Files | Test Methods |
+| Category | Test Methods | Status |
 |---|---|---|
-| Unit Tests | 5 | 42 |
-| Instrumented Tests | 6 | 38 |
-| **Total** | **11** | **80** |
+| Unit Tests (JVM) | 112 | All passing (`testDebugUnitTest`) |
+| Instrumented Tests | 67 | All passing (`connectedDebugAndroidTest` on a booted emulator) |
 
 ### 9.2 Unit Tests
 
-| Test File | Tests | Coverage |
-|---|---|---|
-| `FuelEntryValidatorTest.kt` | 4 | Valid inputs, empty inputs, odometer monotonicity, negative values |
-| `MileageCalculatorTest.kt` | 16 | Empty/single/multi entry, same-odometer edge, monthly spend, per-category mileage, per-category monthly spend |
-| `FuelEntryCsvExporterTest.kt` | 6 | Empty list, single entry, multiple entries, no trailing newline, fuel category column, default category |
-| `FuelCategoryTest.kt` | 13 | Enum integrity, default value, fromDisplayName, filtering logic, empty datasets, large dataset (10k entries) |
+| Test File | Coverage |
+|---|---|
+| `MileageCalculatorTest.kt` | Empty/single/multi entry, same-odometer edge, monthly spend, per-category mileage and spend |
+| `FuelEntryValidatorTest.kt` | Valid inputs, empty inputs, odometer monotonicity, negative values |
+| `VehicleValidatorTest.kt` | Required name, case-insensitive duplicates, whitespace, self-exclusion on edit |
+| `FuelEntryCsvExporterTest.kt` | Empty list, single/multiple entries, no trailing newline, category column, defaults |
+| `FuelCategoryTest.kt` | Enum integrity, default value, `fromDisplayName`, filtering logic, large datasets |
+| `DemoDataGeneratorTest.kt` | Six profiles, per-profile category/mileage/price bands, determinism, vehicle tagging |
+| `UserPreferencesTest.kt` | Defaults, documented keys and values, read-back by a new instance, unknown-value fallback |
+| `ThemeModeTest.kt` | Stored values, default, `system`/`light`/`dark` resolution, `fromStored` fallback |
+| `SettingsRepositoryTest.kt` | Seeded flows, setters, write visible to the next instance, preference independence |
+| `DistanceConverterTest.kt` | km→mi, inverse conversion, mileage, cost per distance, formatting, unit labels |
+| `OdometerToStoreKmTest.kt` | Typed reading → stored km, untouched field keeps its value, blank/unreadable input |
 
 ### 9.3 Instrumented Tests
 
-| Test File | Tests | Coverage |
-|---|---|---|
-| `FuelEntryDaoTest.kt` | 7 | CRUD operations, Flow reactivity, ordering, persistence |
-| `FuelEntryDaoCrudCategoryTest.kt` | 10 | Category CRUD, default category, update/delete with filters, bulk insert, performance (500 rows) |
-| `FuelEntryDaoCategoryTest.kt` | 13 | Category filtering, getLatestByCategory, Flow reactivity, unknown categories, ordering, tie-break, performance (1000 rows) |
-| `FuelEntryBenchmarkTest.kt` | 1 | Bulk insert (5000 entries), getAll <500ms, getLatest 20x <100ms, getById 50x <100ms |
-| `FullRegressionTest.kt` | 6 | Full CRUD regression, edit/delete impact on dashboard/charts, category-aware operations, per-category chart accuracy |
+| Test File | Coverage |
+|---|---|
+| `FuelEntryDaoTest.kt` | CRUD, Flow reactivity, ordering, persistence across reopen |
+| `FuelEntryDaoCrudCategoryTest.kt` | Category CRUD, bulk insert, filter updates on insert/delete, performance (500 rows) |
+| `FuelEntryDaoCategoryTest.kt` | Filtering, `getLatestByCategory`, Flow reactivity, tie-breaks, performance (1000 rows) |
+| `FuelEntryBenchmarkTest.kt` | Bulk insert (5000 entries) and query timing budgets |
+| `MigrationTest.kt` | v1→v4, v2→v4, v3→v4 with data preserved, and FK enforcement |
+| `VehicleDaoTest.kt` | CRUD, unique names, single active vehicle, per-vehicle entry isolation |
+| `VehicleRepositoryTest.kt` | Switch isolation, delete cascade with active promotion, per-vehicle demo seeding |
+| `UserPreferencesPersistenceTest.kt` | Both preferences across a simulated restart, every value, and the XML on disk |
+| `FullRegressionTest.kt` | Full CRUD regression, edit/delete impact on dashboard and charts, category-aware operations |
 
 ---
 
 ## 10. Known Limitations
 
-1. **Single-Vehicle Support:** The app tracks one vehicle profile per installation. Multi-vehicle management is omitted from the lite scope.
-2. **Local-Only Storage:** All data is stored locally in SQLite. Cloud synchronization and multi-device account logins are not included.
-3. **Export Only, No Import:** Fuel history can be exported to CSV via the system document picker (SAF), but CSV import/restore is not implemented.
-4. **Full-Tank Assumption:** Calculations assume each recorded fill-up fills the tank completely. Partial fill-up tracking is deferred to future releases.
-5. **Fixed Currency Formatting:** Currency amounts are formatted in Indian Rupees (INR) by default without multi-currency switching options.
-6. **Destructive Migration:** Database uses `fallbackToDestructiveMigration()` which drops all tables on version bump. Acceptable for mini scope but not production.
+1. **Local-Only Storage:** All data is stored in SQLite on the device. No cloud sync, accounts or shared garage.
+2. **Export Only, No Import:** Fuel history exports to CSV via the document picker; CSV import/restore is not implemented.
+3. **Full-Tank Assumption:** Calculations assume each recorded fill-up fills the tank completely. Partial fill-up tracking is not modelled.
+4. **Fixed Currency:** Amounts are formatted in Indian Rupees (INR); there is no multi-currency switching.
+5. **Miles per Litre:** Fuel is litres in both units, so mileage reads km/L or mi/L, never miles per gallon.
+6. **Distance Unit Granularity:** Odometer readings are stored as whole kilometres. Converting a reading to whole miles and back is not always invertible by a kilometre, so an odometer field that was never edited is written back exactly as loaded rather than re-derived.
+7. **Single Language:** No localisation beyond the default strings.
 
 ---
 
-## 11. Future Roadmap (Sprint 6 — Partly Done)
+## 11. Sprint 8 — What Changed
 
-Sprint 6 design tokens are already applied (Kinetic Logic colors, Inter typography, 8px spacing, shapes, elevation — see §8). Still planned / not yet implemented:
+Sprint 8 closed the gaps between the shipped app and the Instrument Ledger specs in `refactor-design/`. See `Sprint_Plan_MileLog_Lite.md` §8 for the full checklist and the recorded deviations.
 
-- **Settings Screen:** Theme toggle (Light/Dark/System), distance unit preference (km/mi), export logs, clear data (`deleteAll`), app version info.
-- **Bottom Navigation Bar:** 5-tab navigation (Dashboard, History, Add, Reports, Settings) with active/inactive icon states. Current nav has 5 routes (dashboard, history, add_entry, edit_entry, charts) with no bottom bar — see §7.
-- **Integrations:** `themeMode` parameter on `MileLogTheme`, km→mi display conversion (data stays in km), `SettingsRepository` wiring in `MileLogApplication`/`MainActivity`.
+- **Preferences:** `ThemeMode`, `DistanceUnit`, `UserPreferences` (+ `PreferencesStorage` seam), `SettingsRepository`, wired through `MileLogApplication`.
+- **Appearance:** Settings' static row became a Light / Dark / System radio group; `MileLogTheme(themeMode)` is collected in `MainActivity` and re-applies the system-bar style.
+- **Units:** `DistanceConverter`, a Distance unit control on the vehicle form, and unit-aware copy (`DistanceText.kt`) across the Dashboard, History, Charts and the entry form — including the odometer input, converted on the way in and out.
+- **Entry sheet:** reordered (fuel type first), "Save fill-up" with its destination stated, a counting validation banner with focus moved to the first invalid field, and a post-save summary instead of navigating straight back.
+- **Dashboard:** an Edit link on every ledger row, and a shared trailing slot so the wide header stays over its columns.
+
+Also fixed along the way: the Settings readout now states the configuration (unit, currency, network) rather than repeating log statistics, the vehicle form's primary action says "Save vehicle"/"Save changes" instead of "Save Entry", and the three near-identical fuel-type segmented controls collapsed into one shared `SegmentedChoice`.
 
 ---
 
 ## 12. Screenshots
 
-### 12.1 Dashboard
+### 12.1 Sprint 8 (current)
+
+<table>
+  <tr>
+    <td align="center"><b>Dashboard with fill-ups</b><br/><i>Gauge, readouts, ledger with Edit links</i></td>
+    <td align="center"><b>Log a fill-up</b><br/><i>Fuel type first, live instrument</i></td>
+    <td align="center"><b>Saved summary</b><br/><i>Replaces the sheet after a write</i></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/20_dashboard_fillups_miles.png" width="220" /></td>
+    <td><img src="screenshots/21_log_fillup_edit_km.png" width="220" /></td>
+    <td><img src="screenshots/22_log_fillup_saved.png" width="220" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Validation banner</b><br/><i>Counts the invalid fields</i></td>
+    <td align="center"><b>Fuel History</b><br/><i>Ruled ledger, km</i></td>
+    <td align="center"><b>Charts &amp; Insights</b><br/><i>Trend + monthly spend</i></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/23_log_fillup_validation.png" width="220" /></td>
+    <td><img src="screenshots/24_history.png" width="220" /></td>
+    <td><img src="screenshots/25_charts.png" width="220" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Settings: configuration</b><br/><i>Unit, currency, network</i></td>
+    <td align="center"><b>Settings: appearance</b><br/><i>Light / Dark / System</i></td>
+    <td align="center"><b>Settings: data and about</b><br/><i>Seed, export, clear</i></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/26_settings_configuration.png" width="220" /></td>
+    <td><img src="screenshots/27_settings_appearance.png" width="220" /></td>
+    <td><img src="screenshots/28_settings_data_about.png" width="220" /></td>
+  </tr>
+</table>
+
+The dashboard shot is in miles and the form and history shots are in kilometres: the same demo log read in both units, which is what the distance-unit setting changes.
+
+### 12.2 Dashboard (earlier capture)
 
 <table>
   <tr>
     <td align="center"><b>Empty Dashboard</b><br/><i>No entries — prompt to add first record</i></td>
-    <td align="center"><b>After Entry 1</b><br/><i>Initial metric cards</i></td>
-    <td align="center"><b>After Entry 2</b><br/><i>Average mileage populated</i></td>
+    <td align="center"><b>No vehicle yet</b><br/><i>Current empty state</i></td>
+    <td align="center"><b>After Entry 3</b><br/><i>Full metric grid</i></td>
   </tr>
   <tr>
     <td><img src="screenshots/01_empty_dashboard.png" width="220" /></td>
-    <td><img src="screenshots/04_dashboard_after_entry1.png" width="220" /></td>
-    <td><img src="screenshots/05_dashboard_after_entry2.png" width="220" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>After Entry 3</b><br/><i>Full metric grid</i></td>
-    <td align="center"><b>After Edit</b><br/><i>Edited values reflected</i></td>
-    <td align="center"><b>After Delete</b><br/><i>Metrics updated</i></td>
-  </tr>
-  <tr>
+    <td><img src="screenshots/19_dashboard_no_vehicle.png" width="220" /></td>
     <td><img src="screenshots/06_dashboard_after_entry3.png" width="220" /></td>
-    <td><img src="screenshots/12_dashboard_after_edit.png" width="220" /></td>
-    <td><img src="screenshots/15_dashboard_after_delete.png" width="220" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Empty Final</b><br/><i>All entries deleted</i></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/18_dashboard_empty_final.png" width="220" /></td>
-    <td></td>
-    <td></td>
   </tr>
 </table>
 
-### 12.2 Add / Edit Entry
+### 12.3 Add / Edit Entry and History (earlier capture)
 
 <table>
   <tr>
     <td align="center"><b>Add Entry Form</b><br/><i>Blank form with date picker</i></td>
     <td align="center"><b>Form Filled</b><br/><i>First entry data with category</i></td>
-    <td align="center"><b>Edit Mode</b><br/><i>Existing entry loaded</i></td>
+    <td align="center"><b>History</b><br/><i>Category chips and mileage</i></td>
   </tr>
   <tr>
     <td><img src="screenshots/02_add_entry_form.png" width="220" /></td>
     <td><img src="screenshots/03_form_filled_entry1.png" width="220" /></td>
-    <td><img src="screenshots/09_edit_entry_form.png" width="220" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Odometer Changed</b><br/><i>Modified odometer</i></td>
-    <td align="center"><b>Odometer Corrected</b><br/><i>After validation feedback</i></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/10_edit_odometer_changed.png" width="220" /></td>
-    <td><img src="screenshots/10b_edit_odometer_corrected.png" width="220" /></td>
-    <td></td>
-  </tr>
-</table>
-
-### 12.3 Fuel History
-
-<table>
-  <tr>
-    <td align="center"><b>History (3 Entries)</b><br/><i>Category chips and mileage badges</i></td>
-    <td align="center"><b>After Edit</b><br/><i>Edited entry reflected</i></td>
-    <td align="center"><b>After Delete</b><br/><i>Entry removed</i></td>
-  </tr>
-  <tr>
     <td><img src="screenshots/08_history_3_entries.png" width="220" /></td>
-    <td><img src="screenshots/11_history_after_edit.png" width="220" /></td>
-    <td><img src="screenshots/14_history_after_delete.png" width="220" /></td>
   </tr>
-  <tr>
-    <td align="center"><b>Empty History</b><br/><i>All entries removed</i></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/17_history_empty.png" width="220" /></td>
-    <td></td>
-    <td></td>
-  </tr>
-</table>
-
-### 12.4 Charts & Insights
-
-<table>
   <tr>
     <td align="center"><b>Charts (3 Entries)</b><br/><i>Mileage trend + monthly spend</i></td>
-    <td align="center"><b>After Delete</b><br/><i>Charts updated</i></td>
+    <td align="center"><b>Delete Confirmation</b><br/><i>Before deleting a fuel entry</i></td>
+    <td></td>
   </tr>
   <tr>
-    <td><img src="screenshots/07_charts_with_3_entries.png" width="280" /></td>
-    <td><img src="screenshots/16_charts_after_delete.png" width="280" /></td>
+    <td><img src="screenshots/07_charts_with_3_entries.png" width="220" /></td>
+    <td><img src="screenshots/13_delete_confirm_dialog.png" width="220" /></td>
+    <td></td>
   </tr>
 </table>
 
-### 12.5 Delete Confirmation
+### 12.4 UI Dump Files (XML)
 
-<table>
-  <tr>
-    <td align="center"><b>Confirmation Dialog</b><br/><i>Before deleting a fuel entry</i></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/13_delete_confirm_dialog.png" width="280" /></td>
-  </tr>
-</table>
-
-### 12.6 UI Dump Files (XML)
-
-The `docs/screenshots/` directory also contains 19 XML UI hierarchy dumps used for automated testing and accessibility audits:
-
-| File | Description |
-|---|---|
-| `ui_empty_dashboard.xml` | UI hierarchy of empty dashboard |
-| `ui_add_entry.xml` | Add entry form structure |
-| `ui_after_save1.xml` | UI state after first save |
-| `ui_after_save2.xml` | UI state after second save |
-| `ui_after_save3.xml` | UI state after third save |
-| `ui_history.xml` | History screen structure |
-| `ui_last_entry.xml` | Last entry details |
-| `ui_verify_odometer.xml` | Odometer verification state |
-| `ui_edit_form.xml` | Edit form structure |
-| `ui_edit_changed.xml` | Edit form after modification |
-| `ui_after_edit.xml` | UI state after edit |
-| `ui_delete_dialog.xml` | Delete confirmation dialog |
-| `ui_after_delete.xml` | UI state after deletion |
-| `ui_dashboard_after_edit.xml` | Dashboard after edit |
-| `ui_dashboard_after_delete.xml` | Dashboard after delete |
-| `ui_charts.xml` | Charts screen structure |
-| `ui_charts_after_delete.xml` | Charts after deletion |
-| `ui_empty_history.xml` | Empty history state |
-| `ui_history_delete.xml` | History with delete action |
+The `docs/screenshots/` directory also contains XML UI hierarchy dumps used for automated testing and accessibility audits (`ui_empty_dashboard.xml`, `ui_add_entry.xml`, `ui_history.xml`, `ui_charts.xml`, `ui_delete_dialog.xml`, and others).
 
 ---
 

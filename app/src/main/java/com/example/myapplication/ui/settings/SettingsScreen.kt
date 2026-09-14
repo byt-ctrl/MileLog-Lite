@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
+import com.example.myapplication.data.local.ThemeMode
 import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.domain.demo.DemoDataGenerator
 import com.example.myapplication.ui.components.InstrumentBand
@@ -60,11 +61,10 @@ import com.example.myapplication.ui.components.LedgerPanel
 import com.example.myapplication.ui.components.ReadoutItem
 import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
+import com.example.myapplication.ui.components.distanceLabel
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
-import java.text.NumberFormat
-import java.util.Locale
 
 /**
  * Settings.
@@ -84,7 +84,6 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val spacing = MaterialTheme.spacing
-    val integerFormatter = remember { NumberFormat.getIntegerInstance(Locale.getDefault()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSeedDialog by remember { mutableStateOf(false) }
     var vehiclePendingDelete by remember { mutableStateOf<Vehicle?>(null) }
@@ -155,7 +154,7 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsBinnacle(uiState = uiState, integerFormatter = integerFormatter)
+            SettingsBinnacle(uiState = uiState)
 
             Column(
                 modifier = Modifier
@@ -202,14 +201,25 @@ fun SettingsScreen(
                 }
 
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeader(title = stringResource(R.string.settings_section_appearance))
+                    SectionHeader(
+                        title = stringResource(R.string.settings_section_appearance),
+                        note = stringResource(R.string.settings_appearance_note)
+                    )
                     Spacer(Modifier.height(spacing.md))
                     LedgerPanel {
-                        SettingsRow(
-                            title = stringResource(R.string.settings_appearance_row),
-                            note = stringResource(R.string.settings_appearance_note),
-                            value = stringResource(R.string.settings_appearance_value)
-                        )
+                        ThemeMode.entries.forEachIndexed { index, mode ->
+                            if (index > 0) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.ledger.rule,
+                                    thickness = 1.dp
+                                )
+                            }
+                            ThemeModeRow(
+                                mode = mode,
+                                isSelected = mode == uiState.themeMode,
+                                onSelect = { viewModel.setThemeMode(mode) }
+                            )
+                        }
                     }
                 }
 
@@ -473,11 +483,62 @@ private fun VehicleRow(
     }
 }
 
+/**
+ * One appearance in the Appearance group. A radio, not a chip: the three
+ * options are mutually exclusive and the selected one has to be readable
+ * without colour.
+ */
 @Composable
-private fun SettingsBinnacle(
-    uiState: SettingsUiState,
-    integerFormatter: NumberFormat
+private fun ThemeModeRow(
+    mode: ThemeMode,
+    isSelected: Boolean,
+    onSelect: () -> Unit
 ) {
+    val spacing = MaterialTheme.spacing
+    val colors = MaterialTheme.colorScheme
+    val label = stringResource(mode.labelRes)
+    val a11y = stringResource(R.string.settings_theme_a11y, label)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .selectable(
+                selected = isSelected,
+                role = Role.RadioButton,
+                onClick = onSelect
+            )
+            .semantics { contentDescription = a11y }
+            .padding(horizontal = spacing.lg, vertical = spacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (isSelected) {
+                Icons.Rounded.RadioButtonChecked
+            } else {
+                Icons.Rounded.RadioButtonUnchecked
+            },
+            contentDescription = null,
+            tint = if (isSelected) colors.primary else colors.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.onSurface,
+            modifier = Modifier.padding(start = spacing.md)
+        )
+    }
+}
+
+/**
+ * The configuration readout. Settings is a Configure surface, so the first
+ * thing on it is the state of the machine rather than a decorative header:
+ * the unit distances are shown in, the currency, and the fact that nothing
+ * leaves the device.
+ */
+@Composable
+private fun SettingsBinnacle(uiState: SettingsUiState) {
     val ledger = MaterialTheme.ledger
     val spacing = MaterialTheme.spacing
 
@@ -497,22 +558,19 @@ private fun SettingsBinnacle(
         ReadoutStrip(
             items = listOf(
                 ReadoutItem(
-                    label = stringResource(R.string.settings_readout_entries),
-                    value = integerFormatter.format(uiState.entryCount),
-                    note = stringResource(R.string.settings_readout_entries_note)
+                    label = stringResource(R.string.settings_readout_unit),
+                    value = uiState.distanceUnit.distanceLabel(),
+                    note = stringResource(R.string.settings_readout_unit_note)
                 ),
                 ReadoutItem(
-                    label = stringResource(R.string.settings_readout_distance),
-                    value = stringResource(
-                        R.string.dashboard_stat_latest_odometer_unit,
-                        integerFormatter.format(uiState.totalDistance)
-                    ),
-                    note = stringResource(R.string.settings_readout_distance_note)
+                    label = stringResource(R.string.settings_readout_currency),
+                    value = stringResource(R.string.settings_currency_value),
+                    note = stringResource(R.string.settings_readout_currency_note)
                 ),
                 ReadoutItem(
-                    label = stringResource(R.string.settings_readout_storage),
-                    value = stringResource(R.string.settings_about_storage_value),
-                    note = stringResource(R.string.settings_readout_storage_note)
+                    label = stringResource(R.string.settings_readout_network),
+                    value = stringResource(R.string.settings_about_network_value),
+                    note = stringResource(R.string.settings_readout_network_note)
                 )
             ),
             compact = true
