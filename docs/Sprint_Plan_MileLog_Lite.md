@@ -492,6 +492,18 @@ A design checkup of the shipped app raised one MEDIUM and three LOW findings. Al
 - **Still open from the checkup:** the rendered-composition, keyboard, screen-reader and RTL gaps. The release APK is also unsigned (no signing config) and its runtime is unverified: R8 succeeds at build time, and a release build has not been run.
 - **Re-audit outcome.** Three of those four findings were verified fixed by reading the code at their cited lines. The fourth, the bottom-bar one, did not reproduce, and the fix made for it became the one MEDIUM the re-audit raised, since corrected above. The checkup report is regenerated as the current diagnostic. Not re-audited since: the corrected bar behaviour, which is reasoned from the item measure rather than seen, and the device checks the two watch vitals remain gated on.
 
+### 9.9 Accessibility Finding From the Third Checkup — Fixed
+
+The third checkup ran the accessibility pass the two before it had only flagged as a gap, and it found a HIGH.
+
+- [x] **The primary action announced nothing.** The `ExtendedFloatingActionButton` in `ui/components/MileLogFab.kt` was clickable and focusable with an empty `text` and an empty `content-desc`, so the app's primary action on Dashboard, History and Reports reached a screen reader as a bare button; its drawn label is not bridged into the semantics tree. Fixed by naming the button explicitly with `Modifier.semantics { contentDescription = label }` instead of relying on the drawn text.
+- [x] **JVM Compose UI tests, so this class of defect is caught without a device.** Added Robolectric 4.17 (API 23 to 37, built against this project's AGP) with the Compose test rule on the JVM, plus `testOptions.unitTests.isIncludeAndroidResources` and the module export Robolectric needs for the JRE's file-descriptor internals. `OperableControlNameTest` asserts that the primary action and every bottom-bar destination are named **exactly once**, read off the merged semantics tree a screen reader reads.
+- [x] **The test was written before the fix, and failed on the unfixed code** with "could not find any node that satisfies OnClick is defined && has a non-blank accessible name", while the bar case passed alongside it. That contrast is what shows the assertion measures names rather than passing vacuously.
+- [x] **Two build-config additions, both test-only:** the Robolectric and Compose test dependencies under `testImplementation`, and one JVM `--add-exports` for the test runtime. Neither touches the shipped artifact.
+- [x] **Also confirmed clean by the same pass:** each embedded chart exposes one named node with nothing unnamed behind it, closing a question open since the first checkup; keyboard traversal reaches the primary action and all five destinations in a closed loop; and TalkBack binds and runs with the app rendering unchanged.
+- **Verification:** `testDebugUnitTest` 114 tests, 0 failures; `lintDebug` 20 warnings, 0 errors, none in a changed file.
+- **Still open:** the fix was verified by test rather than by device, and the assertion reads the semantics tree rather than a spoken announcement. The exhaustive unnamed-control sweep has been run on one screen only.
+
 **Sprint 9 verification record**
 
 - `app-debug.apk` built, installed and launched cleanly on the `Medium_Phone` AVD before the emulator walkthrough was stopped at the user's request; the emulator was then shut down.

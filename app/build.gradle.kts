@@ -42,6 +42,19 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // Compose UI tests run on the JVM through Robolectric, and they
+            // need the variant's resources to resolve strings and themes.
+            isIncludeAndroidResources = true
+            // Robolectric instruments the JRE's file-descriptor internals, and
+            // the JDK only exposes that package to the test JVM when it is
+            // exported. Without this every test in the suite dies on startup.
+            all { test ->
+                test.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
+        }
+    }
     sourceSets {
         // Expose the exported Room schemas to instrumented tests so
         // MigrationTestHelper can validate migrations against real history.
@@ -72,6 +85,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.mpandroidchart)
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

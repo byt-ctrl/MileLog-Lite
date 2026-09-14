@@ -11,6 +11,9 @@ ksp = "2.3.11"
 composeBom = "2026.02.01"
 room = "2.8.4"
 navigationCompose = "2.9.8"
+# Runs Compose UI tests on the JVM, so semantics can be asserted without a
+# device. 4.17 covers API 23 to 37 and is built against this project's AGP.
+robolectric = "4.17"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +45,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # MPAndroidChart
 mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version = "v3.1.0" }
+
+# JVM Compose UI tests
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
