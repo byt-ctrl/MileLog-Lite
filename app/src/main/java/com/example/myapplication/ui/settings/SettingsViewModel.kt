@@ -43,12 +43,15 @@ enum class SettingsMessage(@StringRes val messageRes: Int) {
     RESTORED(R.string.settings_restored),
     SEEDED(R.string.settings_seeded),
     SEED_FAILED(R.string.settings_seed_failed),
-    VEHICLE_DELETED(R.string.vehicle_deleted),
     ACTION_FAILED(R.string.settings_action_failed)
 }
 
 data class SettingsUiState(
-    val vehicles: List<Vehicle> = emptyList(),
+    /**
+     * The vehicle the entry count below belongs to. The vehicle list itself
+     * lives on its own destination; Settings only needs to know whose fill-ups
+     * it is counting before offering to clear them.
+     */
     val activeVehicle: Vehicle? = null,
     val entryCount: Int = 0,
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
@@ -72,12 +75,12 @@ private data class SettingsTransient(
 /**
  * Settings state.
  *
- * Everything exposed here is a real capability of the app: the vehicle list and
- * active selection come from the database, the entry count belongs to the
- * active vehicle, the appearance and distance unit come from the settings
- * repository, export writes a CSV through the same exporter the History screen
- * uses, and clearing the log keeps the removed rows so the action is
- * recoverable.
+ * Everything exposed here is a real capability of the app: the active vehicle
+ * comes from the database and scopes the entry count, the appearance and
+ * distance unit come from the settings repository, export writes a CSV through
+ * the same exporter the History screen uses, and clearing the log keeps the
+ * removed rows so the action is recoverable. Managing the vehicles themselves
+ * is the Vehicles destination's job, not this screen's.
  */
 class SettingsViewModel(
     application: Application,
@@ -98,13 +101,11 @@ class SettingsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<SettingsUiState> = combine(
-        vehicleRepository.getAllVehiclesFlow(),
         vehicleRepository.getActiveVehicleFlow(),
         _transient,
         settings
-    ) { vehicles, activeVehicle, transient, (themeMode, distanceUnit) ->
+    ) { activeVehicle, transient, (themeMode, distanceUnit) ->
         SettingsUiState(
-            vehicles = vehicles,
             activeVehicle = activeVehicle,
             themeMode = themeMode,
             distanceUnit = distanceUnit,
@@ -142,39 +143,6 @@ class SettingsViewModel(
             runCatching { settingsRepository.setThemeMode(mode) }
                 .onFailure {
                     _transient.update { it.copy(message = SettingsMessage.ACTION_FAILED) }
-                }
-        }
-    }
-
-    /**
-     * Selects the vehicle every screen then logs against.
-     */
-    fun setActiveVehicle(id: Long) {
-        viewModelScope.launch {
-            runCatching { vehicleRepository.setActiveVehicle(id) }
-                .onFailure {
-                    _transient.update { it.copy(message = SettingsMessage.ACTION_FAILED) }
-                }
-        }
-    }
-
-    /**
-     * Removes a vehicle and every fill-up logged against it. Another vehicle is
-     * promoted to active when the removed one was selected.
-     */
-    fun deleteVehicle(vehicle: Vehicle) {
-        viewModelScope.launch {
-            _transient.update { it.copy(isBusy = true) }
-            runCatching { vehicleRepository.deleteVehicleWithEntries(vehicle.id) }
-                .onSuccess {
-                    _transient.update {
-                        it.copy(isBusy = false, message = SettingsMessage.VEHICLE_DELETED)
-                    }
-                }
-                .onFailure {
-                    _transient.update {
-                        it.copy(isBusy = false, message = SettingsMessage.ACTION_FAILED)
-                    }
                 }
         }
     }

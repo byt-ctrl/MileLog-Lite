@@ -11,6 +11,12 @@
     <string name="loading_generic">Loading</string>
     <string name="fab_add_label">Add</string>
 
+    <!-- A reading that has no value yet. The glyph is what a column shows, kept
+         short so tabular figures stay aligned; the spoken form is what should be
+         announced in its place, because a bare dash says nothing. -->
+    <string name="value_not_recorded">—</string>
+    <string name="value_not_recorded_spoken">Not recorded</string>
+
     <!-- Units. Distances are stored in kilometres; these label what is shown. -->
     <string name="unit_kilometres">km</string>
     <string name="unit_miles">mi</string>
@@ -30,7 +36,6 @@
     <string name="dashboard_empty_subtitle">Add your first fuel entry to start tracking your mileage and expenses.</string>
     <string name="dashboard_empty_cta">Add your first entry</string>
     <string name="dashboard_stat_latest_odometer_title">Latest Odometer</string>
-    <string name="dashboard_stat_latest_odometer_empty">—</string>
     <string name="dashboard_stat_total_cost_title">Total Fuel Spend</string>
     <string name="dashboard_stat_total_cost_subtitle">%1$d entries total</string>
     <string name="dashboard_stat_cost_per_distance_title">Cost per %1$s</string>
@@ -98,6 +103,8 @@
     <string name="charts_spend_total_label">Total spend</string>
     <string name="charts_error_load">Couldn\'t load charts. Please try again.</string>
     <string name="charts_loading">Loading charts</string>
+    <string name="charts_marker_title">%1$s  ·  %2$s</string>
+    <string name="charts_touch_hint">Tap a bar or a point to read its exact value</string>
 
     <!-- Add / Edit Entry -->
     <string name="entry_title_add">Add Fuel Entry</string>
@@ -158,6 +165,7 @@
     <string name="bottom_nav_dashboard_label">Dashboard</string>
     <string name="bottom_nav_history_label">History</string>
     <string name="bottom_nav_reports_label">Reports</string>
+    <string name="bottom_nav_vehicles_label">Vehicles</string>
     <string name="bottom_nav_settings_label">Settings</string>
     <string name="rail_offline_note">Works offline. Every fill-up stays on this device.</string>
 
@@ -179,6 +187,24 @@
     <string name="vehicle_action_save_changes">Save changes</string>
     <string name="vehicle_active_note">%1$s  ·  %2$s</string>
     <string name="vehicle_deleted">Vehicle deleted</string>
+    <string name="vehicles_title">Vehicles</string>
+    <string name="vehicles_action_failed">Couldn\'t update the vehicle. Please try again.</string>
+    <string name="vehicles_binnacle_subtitle">Fill-ups are logged against the selected vehicle</string>
+    <string name="vehicles_readout_active">Active vehicle</string>
+    <string name="vehicles_readout_active_note">every fill-up lands here</string>
+    <string name="vehicles_readout_count">Vehicles</string>
+    <string name="vehicles_readout_count_note">on this device</string>
+    <string name="vehicles_section_title">Your vehicles</string>
+    <string name="vehicles_empty">No vehicles yet. Add one to start logging fill-ups.</string>
+    <string name="vehicles_add_row">Add vehicle</string>
+    <string name="vehicles_add_note">Create a vehicle to log fill-ups against</string>
+    <string name="vehicles_edit_a11y">Edit %1$s</string>
+    <string name="vehicles_delete_a11y">Delete %1$s</string>
+    <string name="vehicles_select_a11y">Log fill-ups against %1$s</string>
+    <string name="vehicles_delete_dialog_title">Delete vehicle?</string>
+    <string name="vehicles_delete_dialog_body">This permanently deletes %1$s and every fill-up logged against it. This action cannot be undone.</string>
+    <string name="vehicles_delete_confirm">Delete vehicle</string>
+    <string name="vehicles_delete_cancel">Keep vehicle</string>
     <string name="error_vehicle_name_required">Vehicle name is required</string>
     <string name="error_vehicle_name_duplicate">A vehicle with this name already exists</string>
     <string name="vehicle_error_load_missing">This vehicle no longer exists. It may have been deleted.</string>
@@ -186,18 +212,7 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_action_failed">Couldn\'t update the vehicle. Please try again.</string>
-    <string name="settings_section_vehicle">Vehicle</string>
-    <string name="settings_vehicle_active_note">Fill-ups are logged against the selected vehicle</string>
-    <string name="settings_vehicle_add_row">Add vehicle</string>
-    <string name="settings_vehicle_add_note">Create a vehicle to log fill-ups against</string>
-    <string name="settings_vehicle_edit_a11y">Edit %1$s</string>
-    <string name="settings_vehicle_delete_a11y">Delete %1$s</string>
-    <string name="settings_vehicle_delete_dialog_title">Delete vehicle?</string>
-    <string name="settings_vehicle_delete_dialog_body">This permanently deletes %1$s and every fill-up logged against it. This action cannot be undone.</string>
-    <string name="settings_vehicle_delete_confirm">Delete vehicle</string>
-    <string name="settings_vehicle_delete_cancel">Keep vehicle</string>
-    <string name="settings_vehicle_empty">No vehicles yet. Add one to start logging fill-ups.</string>
+    <string name="settings_action_failed">Couldn\'t update the settings. Please try again.</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_note">The instrument panel stays dark in every mode. Only the logbook follows your choice.</string>
     <string name="settings_theme_light">Light</string>

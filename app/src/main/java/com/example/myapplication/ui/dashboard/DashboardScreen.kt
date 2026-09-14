@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,8 +47,10 @@ import com.example.myapplication.ui.components.LedgerColumnWeights
 import com.example.myapplication.ui.components.LedgerHeaderRow
 import com.example.myapplication.ui.components.LedgerPanel
 import com.example.myapplication.ui.components.LedgerRow
+import com.example.myapplication.ui.components.LogbookContent
 import com.example.myapplication.ui.components.MileageGauge
 import com.example.myapplication.ui.components.MileageTrendBars
+import com.example.myapplication.ui.components.ReadingText
 import com.example.myapplication.ui.components.ReadoutItem
 import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
@@ -108,7 +111,13 @@ fun DashboardScreen(
     ) {
         // Content width decides the table and readout layouts; the shell decides
         // whether this screen owns a top bar. They are different questions.
-        val roomyReadouts = maxWidth >= MileLogWindow.medium
+        //
+        // The three-across strip has to hold three columns of label, value and
+        // note, so its threshold scales with the system font size: at 2.0 text
+        // scale it needs twice the width before the row stops being cramped,
+        // and it falls back to the ruled list below that.
+        val fontScale = LocalDensity.current.fontScale
+        val roomyReadouts = maxWidth >= MileLogWindow.medium * fontScale
 
         Column(
             modifier = Modifier
@@ -203,9 +212,8 @@ private fun Binnacle(
         Spacer(Modifier.height(spacing.sm))
 
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = average?.let { formatOne(DistanceConverter.convertMileage(it, unit)) }
-                    ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            ReadingText(
+                value = average?.let { formatOne(DistanceConverter.convertMileage(it, unit)) },
                 style = MaterialTheme.typography.displayLarge,
                 color = ledger.chromeText
             )
@@ -255,8 +263,7 @@ private fun readouts(
     return listOf(
         ReadoutItem(
             label = stringResource(R.string.dashboard_stat_latest_odometer_title),
-            value = uiState.latestOdometer?.let { formatDistanceWithUnit(it.toDouble(), unit) }
-                ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            value = uiState.latestOdometer?.let { formatDistanceWithUnit(it.toDouble(), unit) },
             note = stringResource(R.string.dashboard_stat_total_cost_subtitle, uiState.entryCount)
         ),
         ReadoutItem(
@@ -266,7 +273,7 @@ private fun readouts(
             ),
             value = uiState.costPerKm?.let { costPerKm ->
                 currency.format(DistanceConverter.convertCostPerDistance(costPerKm, unit))
-            } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            },
             note = stringResource(
                 R.string.dashboard_stat_cost_per_distance_subtitle,
                 formatDistanceWithUnit(uiState.totalDistance.toDouble(), unit)
@@ -320,7 +327,8 @@ private fun gaugeA11y(
         latest == null -> stringResource(
             R.string.dashboard_gauge_a11y,
             formatMileageWithUnit(average, unit),
-            stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            // The accessible name gets words, not the column's dash glyph.
+            stringResource(R.string.value_not_recorded_spoken),
             scale
         )
         else -> stringResource(
@@ -349,10 +357,8 @@ private fun Content(
     val spacing = MaterialTheme.spacing
     val unit = uiState.distanceUnit
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = spacing.lg, vertical = spacing.xl),
+    LogbookContent(
+        modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xl),
         verticalArrangement = Arrangement.spacedBy(spacing.xxl)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -517,7 +523,7 @@ private fun EmptyLedger(
                 text = if (hasVehicle) {
                     stringResource(R.string.dashboard_empty_subtitle)
                 } else {
-                    stringResource(R.string.settings_vehicle_empty)
+                    stringResource(R.string.vehicles_empty)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

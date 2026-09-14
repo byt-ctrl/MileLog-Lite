@@ -22,6 +22,7 @@ import com.example.myapplication.domain.calculation.CategoryMonthlySpendSeries
 import com.example.myapplication.domain.calculation.MonthlyFuelSpend
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.spacing
 import com.github.mikephil.charting.charts.BarChart
@@ -30,7 +31,9 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -58,13 +61,26 @@ fun MonthlySpendChart(
     categorySpends: List<CategoryMonthlySpendSeries> = emptyList(),
     modifier: Modifier = Modifier
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
-    val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
 
-    val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
+    // One stable token per fuel type, so a bar can never be mistaken for
+    // another fuel. Every category is mapped, so the lookups below cannot miss.
+    val categoryColors: Map<FuelCategory, Int> = mapOf(
+        FuelCategory.PETROL to MaterialTheme.ledger.chartPetrol.toArgb(),
+        FuelCategory.DIESEL to MaterialTheme.ledger.chartDiesel.toArgb(),
+        FuelCategory.CNG to MaterialTheme.ledger.chartCng.toArgb()
+    )
+    // The "Total spend" series exists only when the log holds a single fuel
+    // category, so it never shares a chart with a per-category bar: the logbook
+    // primary reads as the page's own accent rather than as a fuel.
+    val totalBarColor = MaterialTheme.colorScheme.primary.toArgb()
+
+    // Tooltip palette: the marker reads as an instrument readout, not a series.
+    val markerSurface = MaterialTheme.ledger.chrome.toArgb()
+    val markerRule = MaterialTheme.ledger.chromeRule.toArgb()
+    val markerTitleColor = MaterialTheme.ledger.chromeTextMuted.toArgb()
+    val markerValueColor = MaterialTheme.ledger.chromeText.toArgb()
 
     // Product default: INR (₹) — see note above.
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"))
@@ -78,7 +94,9 @@ fun MonthlySpendChart(
             put(category, stringResource(category.labelRes))
         }
     }
-    val spendA11y = stringResource(R.string.charts_spend_a11y)
+    // Screen readers get the chart summary plus the tap affordance hint.
+    val spendA11y = stringResource(R.string.charts_spend_a11y) +
+        ". " + stringResource(R.string.charts_touch_hint)
     val spacing = MaterialTheme.spacing
 
     ElevatedCard(
@@ -174,12 +192,16 @@ fun MonthlySpendChart(
                     }
                     chart.xAxis.labelCount = minOf(spends.size, 4)
 
+                    // Holds the per-category sets when grouped, so the marker
+                    // can resolve a tapped dataSetIndex back to its month.
+                    var groupedDataSets: List<BarDataSet> = emptyList()
+
                     if (categorySpends.isEmpty()) {
                         val entries = spends.mapIndexed { index, item ->
                             BarEntry(index.toFloat(), item.totalCost.toFloat())
                         }
                         val dataSet = BarDataSet(entries, totalLabel).apply {
-                            color = primaryColor
+                            color = totalBarColor
                             setDrawValues(true)
                             valueTextSize = 11f
                             valueTextColor = textColor
@@ -193,11 +215,8 @@ fun MonthlySpendChart(
                         }
                         chart.data = barData
                     } else {
-                        val dataSets = categorySpends.mapIndexed { idx, series ->
-                            val color = categoryColors[
-                                FuelCategory.entries.indexOf(series.category)
-                                    .coerceIn(0, categoryColors.lastIndex)
-                            ]
+                        val dataSets = categorySpends.map { series ->
+                            val color = categoryColors.getValue(series.category)
                             val label = categoryLabels[series.category] ?: series.category.displayName
                             val entries = series.values.mapIndexed { index, value ->
                                 BarEntry(index.toFloat(), value.toFloat())
@@ -207,6 +226,7 @@ fun MonthlySpendChart(
                                 setDrawValues(false)
                             }
                         }
+                        groupedDataSets = dataSets
                         val seriesCount = dataSets.size
                         val barData = BarData(*dataSets.toTypedArray())
                         chart.data = barData
@@ -223,6 +243,42 @@ fun MonthlySpendChart(
                             barData.barWidth = if (spends.size == 1) 0.35f else 0.5f
                         }
                     }
+
+                    val grouped = categorySpends.isNotEmpty()
+
+                    // Built every pass so it reads this pass's data lists rather
+                    // than the first composition's, which `factory` would have
+                    // captured.
+                    val marker = ChartValueMarkerView(
+                        context = chart.context,
+                        chromeColor = markerSurface,
+                        ruleColor = markerRule,
+                        titleColor = markerTitleColor,
+                        valueColor = markerValueColor,
+                        content = { entry: Entry, highlight: Highlight ->
+                            val setIndex = highlight.dataSetIndex
+                            val series = if (grouped) categorySpends.getOrNull(setIndex) else null
+                            // groupBars() rewrites each entry's x-value, so
+                            // highlight.x is no longer the month index. The
+                            // entry's position inside its own data set is.
+                            val monthIndex = if (grouped) {
+                                groupedDataSets.getOrNull(setIndex)?.getEntryIndex(entry) ?: -1
+                            } else {
+                                highlight.x.toInt()
+                            }
+                            ChartValueMarkerView.Content(
+                                label = spends.getOrNull(monthIndex)?.label ?: "",
+                                series = series?.let {
+                                    categoryLabels[it.category] ?: it.category.displayName
+                                },
+                                value = currencyFormatter.format(entry.y.toDouble())
+                            )
+                        }
+                    )
+                    marker.setChartView(chart)
+                    chart.setMarker(marker)
+                    chart.setHighlightPerTapEnabled(true)
+
                     // Settle the viewport after the bar widths are decided.
                     // A setVisibleXRangeMaximum() call used to sit here too,
                     // but fitScreen() overrode it on the same pass, so the

@@ -124,7 +124,15 @@ data class LedgerColors(
     val good: Color,
     val goodTint: Color,
     val rule: Color,
-    val ruleStrong: Color
+    val ruleStrong: Color,
+    /*
+     * Chart series ink. One stable hue per fuel type plus a neutral for the
+     * combined reading, so a category line is never mistaken for the total.
+     */
+    val chartPetrol: Color,
+    val chartDiesel: Color,
+    val chartCng: Color,
+    val chartCombined: Color
 )
 
 val LightLedgerColors = LedgerColors(
@@ -142,7 +150,11 @@ val LightLedgerColors = LedgerColors(
     good = GoodLight,
     goodTint = GoodTintLight,
     rule = RuleLight,
-    ruleStrong = RuleStrongLight
+    ruleStrong = RuleStrongLight,
+    chartPetrol = PetrolLight,
+    chartDiesel = FuelLight,
+    chartCng = SlateLight,
+    chartCombined = Ink3Light
 )
 
 val DarkLedgerColors = LightLedgerColors.copy(
@@ -151,7 +163,11 @@ val DarkLedgerColors = LightLedgerColors.copy(
     good = GoodDark,
     goodTint = GoodTintDark,
     rule = RuleDark,
-    ruleStrong = RuleStrongDark
+    ruleStrong = RuleStrongDark,
+    chartPetrol = PetrolDark,
+    chartDiesel = FuelDark,
+    chartCng = SlateDark,
+    chartCombined = Ink3Dark
 )
 
 val LocalLedgerColors = staticCompositionLocalOf { LightLedgerColors }

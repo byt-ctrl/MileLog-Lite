@@ -72,6 +72,40 @@ fun InstrumentBand(
     }
 }
 
+/**
+ * The logbook's content frame.
+ *
+ * The paper reaches both window edges, but the ledger, the forms and the
+ * settings rows stop at [MileLogWindow.contentMaxWidth] and centre inside it.
+ * A wide window then gets a readable measure instead of a stretched one: the
+ * rules and the figures below are already capped this way, and without this
+ * frame a 1600dp desktop window would draw a settings row nearly the full
+ * width of the glass.
+ *
+ * The instrument is deliberately not wrapped: its dark casing has to reach the
+ * window edges or it stops reading as the machine ([InstrumentBand] caps its
+ * own content instead).
+ */
+@Composable
+fun LogbookContent(
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = MileLogWindow.contentMaxWidth)
+                .fillMaxWidth(),
+            verticalArrangement = verticalArrangement,
+            content = content
+        )
+    }
+}
+
 /** A logbook panel: surface fill, hairline edge, small radius, no shadow. */
 @Composable
 fun LedgerPanel(
@@ -229,8 +263,8 @@ fun LedgerRow(
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = mileage ?: "—",
+                    ReadingText(
+                        value = mileage,
                         style = DataTextStyle,
                         color = colors.onSurface
                     )
@@ -268,8 +302,8 @@ fun LedgerRow(
                     textAlign = TextAlign.End,
                     modifier = Modifier.weight(0.8f)
                 )
-                Text(
-                    text = mileage ?: "—",
+                ReadingText(
+                    value = mileage,
                     style = DataTextStyle,
                     color = colors.onSurface,
                     textAlign = TextAlign.End,

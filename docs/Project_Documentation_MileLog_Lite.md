@@ -88,6 +88,8 @@ cd MileLog-Lite/MileLog-Lite
 
 ## 3. Core Screen Overview
 
+Every screen adapts from its **own** frame (`BoxWithConstraints`), never the window: once the shell's 228dp rail is on screen it has already taken that width out of the content, so a window-width threshold would misfire and split a tablet into two unreadable columns. Logbook content is capped at `MileLogWindow.contentMaxWidth` and centred by the shared `LogbookContent` frame; instrument bands stay full-bleed, because the dark casing has to reach the window edges. Readout-strip density scales with the system font size, not width alone.
+
 ### 3.1 Dashboard Screen (`DashboardScreen.kt`)
 - **Purpose:** Monitor surface, read in the order a driver checks it: gauge, readouts, record.
 - **UI Structure:**
@@ -104,7 +106,8 @@ cd MileLog-Lite/MileLog-Lite
   - *Validation:* inline messages, the counting banner, focus moved to the first invalid field; save stays enabled.
   - *Commit:* "Save fill-up" / "Save changes" with "Saved on this device, nothing uploaded" beside it.
   - *Saved summary:* replaces the sheet after a successful write, with a Done action.
-  - Keyboard-aware padding (`imePadding`) and a Material 3 date picker dialog.
+  - *One scroll context:* the instrument readings and the sheet scroll together in a single container that also carries `imePadding()` and `imeNestedScroll()`, so opening the keyboard shortens and scrolls the whole page instead of only the form (the readings never stay pinned while the fields move under them). A Material 3 date picker dialog handles the date.
+  - *Wide content:* at `MileLogWindow.wide` (720dp of content) the sheet recomposes into the console layout the design describes, the live instrument beside the fields; below it the instrument stays full-bleed and the form is capped and centred by `LogbookContent`.
 
 ### 3.3 Fuel History Screen (`HistoryScreen.kt`)
 - **Purpose:** Chronological ledger of the active vehicle's fill-ups with category filtering.
@@ -119,23 +122,32 @@ cd MileLog-Lite/MileLog-Lite
 ### 3.4 Charts & Insights Screen (`ChartsScreen.kt`)
 - **Purpose:** Visual analytics for fuel economy and spend patterns.
 - **UI Structure:**
-  - *Mileage Trend Card:* line chart of mileage per fill-up, drawn in the selected unit. Combined line plus dashed per-category overlays, straight segments (a curve would invent readings between fill-ups).
+  - *Mileage Trend Card:* line chart of mileage per fill-up, drawn in the selected unit. A neutral combined "All fuels" line plus dashed per-category overlays, straight segments (a curve would invent readings between fill-ups). Each fuel type has its own stable colour (petrol / diesel / CNG) so a category is never mistaken for the total.
   - *Monthly Spend Card:* bar chart of total cost per calendar month, single-series or grouped per category.
+  - *Tap readout:* tapping a bar or a line point opens a marker tooltip showing the exact value for that highlight (month + cost, or date + mileage), plus the series name when the chart is split by fuel type.
   - *Layout:* plots stack below 720dp of content width and sit side by side above it.
   - *Fallback / Error States:* friendly notice under two entries; retry-enabled error block.
 
-### 3.5 Settings Screen (`SettingsScreen.kt`)
+### 3.5 Vehicles Screen (`VehiclesScreen.kt`)
+- **Purpose:** The garage. Selecting the vehicle every fill-up lands against is a primary navigation destination, not a settings detail.
+- **UI Structure:**
+  - *Configuration readout:* the active vehicle and how many vehicles are on the device.
+  - *Vehicle list:* one row per vehicle with a radio for the active selection, an edit action, and a delete action with a confirmation dialog plus an undo-style snackbar message.
+  - *Add vehicle row:* opens the add-vehicle form.
+
+### 3.6 Settings Screen (`SettingsScreen.kt`)
 - **Purpose:** Configure surface. It opens with the current configuration as an instrument readout rather than a decorative header.
 - **UI Structure:**
   - *Configuration readout:* distance unit, currency, network (nothing is uploaded).
-  - *Vehicle group:* the vehicle list with the active selection, tap to switch, edit and delete (with confirmation), and an Add vehicle row.
   - *Appearance group:* Light / Dark / System radio group with the note that the instrument stays dark in every mode.
   - *Data group:* Add demo fill-ups, Export fill-ups as CSV, Delete all fill-ups (confirmation and undo).
   - *About group:* version, storage ("This device"), network ("Not required").
+- **Note:** vehicle management moved to its own `Vehicles` destination; Settings keeps the active-vehicle flow only to scope the entry count it offers to clear.
 
-### 3.6 Add / Edit Vehicle Screen (`AddEditVehicleScreen.kt`)
+### 3.7 Add / Edit Vehicle Screen (`AddEditVehicleScreen.kt`)
 - **Purpose:** Configure a vehicle: name, make, model, optional registration, default fuel type, and the distance unit.
 - **Note:** the distance unit is an install-wide preference, so it writes as it is picked while the rest of the form saves on submit.
+- **Wide content:** the preview and the fields split side by side at `MileLogWindow.wide`, matching the entry sheet, and share the same single scroll context under the keyboard.
 
 ---
 
@@ -351,6 +363,7 @@ Stored in `SharedPreferences("milelog_prefs")` through `SharedPreferencesStorage
 | `"dashboard"` | `DASHBOARD` | `DashboardScreen` | None (start destination) |
 | `"history"` | `HISTORY` | `HistoryScreen` | None |
 | `"charts"` | `CHARTS` (`REPORTS`) | `ChartsScreen` | None |
+| `"vehicles"` | `VEHICLES` | `VehiclesScreen` | None |
 | `"settings"` | `SETTINGS` | `SettingsScreen` | None |
 | `"add_entry"` | `ADD_ENTRY` | `AddEditEntryScreen(entryId = 0L)` | None |
 | `"edit_entry/{entryId}"` | `EDIT_ENTRY` | `AddEditEntryScreen(entryId)` | `entryId: Long` |
@@ -358,16 +371,17 @@ Stored in `SharedPreferences("milelog_prefs")` through `SharedPreferencesStorage
 | `"vehicle_edit/{vehicleId}"` | `VEHICLE_EDIT` | `AddEditVehicleScreen(vehicleId)` | `vehicleId: Long` |
 
 ### 7.2 Shell
-- Below 840dp the shell is a dark bottom bar with four destinations (Dashboard, History, Reports, Settings) plus the primary-action FAB on everything except Settings.
+- Below 840dp the shell is a dark bottom bar with five destinations (Dashboard, History, Reports, Vehicles, Settings) plus the primary-action FAB on everything except Settings and Vehicles.
 - At and above 840dp it is a dark 228dp rail carrying the same destinations, the wordmark, the primary action and the offline note.
-- A tab press pops up to the start destination and restores state; back from a tab pops to the start destination.
+- Destination changes cross-fade with a short directional offset; a tab press pops up to the start destination and restores state; back from a tab pops to the start destination.
 - `AddEditEntryScreen` and `AddEditVehicleScreen` are full-screen routes with no shell bars.
 
 ### 7.3 Navigation Flow
 - **Dashboard** → Add Entry (FAB), History ("View all"), Charts ("Open charts"), Edit Entry (ledger row link), Add Vehicle (empty state)
 - **History** → Edit Entry (tap row), Add Entry (FAB), Delete Entry (row action + confirmation + undo), Export CSV (top bar)
 - **Charts** → Add Entry (empty state CTA)
-- **Settings** → Add Vehicle, Edit Vehicle, switch active vehicle, export, clear with undo, seed demo data
+- **Vehicles** → Add Vehicle, Edit Vehicle, switch active vehicle, delete vehicle (confirmation)
+- **Settings** → export, clear with undo, seed demo data, appearance, distance unit
 - **Add/Edit** → back arrow, or Done after a save
 
 ---
@@ -470,7 +484,9 @@ Inter for prose, `DataMono` for readings. The classes that matter:
 
 ---
 
-## 11. Sprint 8 — What Changed
+## 11. Sprints 8 & 9 — What Changed
+
+### Sprint 8
 
 Sprint 8 closed the gaps between the shipped app and the Instrument Ledger specs in `refactor-design/`. See `Sprint_Plan_MileLog_Lite.md` §8 for the full checklist and the recorded deviations.
 
@@ -481,6 +497,16 @@ Sprint 8 closed the gaps between the shipped app and the Instrument Ledger specs
 - **Dashboard:** an Edit link on every ledger row, and a shared trailing slot so the wide header stays over its columns.
 
 Also fixed along the way: the Settings readout now states the configuration (unit, currency, network) rather than repeating log statistics, the vehicle form's primary action says "Save vehicle"/"Save changes" instead of "Save Entry", and the three near-identical fuel-type segmented controls collapsed into one shared `SegmentedChoice`.
+
+### Sprint 9
+
+Sprint 9 restructured navigation, unified the entry form's scroll context, and made the charts readable on a tap. See `Sprint_Plan_MileLog_Lite.md` §9 for the checklist and the verification record.
+
+- **Vehicles destination:** `ui/vehicle/VehiclesScreen.kt` + `VehiclesViewModel.kt`; the `VEHICLES` route, a fifth bottom-bar/rail destination (`Icons.Rounded/Outlined.DirectionsCar`), and the vehicle list moved out of Settings (`SettingsScreen`/`SettingsViewModel` now only observe the active vehicle to scope the entry count).
+- **Shell transitions:** `MileLiteNavHost` fades each destination in with a small horizontal offset, and pops back the other way.
+- **Entry and vehicle forms:** the instrument readings and the form now share one `verticalScroll` container carrying `imePadding()` + `imeNestedScroll()`, so the keyboard shortens the whole page and the readings scroll with the fields. The entry form's readout strip also reflows to the roomy layout at `MileLogWindow.medium`.
+- **Charts:** a shared `ChartValueMarkerView` marker reports the exact value on tap for both plots; per-fuel colours moved to theme tokens (`chartPetrol`/`chartDiesel`/`chartCng`); the trend chart's combined "All fuels" line uses the neutral `chartCombined` so it can never be mistaken for the petrol series; and the single-series spend bar keeps the logbook primary (it only appears when the log holds one fuel category, so it never shares a chart with a category bar).
+- **Motion:** the `MileageGauge` fill animates to a new reading, and the entry form cross-fades into its saved summary.
 
 ---
 

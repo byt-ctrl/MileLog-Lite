@@ -3,23 +3,31 @@ package com.example.myapplication.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
@@ -37,6 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
@@ -44,6 +55,13 @@ import com.example.myapplication.ui.components.MileLogWordmark
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
+
+/**
+ * Width at which all five destination labels fit their share of the bar. A
+ * five-item Material bar gives each item roughly an eighth of the width at
+ * 320dp, which is inside the measure of the longest label.
+ */
+private val BottomBarLabelWidth = 400.dp
 
 private data class NavDestination(
     val route: String,
@@ -72,6 +90,12 @@ private val navDestinations = listOf(
         unselectedIcon = Icons.Outlined.Assessment
     ),
     NavDestination(
+        route = MileLogRoutes.VEHICLES,
+        labelRes = R.string.bottom_nav_vehicles_label,
+        selectedIcon = Icons.Rounded.DirectionsCar,
+        unselectedIcon = Icons.Outlined.DirectionsCar
+    ),
+    NavDestination(
         route = MileLogRoutes.SETTINGS,
         labelRes = R.string.bottom_nav_settings_label,
         selectedIcon = Icons.Rounded.Settings,
@@ -92,40 +116,63 @@ fun MileLogBottomBar(
     modifier: Modifier = Modifier
 ) {
     val ledger = MaterialTheme.ledger
-    NavigationBar(
-        modifier = modifier,
-        containerColor = ledger.chrome,
-        contentColor = ledger.chromeText,
-        tonalElevation = 0.dp
-    ) {
-        navDestinations.forEach { destination ->
-            val selected = currentRoute == destination.route
-            NavigationBarItem(
-                selected = selected,
-                onClick = { onTabSelected(destination.route) },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                        contentDescription = null,
-                        modifier = Modifier.size(22.dp)
+
+    BoxWithConstraints(modifier = modifier) {
+        // Five destinations carry five labels; below this width the longest of
+        // them ("Dashboard") no longer fits its share of the bar. Rather than
+        // let all five truncate, only the selected destination keeps its label,
+        // which is the same shape Material uses for a bar this tight.
+        val roomyLabels = maxWidth >= BottomBarLabelWidth
+
+        NavigationBar(
+            containerColor = ledger.chrome,
+            contentColor = ledger.chromeText,
+            tonalElevation = 0.dp
+        ) {
+            navDestinations.forEach { destination ->
+                val selected = currentRoute == destination.route
+                val label = stringResource(destination.labelRes)
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = { onTabSelected(destination.route) },
+                    icon = {
+                        // The name lives on the icon, not on the label text: a
+                        // label that can be hidden must not be the only thing
+                        // carrying it, or a narrow bar would leave a destination
+                        // that nothing announces.
+                        Icon(
+                            imageVector = if (selected) {
+                                destination.selectedIcon
+                            } else {
+                                destination.unselectedIcon
+                            },
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .semantics { contentDescription = label }
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = label,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            // Already named by the icon, and this is the node
+                            // that comes and goes, so it stays out of the
+                            // accessibility tree rather than announcing twice.
+                            modifier = Modifier.clearAndSetSemantics { }
+                        )
+                    },
+                    alwaysShowLabel = roomyLabels || selected,
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = ledger.chromeText,
+                        selectedTextColor = ledger.chromeText,
+                        unselectedIconColor = ledger.chromeTextMuted,
+                        unselectedTextColor = ledger.chromeTextMuted,
+                        indicatorColor = ledger.chromeRaisedHigh
                     )
-                },
-                label = {
-                    Text(
-                        text = stringResource(destination.labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                alwaysShowLabel = true,
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = ledger.chromeText,
-                    selectedTextColor = ledger.chromeText,
-                    unselectedIconColor = ledger.chromeTextMuted,
-                    unselectedTextColor = ledger.chromeTextMuted,
-                    indicatorColor = ledger.chromeRaisedHigh
                 )
-            )
+            }
         }
     }
 }
@@ -150,6 +197,14 @@ fun MileLogRail(
             .fillMaxHeight()
             .width(228.dp)
             .background(ledger.chrome)
+            // The rail is shell chrome, not Scaffold content, so it has to
+            // claim the system bars itself. Edge-to-edge otherwise draws the
+            // wordmark under the status bar and the offline note under the
+            // gesture bar, on exactly the tablets and desktop windows this
+            // rail exists for. The IME is excluded: the keyboard overlays the
+            // bottom of the content beside the rail, and it must not squeeze
+            // the rail's own destinations and primary action.
+            .windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime))
             .padding(horizontal = spacing.md, vertical = spacing.lg)
     ) {
         MileLogWordmark()

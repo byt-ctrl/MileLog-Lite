@@ -3,12 +3,16 @@ package com.example.myapplication.ui.vehicle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -41,9 +45,11 @@ import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
+import com.example.myapplication.ui.components.LogbookContent
 import com.example.myapplication.ui.components.SegmentedChoice
 import com.example.myapplication.ui.theme.MicroLabelStyle
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
 
@@ -55,6 +61,7 @@ import com.example.myapplication.ui.theme.spacing
  * make and model, an optional registration, the default fuel type, and the unit
  * every distance is printed in.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddEditVehicleScreen(
     vehicleId: Long = 0L,
@@ -76,34 +83,73 @@ fun AddEditVehicleScreen(
         }
     }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        InstrumentBar(
-            title = stringResource(
-                if (uiState.isEditMode) R.string.vehicle_title_edit else R.string.vehicle_title_add
-            ),
-            onNavigateUp = onNavigateUp,
-            backContentDescription = stringResource(R.string.action_navigate_back)
-        )
+        // Same two-question frame as the entry sheet: the content width decides
+        // whether the preview sits beside the fields, and it is the screen's own
+        // frame, not the window, so a rail on screen is already accounted for.
+        val sideBySide = maxWidth >= MileLogWindow.wide
 
-        when {
-            uiState.isLoading -> VehicleLoadingBlock()
-
-            uiState.loadError != null -> VehicleLoadErrorBlock(
-                messageRes = uiState.loadError!!.messageRes,
-                onRetry = viewModel::retryLoad
+        Column(modifier = Modifier.fillMaxSize()) {
+            InstrumentBar(
+                title = stringResource(
+                    if (uiState.isEditMode) R.string.vehicle_title_edit else R.string.vehicle_title_add
+                ),
+                onNavigateUp = onNavigateUp,
+                backContentDescription = stringResource(R.string.action_navigate_back)
             )
 
-            else -> {
-                VehicleInstrument(uiState = uiState)
-                VehicleForm(
-                    uiState = uiState,
-                    viewModel = viewModel,
-                    modifier = Modifier.weight(1f)
+            when {
+                uiState.isLoading -> VehicleLoadingBlock()
+
+                uiState.loadError != null -> VehicleLoadErrorBlock(
+                    messageRes = uiState.loadError!!.messageRes,
+                    onRetry = viewModel::retryLoad
                 )
+
+                else -> {
+                    // One scroll context for the whole sheet. The instrument is
+                    // the top of the page rather than a pinned header, so the
+                    // keyboard shortens the entire form and the vehicle preview
+                    // scrolls with the fields it describes.
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .imePadding()
+                            .imeNestedScroll()
+                    ) {
+                        if (sideBySide) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.xl),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    VehicleInstrument(uiState = uiState)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    VehicleForm(
+                                        uiState = uiState,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+                        } else {
+                            VehicleInstrument(uiState = uiState)
+                            LogbookContent {
+                                VehicleForm(
+                                    uiState = uiState,
+                                    viewModel = viewModel
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -155,8 +201,6 @@ private fun VehicleForm(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
             .padding(spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.lg)
     ) {

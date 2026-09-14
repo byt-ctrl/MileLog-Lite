@@ -25,6 +25,7 @@ import com.example.myapplication.domain.conversion.DistanceUnit
 import com.example.myapplication.ui.components.mileageLabel
 import com.example.myapplication.ui.theme.MileLogElevation
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.level1Shadow
 import com.example.myapplication.ui.theme.spacing
 import com.github.mikephil.charting.charts.LineChart
@@ -34,6 +35,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,14 +63,23 @@ fun MileageTrendChart(
     distanceUnit: DistanceUnit = DistanceUnit.DEFAULT,
     modifier: Modifier = Modifier
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
-    val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val gridColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
 
-    // Distinct color per category. Order matches FuelCategory.entries.
-    val categoryColors = listOf(primaryColor, secondaryColor, tertiaryColor)
+    // One stable token per fuel type, plus a neutral for the combined line, so
+    // a category can never be mistaken for the total (or for another fuel).
+    val categoryColors: Map<FuelCategory, Int> = mapOf(
+        FuelCategory.PETROL to MaterialTheme.ledger.chartPetrol.toArgb(),
+        FuelCategory.DIESEL to MaterialTheme.ledger.chartDiesel.toArgb(),
+        FuelCategory.CNG to MaterialTheme.ledger.chartCng.toArgb()
+    )
+    val combinedColor = MaterialTheme.ledger.chartCombined.toArgb()
+
+    // Tooltip palette: the marker reads as an instrument readout, not a series.
+    val markerSurface = MaterialTheme.ledger.chrome.toArgb()
+    val markerRule = MaterialTheme.ledger.chromeRule.toArgb()
+    val markerTitleColor = MaterialTheme.ledger.chromeTextMuted.toArgb()
+    val markerValueColor = MaterialTheme.ledger.chromeText.toArgb()
 
     val combinedLabel = stringResource(R.string.charts_combined_label)
     val mileageLabel = distanceUnit.mileageLabel()
@@ -77,7 +88,9 @@ fun MileageTrendChart(
             put(category, stringResource(category.labelRes))
         }
     }
-    val trendA11y = stringResource(R.string.charts_trend_a11y, mileageLabel)
+    // Screen readers get the chart summary plus the tap affordance hint.
+    val trendA11y = stringResource(R.string.charts_trend_a11y, mileageLabel) +
+        ". " + stringResource(R.string.charts_touch_hint)
     val spacing = MaterialTheme.spacing
 
     ElevatedCard(
@@ -154,6 +167,11 @@ fun MileageTrendChart(
                 val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
                 val dataSets = mutableListOf<LineDataSet>()
+                // Parallel to dataSets: the fuel each line represents, or null
+                // for the combined line. Overlays with fewer than two points
+                // are dropped, so dataSetIndex cannot be mapped back to an
+                // index into categorySeries.
+                val dataSetCategories = mutableListOf<FuelCategory?>()
 
                 val combinedPoints = fillups.filter { it.mileageKmPerL != null }
                 // Overlay lines have to sit on the same x positions as the
@@ -176,8 +194,8 @@ fun MileageTrendChart(
                         )
                     }
                     dataSets += LineDataSet(entries, combinedLabel).apply {
-                        color = primaryColor
-                        setCircleColor(primaryColor)
+                        color = combinedColor
+                        setCircleColor(combinedColor)
                         lineWidth = 3f
                         circleRadius = 4f
                         setDrawCircleHole(true)
@@ -196,6 +214,7 @@ fun MileageTrendChart(
                         mode = LineDataSet.Mode.LINEAR
                         setDrawFilled(false)
                     }
+                    dataSetCategories += null
                 }
 
                 categorySeries.forEachIndexed { index, series ->
@@ -212,8 +231,7 @@ fun MileageTrendChart(
                         }
                     }
                     if (entries.size < 2) return@forEachIndexed
-                    val color = categoryColors[FuelCategory.entries.indexOf(series.category)
-                        .coerceIn(0, categoryColors.lastIndex)]
+                    val color = categoryColors.getValue(series.category)
                     val categoryLabel = categoryLabels[series.category] ?: series.category.displayName
                     dataSets += LineDataSet(entries, categoryLabel).apply {
                         this.color = color
@@ -227,6 +245,7 @@ fun MileageTrendChart(
                         mode = LineDataSet.Mode.LINEAR
                         setDrawFilled(false)
                     }
+                    dataSetCategories += series.category
                 }
 
                 chart.xAxis.valueFormatter = object : ValueFormatter() {
@@ -246,6 +265,36 @@ fun MileageTrendChart(
                 } else {
                     chart.data = LineData(*dataSets.toTypedArray())
                 }
+
+                // Built every pass so it closes over this pass's data lists
+                // (combinedPoints, dataSetCategories) rather than the first
+                // composition's, which `factory` would have captured.
+                val marker = ChartValueMarkerView(
+                    context = chart.context,
+                    chromeColor = markerSurface,
+                    ruleColor = markerRule,
+                    titleColor = markerTitleColor,
+                    valueColor = markerValueColor,
+                    content = { entry: Entry, highlight: Highlight ->
+                        val index = highlight.x.toInt()
+                        val dateLabel = combinedPoints.getOrNull(index)
+                            ?.let { dateFormat.format(Date(it.entry.date)) } ?: ""
+                        val category = dataSetCategories.getOrNull(highlight.dataSetIndex)
+                        ChartValueMarkerView.Content(
+                            label = dateLabel,
+                            series = category?.let { categoryLabels[it] ?: it.displayName },
+                            value = String.format(
+                                Locale.getDefault(),
+                                "%.1f %s",
+                                entry.y,
+                                mileageLabel
+                            )
+                        )
+                    }
+                )
+                marker.setChartView(chart)
+                chart.setMarker(marker)
+                chart.setHighlightPerTapEnabled(true)
                 chart.invalidate()
             }
         )

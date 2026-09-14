@@ -1,17 +1,27 @@
 package com.example.myapplication.ui.entry
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -69,7 +81,9 @@ import com.example.myapplication.ui.components.GaugeScaleLabels
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
 import com.example.myapplication.ui.components.LedgerPanel
+import com.example.myapplication.ui.components.LogbookContent
 import com.example.myapplication.ui.components.MileageGauge
+import com.example.myapplication.ui.components.ReadingText
 import com.example.myapplication.ui.components.ReadoutItem
 import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
@@ -82,7 +96,9 @@ import com.example.myapplication.ui.components.formatTick
 import com.example.myapplication.ui.components.mileageLabel
 import com.example.myapplication.ui.components.withUnit
 import com.example.myapplication.ui.theme.MicroLabelStyle
+import com.example.myapplication.ui.theme.MileLogMotion
 import com.example.myapplication.ui.theme.MileLogShapes
+import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
 import java.text.NumberFormat
@@ -113,7 +129,7 @@ private data class EntryCalc(
  * burned, when, how far, how much, what it cost - and a valid submit replaces
  * it with a summary of what was recorded.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddEditEntryScreen(
     entryId: Long = 0L,
@@ -133,46 +149,103 @@ fun AddEditEntryScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        InstrumentBar(
-            title = stringResource(
-                if (uiState.isEditMode) R.string.entry_title_edit else R.string.entry_title_add
-            ),
-            onNavigateUp = onNavigateUp,
-            backContentDescription = stringResource(R.string.action_navigate_back)
-        )
+        // Two questions about this frame. A split layout halves the instrument's
+        // width, so the three-across readouts only apply when the instrument has
+        // the whole sheet; and their threshold scales with the system font size,
+        // because three columns of label, value and note need proportionally
+        // more width as the text grows.
+        val sideBySide = maxWidth >= MileLogWindow.wide
+        val fontScale = LocalDensity.current.fontScale
+        val roomyReadouts = !sideBySide && maxWidth >= MileLogWindow.medium * fontScale
 
-        when {
-            uiState.isLoading -> LoadingBlock()
-
-            uiState.loadError != null -> LoadErrorBlock(
-                messageRes = uiState.loadError!!.messageRes,
-                onRetry = viewModel::retryLoad
+        Column(modifier = Modifier.fillMaxSize()) {
+            InstrumentBar(
+                title = stringResource(
+                    if (uiState.isEditMode) R.string.entry_title_edit else R.string.entry_title_add
+                ),
+                onNavigateUp = onNavigateUp,
+                backContentDescription = stringResource(R.string.action_navigate_back)
             )
 
-            else -> {
-                EntryInstrument(uiState = uiState, currency = currency)
+            when {
+                uiState.isLoading -> LoadingBlock()
 
-                if (uiState.isEntrySaved) {
-                    EntrySavedSummary(
-                        uiState = uiState,
-                        currency = currency,
-                        dateFormatter = dateFormatter,
-                        onDone = onNavigateUp,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    EntryForm(
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        dateFormatter = dateFormatter,
-                        onRequestDatePicker = { showDatePicker = true },
-                        modifier = Modifier.weight(1f)
-                    )
+                uiState.loadError != null -> LoadErrorBlock(
+                    messageRes = uiState.loadError!!.messageRes,
+                    onRetry = viewModel::retryLoad
+                )
+
+                else -> {
+                    // One scroll context for the whole sheet. The instrument is
+                    // the top of the page, not a pinned header: keeping the
+                    // readings and the fields in the same scrollable means the
+                    // keyboard shortens the entire view and the number scrolls
+                    // together with the field it describes, instead of the
+                    // instrument staying locked while only the form moves under
+                    // it.
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .imePadding()
+                            .imeNestedScroll()
+                    ) {
+                        if (sideBySide) {
+                            // A tablet or a landscape window gets the console
+                            // layout this sheet is named for: the live instrument
+                            // as the input display on the left, the fields on the
+                            // right, both scrolling as the one page the keyboard
+                            // already resizes.
+                            // No horizontal padding on the split: the instrument
+                            // is a panel of the machine and keeps its edge, and
+                            // both halves carry their own inner padding.
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(spacing.xl),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    EntryInstrument(
+                                        uiState = uiState,
+                                        currency = currency,
+                                        roomyReadouts = false
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    EntrySheet(
+                                        uiState = uiState,
+                                        viewModel = viewModel,
+                                        currency = currency,
+                                        dateFormatter = dateFormatter,
+                                        onDone = onNavigateUp,
+                                        onRequestDatePicker = { showDatePicker = true }
+                                    )
+                                }
+                            }
+                        } else {
+                            EntryInstrument(
+                                uiState = uiState,
+                                currency = currency,
+                                roomyReadouts = roomyReadouts
+                            )
+                            LogbookContent {
+                                EntrySheet(
+                                    uiState = uiState,
+                                    viewModel = viewModel,
+                                    currency = currency,
+                                    dateFormatter = dateFormatter,
+                                    onDone = onNavigateUp,
+                                    onRequestDatePicker = { showDatePicker = true }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -255,7 +328,8 @@ private fun computeEntry(uiState: AddEditUiState): EntryCalc {
 @Composable
 private fun EntryInstrument(
     uiState: AddEditUiState,
-    currency: NumberFormat
+    currency: NumberFormat,
+    roomyReadouts: Boolean
 ) {
     val ledger = MaterialTheme.ledger
     val spacing = MaterialTheme.spacing
@@ -297,9 +371,8 @@ private fun EntryInstrument(
         Spacer(Modifier.height(spacing.sm))
 
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = calc.mileage?.let { formatOne(DistanceConverter.convertMileage(it, unit)) }
-                    ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+            ReadingText(
+                value = calc.mileage?.let { formatOne(DistanceConverter.convertMileage(it, unit)) },
                 style = MaterialTheme.typography.displayMedium,
                 color = ledger.chromeText
             )
@@ -337,8 +410,7 @@ private fun EntryInstrument(
             items = listOf(
                 ReadoutItem(
                     label = stringResource(R.string.entry_readout_distance),
-                    value = calc.distance?.let { formatDistanceWithUnit(it.toDouble(), unit) }
-                        ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+                    value = calc.distance?.let { formatDistanceWithUnit(it.toDouble(), unit) },
                     note = stringResource(R.string.entry_readout_distance_note)
                 ),
                 ReadoutItem(
@@ -348,17 +420,16 @@ private fun EntryInstrument(
                     ),
                     value = calc.costPerKm?.let { costPerKm ->
                         currency.format(DistanceConverter.convertCostPerDistance(costPerKm, unit))
-                    } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+                    },
                     note = stringResource(R.string.entry_readout_cost_per_km_note)
                 ),
                 ReadoutItem(
                     label = stringResource(R.string.entry_readout_price_per_litre),
-                    value = calc.pricePerLitre?.let { currency.format(it) }
-                        ?: stringResource(R.string.dashboard_stat_latest_odometer_empty),
+                    value = calc.pricePerLitre?.let { currency.format(it) },
                     note = stringResource(R.string.entry_readout_price_per_litre_note)
                 )
             ),
-            compact = true
+            compact = !roomyReadouts
         )
     }
 }
@@ -385,6 +456,44 @@ private fun instrumentA11y(mileage: Double?, ceiling: Double, unit: DistanceUnit
     }
 }
 
+/**
+ * The sheet half of the screen: the form while the entry is being decided, the
+ * receipt once it is saved. Lifted out of [AddEditEntryScreen] because the split
+ * layout renders it in a column of its own while the stacked layout renders it
+ * under the instrument, and both must stay the same content.
+ */
+@Composable
+private fun EntrySheet(
+    uiState: AddEditUiState,
+    viewModel: AddEditViewModel,
+    currency: NumberFormat,
+    dateFormatter: SimpleDateFormat,
+    onDone: () -> Unit,
+    onRequestDatePicker: () -> Unit
+) {
+    Crossfade(
+        targetState = uiState.isEntrySaved,
+        animationSpec = tween(MileLogMotion.standard, easing = MileLogMotion.easing),
+        label = "entry-form-state"
+    ) { saved ->
+        if (saved) {
+            EntrySavedSummary(
+                uiState = uiState,
+                currency = currency,
+                dateFormatter = dateFormatter,
+                onDone = onDone
+            )
+        } else {
+            EntryForm(
+                uiState = uiState,
+                viewModel = viewModel,
+                dateFormatter = dateFormatter,
+                onRequestDatePicker = onRequestDatePicker
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntryForm(
@@ -397,6 +506,16 @@ private fun EntryForm(
     val spacing = MaterialTheme.spacing
     val unit = uiState.distanceUnit
     val datePickerA11y = stringResource(R.string.entry_field_date_a11y)
+    val invalidCount = uiState.invalidFields.size
+
+    // The banner leaves with the last count it showed. An empty field list is
+    // not a number worth announcing, and the banner is a live region, so
+    // rendering it with zero on the way out would read out "0 fields need
+    // attention" exactly as the form became valid. Holding it here rather than
+    // behind an effect also means a failed submit shows the real count on its
+    // first frame instead of flicking through zero.
+    var announcedInvalidCount by remember { mutableIntStateOf(0) }
+    if (invalidCount > 0) announcedInvalidCount = invalidCount
 
     val dateFocus = remember { FocusRequester() }
     val odometerFocus = remember { FocusRequester() }
@@ -442,13 +561,23 @@ private fun EntryForm(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
             .padding(spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.lg)
     ) {
-        if (uiState.invalidFields.isNotEmpty()) {
-            ValidationBanner(count = uiState.invalidFields.size)
+        AnimatedVisibility(
+            visible = invalidCount > 0,
+            enter = fadeIn(tween(MileLogMotion.fast, easing = MileLogMotion.easing)) +
+                expandVertically(
+                    animationSpec = tween(MileLogMotion.medium, easing = MileLogMotion.easing),
+                    expandFrom = Alignment.Top
+                ),
+            exit = fadeOut(tween(MileLogMotion.fast, easing = MileLogMotion.easing)) +
+                shrinkVertically(
+                    animationSpec = tween(MileLogMotion.fast, easing = MileLogMotion.easing),
+                    shrinkTowards = Alignment.Top
+                )
+        ) {
+            ValidationBanner(count = announcedInvalidCount)
         }
 
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -657,7 +786,6 @@ private fun EntrySavedSummary(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
             .padding(spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.lg)
     ) {
@@ -675,7 +803,7 @@ private fun EntrySavedSummary(
         LedgerPanel {
             SummaryRow(
                 label = stringResource(R.string.vehicle_preview_label),
-                value = uiState.vehicleName ?: stringResource(R.string.dashboard_stat_latest_odometer_empty)
+                value = uiState.vehicleName
             )
             SummaryDivider()
             SummaryRow(
@@ -691,20 +819,18 @@ private fun EntrySavedSummary(
             SummaryRow(
                 label = stringResource(R.string.entry_field_odometer_label),
                 value = calc.odometer?.let { formatDistanceWithUnit(it.toDouble(), unit) }
-                    ?: stringResource(R.string.dashboard_stat_latest_odometer_empty)
             )
             SummaryDivider()
             SummaryRow(
                 label = stringResource(R.string.entry_field_liters_label),
                 value = calc.liters?.let {
                     stringResource(R.string.dashboard_ledger_liters_value, it)
-                } ?: stringResource(R.string.dashboard_stat_latest_odometer_empty)
+                }
             )
             SummaryDivider()
             SummaryRow(
                 label = stringResource(R.string.entry_field_cost_label),
                 value = calc.cost?.let { currency.format(it) }
-                    ?: stringResource(R.string.dashboard_stat_latest_odometer_empty)
             )
             calc.mileage?.let { mileage ->
                 SummaryDivider()
@@ -738,7 +864,7 @@ private fun EntrySavedSummary(
 }
 
 @Composable
-private fun SummaryRow(label: String, value: String) {
+private fun SummaryRow(label: String, value: String?) {
     val spacing = MaterialTheme.spacing
     Row(
         modifier = Modifier
@@ -753,8 +879,8 @@ private fun SummaryRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
-        Text(
-            text = value,
+        ReadingText(
+            value = value,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,

@@ -2,6 +2,9 @@ package com.example.myapplication.ui.history
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +68,7 @@ import com.example.myapplication.ui.components.LedgerRow
 import com.example.myapplication.ui.components.formatDistanceWithUnit
 import com.example.myapplication.ui.components.formatMileageWithUnit
 import com.example.myapplication.ui.theme.MicroLabelStyle
+import com.example.myapplication.ui.theme.MileLogMotion
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.ledger
@@ -246,46 +250,70 @@ fun HistoryScreen(
                             }
                         }
                         itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
-                            if (index > 0) {
-                                HorizontalDivider(
-                                    color = MaterialTheme.ledger.rule,
-                                    thickness = 1.dp
+                            // The row's own node carries the motion. Adding,
+                            // deleting or undoing an entry then moves the list
+                            // and fades the row out, instead of blinking the
+                            // neighbours into their new places; the stable key
+                            // above is what lets it tell the rows apart.
+                            Column(
+                                modifier = Modifier.animateItem(
+                                    fadeInSpec = tween(
+                                        MileLogMotion.standard,
+                                        easing = MileLogMotion.easing
+                                    ),
+                                    placementSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                    fadeOutSpec = tween(
+                                        MileLogMotion.fast,
+                                        easing = MileLogMotion.easing
+                                    )
                                 )
-                            }
-                            val formattedDate = dateFormatter.format(Date(entry.date))
-                            LedgerRow(
-                                date = formattedDate,
-                                odometer = formatDistanceWithUnit(
-                                    entry.odometer.toDouble(),
-                                    distanceUnit
-                                ),
-                                liters = if (wide) {
-                                    stringResource(R.string.dashboard_ledger_liters_value, entry.liters)
-                                } else {
-                                    stringResource(R.string.dashboard_ledger_liters_value, entry.liters) +
-                                        "  ·  " + stringResource(
+                            ) {
+                                if (index > 0) {
+                                    HorizontalDivider(
+                                        color = MaterialTheme.ledger.rule,
+                                        thickness = 1.dp
+                                    )
+                                }
+                                val formattedDate = dateFormatter.format(Date(entry.date))
+                                LedgerRow(
+                                    date = formattedDate,
+                                    odometer = formatDistanceWithUnit(
+                                        entry.odometer.toDouble(),
+                                        distanceUnit
+                                    ),
+                                    liters = if (wide) {
+                                        stringResource(
+                                            R.string.dashboard_ledger_liters_value,
+                                            entry.liters
+                                        )
+                                    } else {
+                                        stringResource(
+                                            R.string.dashboard_ledger_liters_value,
+                                            entry.liters
+                                        ) + "  ·  " + stringResource(
                                             FuelCategory.fromDisplayName(entry.fuelCategory).labelRes
                                         )
-                                },
-                                mileage = uiState.mileageById[entry.id]?.let { value ->
-                                    formatMileageWithUnit(value, distanceUnit)
-                                },
-                                cost = currencyFormatter.format(entry.cost),
-                                compact = !wide,
-                                onClick = { onEditEntry(entry.id) },
-                                trailing = {
-                                    IconButton(onClick = { entryPendingDelete = entry }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Delete,
-                                            contentDescription = stringResource(
-                                                R.string.history_card_delete,
-                                                formattedDate
-                                            ),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                    },
+                                    mileage = uiState.mileageById[entry.id]?.let { value ->
+                                        formatMileageWithUnit(value, distanceUnit)
+                                    },
+                                    cost = currencyFormatter.format(entry.cost),
+                                    compact = !wide,
+                                    onClick = { onEditEntry(entry.id) },
+                                    trailing = {
+                                        IconButton(onClick = { entryPendingDelete = entry }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Delete,
+                                                contentDescription = stringResource(
+                                                    R.string.history_card_delete,
+                                                    formattedDate
+                                                ),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }

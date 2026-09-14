@@ -13,6 +13,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 > - [Sprint 6: Settings, Design System Migration & Bottom Navigation](#sprint-6-settings-design-system-migration--bottom-navigation) — design section superseded
 > - [Sprint 7: Vehicle Management & Seed Data Expansion](#sprint-7-vehicle-management--seed-data-expansion)
 > - [Sprint 8: Instrument Ledger Conformance](#sprint-8-instrument-ledger-conformance-refactor-design)
+> - [Sprint 9: Navigation, Layout & Chart Interaction Refinement](#sprint-9-navigation-layout--chart-interaction-refinement)
 
 ---
 
@@ -196,7 +197,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 
 #### 6.2.1 Navigation (`MileLiteNavHost.kt`, `BottomNavBar.kt`)
 - [x] Add the `SETTINGS` route and the `REPORTS` alias for the charts destination in `MileLogRoutes`.
-- [x] `MileLogBottomBar` with the four shell destinations:
+- [x] `MileLogBottomBar` with the four shell destinations (**a fifth, Vehicles, was added in Sprint 9** — see §9):
     - [x] Dashboard (`Icons.Rounded.Dashboard` / `Icons.Outlined.Dashboard`)
     - [x] History (`Icons.Rounded.History` / `Icons.Outlined.History`)
     - [x] Reports (`Icons.Rounded.Assessment` / `Icons.Outlined.Assessment`)
@@ -205,13 +206,13 @@ This document provides an interactive execution checklist for the mini-scope Mil
 - [x] `MileLogRail` (228dp) for expanded widths: the same destinations plus the wordmark, the primary action and the offline note, so widening the window never removes a way to move.
 - [x] Bar wired to the `NavHost` with `startDestination = DASHBOARD`; a tab press pops up to the start destination and restores state.
 
-> **Superseded:** the planned fifth "Add" tab (centred elevated pill) was not shipped. Logging a fill-up is the shell's own FAB (`MileLogFab`), which is why it appears on Dashboard, History and Reports but not on Settings.
+> **Superseded:** the planned fifth "Add" tab (centred elevated pill) was not shipped. Logging a fill-up is the shell's own FAB (`MileLogFab`), which is why it appears on Dashboard, History and Reports but not on Settings (and not on Vehicles, added in Sprint 9).
 
 #### 6.2.2 Screen Navigation Updates
 - [x] Back navigation with the bottom bar pops up to the start destination.
 - [x] Charts reachable from the Reports tab, and from the dashboard's "Open charts" action.
 - [x] `AddEditEntryScreen` and `AddEditVehicleScreen` are full-screen routes with no shell bars.
-- [x] Decide whether the primary action should also be reachable from Settings: **it stays off Settings.** Logging a fill-up is an act on the log, not a configuration change, and the shell already carries the FAB on Dashboard, History and Reports. Settings reaches the same surface through the Vehicle group.
+- [x] Decide whether the primary action should also be reachable from Settings: **it stays off Settings.** Logging a fill-up is an act on the log, not a configuration change, and the shell already carries the FAB on Dashboard, History and Reports. Settings reaches the log surfaces through **Data** (export, clear, seed); vehicle management moved to its own destination in Sprint 9.
 
 ---
 
@@ -224,7 +225,7 @@ This document provides an interactive execution checklist for the mini-scope Mil
 `ui/settings/SettingsScreen.kt` + `SettingsViewModel.kt`, using `LedgerPanel`, `SectionHeader` and `SettingsRow` (60dp rows, hairline dividers) rather than the Kinetic Logic card layout:
 
 - [x] Opens with an instrument readout of the current state (fill-ups logged, distance tracked, storage) instead of a decorative header.
-- [x] **Vehicle** group: vehicles with the active selection, tap to switch, edit route, and delete with a confirmation dialog.
+- [x] **Vehicle** group: vehicles with the active selection, tap to switch, edit route, and delete with a confirmation dialog. **Relocated in Sprint 9** to the Vehicles destination (§9), which is now the single home for the garage; Settings keeps only the active-vehicle flow it needs to scope the entry count.
 - [x] **Data** group: Export fill-ups as CSV through the system document picker; Delete all fill-ups with confirmation **and undo**; Add demo fill-ups.
 - [x] **About** group: version, storage ("This device"), network ("Not required").
 - [x] Every claim on the screen is true of the product — there is no subscription, sync, account or log out, so none of them appear.
@@ -271,7 +272,7 @@ The status and navigation bars move with the resolved appearance too, which is w
 - [x] Bottom navigation is functional with correct selected/unselected states at both compact and expanded widths.
 - [x] All existing functionality (CRUD, calculations, charts, export) continues to work with the shipped design system and navigation.
 - [ ] ~~App uses the new Kinetic Logic design system across all screens~~ — **superseded**; Instrument Ledger shipped instead (§6.1).
-- [ ] ~~5-tab bottom navigation bar is functional~~ — **superseded**; four destinations plus a shell FAB shipped instead (§6.2).
+- [ ] ~~5-tab bottom navigation bar is functional~~ — **superseded**; four destinations plus a shell FAB shipped instead (§6.2). **Updated in Sprint 9:** five destinations now, once Vehicles joined the bar.
 - [x] Theme toggle and distance units, with preferences persisting across restarts — **shipped in Sprint 8** (§8.1).
 
 ---
@@ -282,7 +283,7 @@ The status and navigation bars move with the resolved appearance too, which is w
 - [x] Clear data: scoped to the active vehicle and restorable through undo (`SettingsViewModel.clearAllEntries` / `undoClear`).
 - [x] Export from Settings writes the active vehicle's CSV through the document picker.
 - [x] Instrumented suite covers the per-vehicle delete path (`VehicleDaoTest`, `FuelEntryDaoCategoryTest`, `VehicleRepositoryTest`) — 61 instrumented tests passing.
-- [x] Bottom navigation: four destinations navigate correctly; the selected tab shows the filled icon (`Icons.Rounded`), the rest outlined (`Icons.Outlined`).
+- [x] Bottom navigation: four destinations navigate correctly; the selected tab shows the filled icon (`Icons.Rounded`), the rest outlined (`Icons.Outlined`). **Five since Sprint 9** (Vehicles added).
 - [x] Accessibility: interactive elements carry content descriptions and 48dp minimum targets.
 - [x] Full regression: add → edit → delete → dashboard and charts update (`FullRegressionTest`).
 
@@ -310,7 +311,7 @@ The status and navigation bars move with the resolved appearance too, which is w
 - [x] Add vehicle-scoped fuel-entry queries (`getAllFlowForVehicle`, `getAllForVehicle`, `getLatestForVehicle`, `deleteByVehicle`) and mirror them in `FuelEntryRepository`.
 - [x] Build the Add/Edit Vehicle screen (`AddEditVehicleScreen` + `AddEditVehicleViewModel`).
 - [x] Add `VehicleValidator` for required and case-insensitive duplicate names.
-- [x] Build the Settings > Vehicle section: vehicle list, active-vehicle switching, add row, edit and delete with a confirmation dialog.
+- [x] Build the Settings > Vehicle section: vehicle list, active-vehicle switching, add row, edit and delete with a confirmation dialog. **Moved in Sprint 9** to the `Vehicles` primary destination, which ships the same list, switching, add, edit and delete.
 - [x] Filter Dashboard, History and Charts to the active vehicle using `flatMapLatest` over the active-vehicle flow.
 - [x] Show the active vehicle on Dashboard (binnacle subtitle), History, Charts and Add/Edit Entry; block logging when no vehicle exists.
 - [x] Expand `DemoDataGenerator` to six profiles: Creta, Seltos and Harrier, each with a Diesel and a CNG history with distinct odometer, mileage and fuel-price bands.
@@ -408,11 +409,99 @@ The link carries the fill-up's date in its accessible name (`dashboard_ledger_ed
 
 ---
 
+## Sprint 9: Navigation, Layout & Chart Interaction Refinement
+
+**Timeline:** Week 9
+
+**Primary Goal:** Make the vehicle, the fill-up form and the charts reachable and readable instead of fighting the shell: vehicle management becomes a primary destination, the entry form's readings and fields share one scroll context, and both charts report an exact value on tap.
+
+### 9.1 Vehicle Management as a Primary Destination
+- [x] Add `VEHICLES = "vehicles"` to `MileLogRoutes` and register `VehiclesScreen` in `MileLiteNavHost`.
+- [x] Add Vehicles as the fifth `MileLogBottomBar` / `MileLogRail` destination (`Icons.Rounded` / `Icons.Outlined.DirectionsCar`, `bottom_nav_vehicles_label`).
+- [x] Include `VEHICLES` in the shell's top-level detection and keep the FAB off it — the FAB logs a fill-up, which is not an act on the garage.
+- [x] Create `ui/vehicle/VehiclesScreen.kt` + `VehiclesViewModel.kt`: configuration readout (active vehicle, count), vehicle rows with select / edit / delete, an Add vehicle row, and a delete confirmation dialog.
+- [x] Remove the Vehicle group, its dialog and `VehicleRow` from `SettingsScreen`; drop `vehicles` from `SettingsUiState` and `setActiveVehicle` / `deleteVehicle` from `SettingsViewModel`, which now observes only the active vehicle (to scope the entry count).
+- [x] Point the Dashboard empty-state copy at `vehicles_empty`.
+- [x] Retire the now-unused `settings_vehicle_*` / `settings_section_vehicle` strings and add the `vehicles_*` set.
+
+### 9.2 Unified Scroll & Keyboard on the Entry Form
+- [x] Move `EntryInstrument` and the form / saved summary into a single `verticalScroll` container, replacing the fixed instrument above a separately scrolling form.
+- [x] Apply `imePadding()` and `imeNestedScroll()` to that one container, so the keyboard shortens and scrolls the whole page.
+- [x] Remove the nested `verticalScroll` / `imePadding` from `EntryForm` and `EntrySavedSummary` (a same-axis nested scrollable is illegal).
+- [x] Apply the same treatment to `AddEditVehicleScreen`.
+- [x] Reflow the entry readout strip to the roomy layout at `MileLogWindow.medium`.
+
+### 9.3 Charts — Exact Value on Tap, Distinct Fuel Colours
+- [x] Add `ChartValueMarkerView` (an MPAndroidChart `MarkerView`) plus `res/layout/chart_marker_view.xml`, drawn with the instrument surface and rule tokens.
+- [x] `MonthlySpendChart`: marker on tap showing the month (and the fuel type when grouped) and the exact formatted cost; rebuilt in the `update` block so it always reads the current data.
+- [x] `MileageTrendChart`: marker on tap showing the date (and fuel type for an overlay line) and the mileage in the selected unit.
+- [x] Add per-fuel theme tokens `chartPetrol` / `chartDiesel` / `chartCng` / `chartCombined` to `LedgerColors`, map every `FuelCategory` explicitly, and give the combined line the neutral `chartCombined`.
+- [x] Append `charts_touch_hint` to both chart content descriptions.
+
+### 9.4 Responsive Polish & Motion
+
+A motion-system pass over the shipped app. The on-record design reviews had already refused entrance choreography for this product surface ("Product UI does not need entrance beats"), so the pass adds only motion that explains a state change.
+
+- [x] **One budget:** `MileLogMotion` (`ui/theme/Motion.kt`) holds the durations (`tap` / `fast` / `standard` / `medium` / `large` / `screenEnter` / `screenExit` / `readout`) and the single easing curve, so a selection, a reveal and a whole screen change move at the same tempo instead of each site inventing its own. Adopted by navigation, the gauge, the entry crossfade and everything below.
+- [x] `MileLiteNavHost` destination transitions: a short fade plus a small directional offset (forward on push, back on pop), with exits shorter than entrances (170ms against 220ms).
+- [x] Animate the `MileageGauge` fill to a new reading (`animateFloatAsState`).
+- [x] Cross-fade the entry form into its saved summary.
+- [x] **Selection feedback:** `SegmentedChoice` crossfades the selected segment's fill and label, so the fuel-type and distance-unit controls answer a tap instead of jumping.
+- [x] **Error feedback:** the entry form's validation banner enters and leaves with a fade plus a vertical expand/shrink, and holds the last count it showed so the live region never announces "0 fields need attention" on the way out.
+- [x] **List feedback:** each History ledger row carries `Modifier.animateItem()`, so adding, deleting or undoing an entry moves the list and fades the row instead of blinking the neighbours into place. Placement uses a spring (interruptible); the fades use the budget.
+- [x] **Reduced motion re-verified, not re-implemented:** Compose scales every duration by the system animation scale (`MotionDurationScale` observes the Android animator duration scale), so a device with animations off already collapses these to the next frame, while the infinite spinners keep turning as the platform intends.
+- Considered and deliberately rejected: entrance choreography or staggered reveals on the dashboard (the review refused them; a dashboard should arrive ready to use), animating the trend bars (height animation janks and would read as an entrance on first paint), a loading-to-content crossfade per screen (the shell already fades the destination in), and animating the chart marker or the theme switch.
+
+### 9.5 Responsive Adaptation (shipped app)
+
+A responsive adaptation pass over the shipped Compose app. The on-record design reviews audit the superseded `refactor-design/` artifacts rather than the app itself, so their findings were re-verified against the real code before anything was acted on.
+
+- [x] **System bars on the rail.** `MileLogRail` is shell chrome, not Scaffold content, so it was the one surface with no window-inset handling: on an edge-to-edge tablet the wordmark sat under the status bar and the offline note under the gesture bar. It now carries `windowInsetsPadding(WindowInsets.safeDrawing)`. (Re-verified from `review-report.md` finding 5, which asked for desktop navigation that actually works: the rail shipped, but it was drawn under the system bars.)
+- [x] **Content measure on wide windows.** Only `InstrumentBand`, Charts and History capped their content; the dashboard ledger, Settings, Vehicles and both forms stretched to the full frame (about 1370dp on a 1600dp window), against the rule in `Spacing.kt` that backgrounds stay full-bleed and only text and controls are capped. Added a shared `LogbookContent` frame (centred, `widthIn(max = MileLogWindow.contentMaxWidth)`) and applied it to those four surfaces. The instrument is deliberately not wrapped: its casing has to reach the window edges.
+- [x] **Split console layout.** The entry and vehicle sheets were a single full-width column at every width. At `MileLogWindow.wide` of **content** width they now recompose to the console the design describes: the live instrument beside the fields, both scrolling as the one page. The threshold is measured on the screen's own frame, so a rail on screen is already accounted for.
+- [x] **Font-scale-aware readouts.** The three-across readout strip switched on width alone, so it stayed three-across at a 2.0 system font scale and crushed. Its threshold now scales with `LocalDensity.fontScale` and falls back to the ruled list; the split layout is always compact.
+- [x] Consolidated the duplicated 720dp breakpoint into `MileLogWindow.wide` (Charts held a private copy).
+- Inspected and deliberately left alone: the bottom bar's label behaviour (M3 ellipsises safely; the alternatives cost discoverability), History's centred `LazyColumn` (needs `contentPadding`, so it keeps its own mechanism), and RTL (Compose `start`/`end` and `Alignment.TopStart` are already logical throughout — no physical `left`/`right` anywhere).
+
+### 9.6 Sprint 9 Milestone
+- [x] Vehicles is a primary destination reachable in one tap from the shell; the entry form scrolls and resizes as one page under the keyboard; both charts report exact values on tap and distinguish petrol, diesel and CNG by colour.
+
+### 9.7 Sprint 9 Testing
+- [x] `:app:compileDebugKotlin` + `:app:processDebugResources` — success.
+- [x] `:app:testDebugUnitTest` — 112 tests, 0 failures (no regressions; no data-layer logic changed).
+- [x] `:app:lintDebug` — success: 20 warnings, 0 errors, none of them in a file this sprint touched.
+- [x] `:app:assembleDebug` and `:app:assembleDebugAndroidTest` — success.
+- [x] Responsive pass re-verified after the §9.5 changes — compile + resources success, `:app:testDebugUnitTest` 112 tests / 0 failures, lint unchanged at 20 warnings / 0 errors, IDE diagnostics clean on all nine changed files.
+- [x] Motion pass re-verified after the §9.4 changes — compile + resources success, `:app:testDebugUnitTest` 112 tests / 0 failures, lint unchanged at 20 warnings / 0 errors, IDE diagnostics clean on all six changed files.
+- [ ] Motion observed on a device — the selection crossfade, the banner's enter/exit, list placement on delete and undo, and the system reduced-motion path are **not verified as rendered behaviour**. No device was used this pass, so they are verified as implementations only.
+- [ ] Rendered composition at 320 / 360 / 600 / 840 / 1280dp, in landscape, and at font scale 2.0 — **not verified**. No renderer or device was exercised this pass (the emulator walkthrough was stopped at the user's request in the previous task), so the wide-frame, split-console and scaled-readout behaviour is reasoned from `BoxWithConstraints` widths and `LocalDensity.fontScale` rather than observed.
+- [ ] Manual emulator walkthrough across screen sizes and orientations — **cut short at the user's request**; not re-run. Verified by build, unit tests and lint instead.
+
+### 9.8 Design Checkup Findings — Fixed
+
+A design checkup of the shipped app raised one MEDIUM and three LOW findings. All four are closed. The checkup report is left as the point-in-time diagnostic; re-running it is what verifies them.
+
+- [x] **MEDIUM — an empty reading had no spoken form.** The placeholder was a bare em dash in a resource plus two inline literals, so a screen reader reached an unspoken dash in every empty readout and in the mileage cell of a first fill-up. Now a resource pair (`value_not_recorded` for the glyph, `value_not_recorded_spoken` for the words) is rendered by one component, `ReadingText`: it keeps the glyph for the eye and swaps in the words for the accessibility tree. `ReadoutItem.value` and `SummaryRow`'s value became nullable so no screen decides what to print for a figure it does not have, the inline literals in `LedgerRow` are gone, and the gauge's accessible name says "Not recorded" instead of reading out a dash.
+- [x] **LOW — radio sets were not announced as sets.** `Modifier.selectableGroup()` on the segmented control (fuel type, distance unit), the vehicle list and the appearance list, so each announces as one choice rather than a run of unrelated radio buttons. The Vehicles panel keeps its Add row outside the group: that row is an action, not an option.
+- [x] **LOW — five bottom-bar labels in 320dp.** `MileLogBottomBar` now measures its own width: at or above 400dp every label shows, below that only the selected destination keeps its label. The name moved onto the icon, with the visible label removed from the accessibility tree, so a destination is still announced when its label is hidden and is never announced twice when it is shown.
+- [x] **LOW — release shipped unshrunk.** R8 code and resource shrinking are on for the release variant. Measured: the release APK is **2.0 MB** against the debug artifact's **20.2 MB**, and R8 ran clean with no missing-class errors.
+- **Deviation, stated plainly:** the checkup proposed enabling the `optimization {}` block, but that block is the AGP 9.3 DSL and this project is on 9.2, where it refuses to enable without an internal rollout flag. The documented switch for 9.2 (`isMinifyEnabled` + `isShrinkResources`) was used instead. The build-config change was signed off first, per `AGENTS.md`.
+- **Verification:** `compileDebugKotlin` + `processDebugResources`, `testDebugUnitTest` (112 tests, 0 failures), `lintDebug` (20 warnings, 0 errors, none in a changed file), `assembleRelease` (R8 clean), and IDE diagnostics clean across the eight changed source files.
+- **Still open from the checkup:** the rendered-composition, keyboard, screen-reader and RTL gaps. The release APK is also unsigned (no signing config) and its runtime is unverified: R8 succeeds at build time, and a release build has not been run.
+
+**Sprint 9 verification record**
+
+- `app-debug.apk` built, installed and launched cleanly on the `Medium_Phone` AVD before the emulator walkthrough was stopped at the user's request; the emulator was then shut down.
+- Machine note: `org.gradle.configuration-cache=true` fails on this host with a `JdkImageInput` serialization error in `:app:compileDebugJavaWithJavac`. Worked around per-machine with `--no-configuration-cache`; no project file was changed.
+- Deferred follow-up: an on-device pass at multiple widths/orientations (including a tablet) and a visual check of the chart markers.
+
+---
+
 ## Deferred / Not in Mini Scope
 
 > More features have been done in original full application , This is completely diff , in terms of UI wise
 
-Sprint 8 was the last planned sprint, and it closes the conformance gaps that Sprint 6 left open once its Kinetic Logic sections were superseded: the Appearance control, the distance unit and both preferences' persistence, the entry sheet's order and post-save summary, and the dashboard ledger's edit link. **Nothing on this plan is still open** — every remaining item is either shipped, explicitly superseded (Kinetic Logic, the 5-tab bar, the centred Add tab), or recorded above as a decision.
+Sprint 9 is the latest planned sprint. It adds the Vehicles destination, unifies the entry form's scroll context with the keyboard, and gives both charts a tap readout plus per-fuel colours; it also supersedes the Sprint 6 decisions that the garage lives in Settings and that the shell carries four destinations. **Nothing on this plan is still open** — every remaining item is either shipped, explicitly superseded (Kinetic Logic, the 5-tab bar, the centred Add tab, the Settings vehicle group), or recorded above as a decision.
 
 Deliberately out of scope for the mini build, unchanged by Sprint 8:
 

@@ -22,9 +22,17 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            // R8 code and resource optimization, for the shipped build only:
+            // it costs build time and obscures stack traces, so the debug
+            // variant keeps both off.
+            //
+            // This is the documented switch for AGP 9.2. The `optimization {}
+            // block` that replaces these two flags belongs to AGP 9.3; on 9.2 it
+            // refuses to enable without an internal feature flag, so the flags
+            // below are the supported path. Keep rules, if any are needed, live
+            // in src/main/keepRules/rules.keep.
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
     compileOptions {

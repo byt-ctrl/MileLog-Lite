@@ -29,8 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 import com.example.myapplication.data.local.FuelCategory
@@ -40,14 +38,6 @@ import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.MileLogWindow
 import com.example.myapplication.ui.theme.spacing
 import com.example.myapplication.ui.theme.touchTargetMinHeight
-
-/**
- * Content width at which the two plots fit side by side without cramping.
- * Lower than the shell's expanded breakpoint on purpose: once the navigation
- * rail is on screen it has already taken 228dp out of the content width, so
- * waiting for the shell's own threshold would never trigger on a 10in tablet.
- */
-private val SideBySideMinWidth: Dp = 720.dp
 
 /**
  * Charts/Insights screen hosting the mileage trend line chart and the
@@ -179,7 +169,7 @@ private fun ChartsContent(
     val hasMileage = uiState.fillups.count { it.mileageKmPerL != null } >= 2
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val sideBySide = maxWidth >= SideBySideMinWidth
+        val sideBySide = maxWidth >= MileLogWindow.wide
 
         Column(
             modifier = Modifier

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tooltip bubble inflated by ChartValueMarkerView. The root carries the padding
+  and the background (drawn in code as a rounded GradientDrawable); the two
+  TextViews are filled in from refreshContent().
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chart_marker_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/chart_marker_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="11sp" />
+
+    <TextView
+        android:id="@+id/chart_marker_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

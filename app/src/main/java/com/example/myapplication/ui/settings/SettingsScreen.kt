@@ -16,17 +16,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.DeleteOutline
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -51,13 +49,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
-import com.example.myapplication.data.local.FuelCategory
 import com.example.myapplication.data.local.ThemeMode
-import com.example.myapplication.data.local.Vehicle
 import com.example.myapplication.domain.demo.DemoDataGenerator
 import com.example.myapplication.ui.components.InstrumentBand
 import com.example.myapplication.ui.components.InstrumentBar
 import com.example.myapplication.ui.components.LedgerPanel
+import com.example.myapplication.ui.components.LogbookContent
 import com.example.myapplication.ui.components.ReadoutItem
 import com.example.myapplication.ui.components.ReadoutStrip
 import com.example.myapplication.ui.components.SectionHeader
@@ -77,8 +74,6 @@ import com.example.myapplication.ui.theme.spacing
  */
 @Composable
 fun SettingsScreen(
-    onAddVehicle: () -> Unit,
-    onEditVehicle: (Long) -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -86,7 +81,6 @@ fun SettingsScreen(
     val spacing = MaterialTheme.spacing
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSeedDialog by remember { mutableStateOf(false) }
-    var vehiclePendingDelete by remember { mutableStateOf<Vehicle?>(null) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -156,57 +150,19 @@ fun SettingsScreen(
         ) {
             SettingsBinnacle(uiState = uiState)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.lg, vertical = spacing.xl),
+            LogbookContent(
+                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xl),
                 verticalArrangement = Arrangement.spacedBy(spacing.xxl)
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeader(
-                        title = stringResource(R.string.settings_section_vehicle),
-                        note = stringResource(R.string.settings_vehicle_active_note)
-                    )
-                    Spacer(Modifier.height(spacing.md))
-                    LedgerPanel {
-                        if (uiState.vehicles.isEmpty()) {
-                            SettingsRow(title = stringResource(R.string.settings_vehicle_empty))
-                        } else {
-                            uiState.vehicles.forEachIndexed { index, vehicle ->
-                                if (index > 0) {
-                                    HorizontalDivider(
-                                        color = MaterialTheme.ledger.rule,
-                                        thickness = 1.dp
-                                    )
-                                }
-                                VehicleRow(
-                                    vehicle = vehicle,
-                                    isActive = vehicle.id == uiState.activeVehicle?.id,
-                                    onSelect = { viewModel.setActiveVehicle(vehicle.id) },
-                                    onEdit = { onEditVehicle(vehicle.id) },
-                                    onDelete = { vehiclePendingDelete = vehicle }
-                                )
-                            }
-                            HorizontalDivider(
-                                color = MaterialTheme.ledger.rule,
-                                thickness = 1.dp
-                            )
-                        }
-                        SettingsRow(
-                            title = stringResource(R.string.settings_vehicle_add_row),
-                            note = stringResource(R.string.settings_vehicle_add_note),
-                            onClick = onAddVehicle
-                        )
-                    }
-                }
-
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SectionHeader(
                         title = stringResource(R.string.settings_section_appearance),
                         note = stringResource(R.string.settings_appearance_note)
                     )
                     Spacer(Modifier.height(spacing.md))
-                    LedgerPanel {
+                    // One radio set, so the three appearances announce as a
+                    // choice rather than as three separate buttons.
+                    LedgerPanel(modifier = Modifier.selectableGroup()) {
                         ThemeMode.entries.forEachIndexed { index, mode ->
                             if (index > 0) {
                                 HorizontalDivider(
@@ -356,130 +312,6 @@ fun SettingsScreen(
                 }
             }
         )
-    }
-
-    vehiclePendingDelete?.let { vehicle ->
-        AlertDialog(
-            onDismissRequest = { vehiclePendingDelete = null },
-            shape = MileLogShapes.md,
-            title = { Text(stringResource(R.string.settings_vehicle_delete_dialog_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.settings_vehicle_delete_dialog_body,
-                        vehicle.name
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteVehicle(vehicle)
-                        vehiclePendingDelete = null
-                    },
-                    modifier = Modifier.heightIn(min = spacing.touchTarget)
-                ) {
-                    Text(
-                        text = stringResource(R.string.settings_vehicle_delete_confirm),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { vehiclePendingDelete = null },
-                    modifier = Modifier.heightIn(min = spacing.touchTarget)
-                ) {
-                    Text(stringResource(R.string.settings_vehicle_delete_cancel))
-                }
-            }
-        )
-    }
-}
-
-/**
- * One vehicle in the Vehicle group. The leading control selects which vehicle
- * every screen logs against; edit and delete act on the row itself.
- */
-@Composable
-private fun VehicleRow(
-    vehicle: Vehicle,
-    isActive: Boolean,
-    onSelect: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val spacing = MaterialTheme.spacing
-    val colors = MaterialTheme.colorScheme
-    val category = FuelCategory.fromDisplayName(vehicle.fuelType)
-    val summary = listOf(vehicle.make, vehicle.model)
-        .filter { it.isNotBlank() }
-        .joinToString("  ")
-        .ifBlank { stringResource(category.labelRes) }
-    val note = "$summary  ·  ${stringResource(category.labelRes)}"
-    val editA11y = stringResource(R.string.settings_vehicle_edit_a11y, vehicle.name)
-    val deleteA11y = stringResource(R.string.settings_vehicle_delete_a11y, vehicle.name)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .selectable(
-                selected = isActive,
-                role = Role.RadioButton,
-                onClick = onSelect
-            )
-            .padding(start = spacing.lg, end = spacing.sm, top = spacing.sm, bottom = spacing.sm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = if (isActive) {
-                Icons.Rounded.RadioButtonChecked
-            } else {
-                Icons.Rounded.RadioButtonUnchecked
-            },
-            contentDescription = null,
-            tint = if (isActive) colors.primary else colors.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = spacing.md)
-        ) {
-            Text(
-                text = vehicle.name,
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.onSurface
-            )
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant
-            )
-        }
-        IconButton(
-            onClick = onEdit,
-            modifier = Modifier.semantics { contentDescription = editA11y }
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Edit,
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.semantics { contentDescription = deleteA11y }
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.DeleteOutline,
-                contentDescription = null,
-                tint = colors.error,
-                modifier = Modifier.size(20.dp)
-            )
-        }
     }
 }
 

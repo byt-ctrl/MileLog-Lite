@@ -47,6 +47,14 @@ object MileLogWindow {
     val expanded: Dp = 840.dp
 
     /**
+     * Content width at which two panels can sit side by side without cramping.
+     * Measured against the screen's own frame, not the window: once the shell's
+     * rail is on screen it has already taken 228dp out of the content, so a
+     * window-width threshold would split a tablet into two unreadable columns.
+     */
+    val wide: Dp = 720.dp
+
+    /**
      * Widest the logbook content is allowed to get. Backgrounds stay full-bleed;
      * only text and controls are capped, so a wide window centres the ledger
      * instead of stretching the instrument across it.

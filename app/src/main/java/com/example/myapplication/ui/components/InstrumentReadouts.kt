@@ -1,5 +1,7 @@
 package com.example.myapplication.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,29 +20,73 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.DataTextStyle
 import com.example.myapplication.ui.theme.MicroLabelStyle
+import com.example.myapplication.ui.theme.MileLogMotion
 import com.example.myapplication.ui.theme.MileLogShapes
 import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
 
-/** One instrument reading: micro-label, monospace value, optional context. */
+/**
+ * One instrument reading: micro-label, monospace value, optional context.
+ *
+ * [value] is null when there is no reading yet. How that absence looks and
+ * sounds is this component's business, not the caller's, so no screen has to
+ * decide what to print for a figure it does not have.
+ */
 data class ReadoutItem(
     val label: String,
-    val value: String,
+    val value: String?,
     val note: String? = null
 )
+
+/**
+ * A reading, or the mark that stands in for one.
+ *
+ * A column needs a short glyph so tabular figures stay aligned, but a bare dash
+ * is announced as a dash or as nothing at all. When there is no value the text
+ * keeps its glyph and carries the spoken form instead, so the eye and the
+ * screen reader each get what they need from the same cell.
+ */
+@Composable
+fun ReadingText(
+    value: String?,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign? = null
+) {
+    val glyph = stringResource(R.string.value_not_recorded)
+    val spoken = stringResource(R.string.value_not_recorded_spoken)
+
+    Text(
+        text = value ?: glyph,
+        style = style,
+        color = color,
+        textAlign = textAlign,
+        modifier = if (value == null) {
+            modifier.semantics { contentDescription = spoken }
+        } else {
+            modifier
+        }
+    )
+}
 
 /**
  * The mileage gauge. A real 0..[ceiling] scale with ticks, a translucent fill
@@ -56,11 +102,24 @@ fun MileageGauge(
     contentDescription: String? = null
 ) {
     val ledger = MaterialTheme.ledger
-    val fraction = if (value != null && ceiling > 0.0) {
+    val targetFraction = if (value != null && ceiling > 0.0) {
         (value / ceiling).coerceIn(0.0, 1.0).toFloat()
     } else {
         0f
     }
+    // The dial travels to the reading instead of snapping to it, so a new
+    // fill-up reads as the needle moving rather than the screen replacing a
+    // number with no relationship to the one before it.
+    val fraction by animateFloatAsState(
+        targetValue = targetFraction,
+        // The dial settles at the app's readout tempo: long enough to follow
+        // the needle, short enough that nobody waits on it.
+        animationSpec = tween(
+            durationMillis = MileLogMotion.readout,
+            easing = MileLogMotion.easing
+        ),
+        label = "gauge-fraction"
+    )
 
     Canvas(
         modifier = modifier
@@ -185,8 +244,8 @@ fun ReadoutStrip(
                             color = ledger.chromeTextMuted,
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = item.value,
+                        ReadingText(
+                            value = item.value,
                             style = DataTextStyle,
                             color = ledger.chromeText
                         )
@@ -230,8 +289,8 @@ fun ReadoutStrip(
                         color = ledger.chromeTextMuted
                     )
                     Spacer(Modifier.height(spacing.xs))
-                    Text(
-                        text = item.value,
+                    ReadingText(
+                        value = item.value,
                         style = DataTextStyle,
                         color = ledger.chromeText
                     )
