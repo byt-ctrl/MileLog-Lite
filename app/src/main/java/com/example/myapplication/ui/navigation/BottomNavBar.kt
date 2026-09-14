@@ -44,8 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,11 +57,15 @@ import com.example.myapplication.ui.theme.ledger
 import com.example.myapplication.ui.theme.spacing
 
 /**
- * Width at which all five destination labels fit their share of the bar. A
- * five-item Material bar gives each item roughly an eighth of the width at
- * 320dp, which is inside the measure of the longest label.
+ * Width at which five destination labels stop fitting their share of the bar at
+ * the default text size.
+ *
+ * A five-item Material bar gives each item a fifth of the width, so a 320dp bar
+ * leaves 64dp per label. The longest of them ("Dashboard") needs about 58dp at
+ * 12sp, which is where that slack runs out. Callers scale it by the system font
+ * size before comparing, because the labels grow and the bar does not.
  */
-private val BottomBarLabelWidth = 400.dp
+private val BottomBarLabelWidth = 320.dp
 
 private data class NavDestination(
     val route: String,
@@ -118,11 +122,12 @@ fun MileLogBottomBar(
     val ledger = MaterialTheme.ledger
 
     BoxWithConstraints(modifier = modifier) {
-        // Five destinations carry five labels; below this width the longest of
-        // them ("Dashboard") no longer fits its share of the bar. Rather than
-        // let all five truncate, only the selected destination keeps its label,
-        // which is the same shape Material uses for a bar this tight.
-        val roomyLabels = maxWidth >= BottomBarLabelWidth
+        // Every phone shows all five labels at the default text size. The
+        // fallback is for the case the labels genuinely cannot fit: a narrow
+        // screen with the system font enlarged, where five full labels would
+        // each truncate to a stub. There, only the selected destination keeps
+        // its name rather than all five showing a fragment of theirs.
+        val roomyLabels = maxWidth >= BottomBarLabelWidth * LocalDensity.current.fontScale
 
         NavigationBar(
             containerColor = ledger.chrome,
@@ -132,14 +137,15 @@ fun MileLogBottomBar(
             navDestinations.forEach { destination ->
                 val selected = currentRoute == destination.route
                 val label = stringResource(destination.labelRes)
+                // The drawn label names the destination; only when it is not
+                // drawn does the icon have to carry the name instead. Naming
+                // both would announce the destination twice, and naming neither
+                // would leave something a user can operate that says nothing.
+                val labelShown = roomyLabels || selected
                 NavigationBarItem(
                     selected = selected,
                     onClick = { onTabSelected(destination.route) },
                     icon = {
-                        // The name lives on the icon, not on the label text: a
-                        // label that can be hidden must not be the only thing
-                        // carrying it, or a narrow bar would leave a destination
-                        // that nothing announces.
                         Icon(
                             imageVector = if (selected) {
                                 destination.selectedIcon
@@ -149,21 +155,23 @@ fun MileLogBottomBar(
                             contentDescription = null,
                             modifier = Modifier
                                 .size(22.dp)
-                                .semantics { contentDescription = label }
+                                .then(
+                                    if (labelShown) {
+                                        Modifier
+                                    } else {
+                                        Modifier.semantics { contentDescription = label }
+                                    }
+                                )
                         )
                     },
                     label = {
                         Text(
                             text = label,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            // Already named by the icon, and this is the node
-                            // that comes and goes, so it stays out of the
-                            // accessibility tree rather than announcing twice.
-                            modifier = Modifier.clearAndSetSemantics { }
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
-                    alwaysShowLabel = roomyLabels || selected,
+                    alwaysShowLabel = labelShown,
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = ledger.chromeText,
                         selectedTextColor = ledger.chromeText,
